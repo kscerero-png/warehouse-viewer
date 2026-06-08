@@ -481,9 +481,17 @@
             pointer-events: none;
             margin-top: 0;
         }
-        #search-panel.collapsed {
+        #search-panel.collapsed { 
             gap: 0px;
             padding-bottom: 10px;
+        }
+        #sync-status {
+            font-size: 10px;
+            color: var(--text-muted);
+            font-family: var(--font-mono);
+            text-align: right;
+            margin-top: 4px;
+            letter-spacing: 0.04em;
         }
         
         .input-terminal { 
@@ -1061,6 +1069,7 @@
                     <button type="button" class="btn-pasillo" data-pasillo="9">09</button>
                 </div>
             </div>
+            <div id="sync-status" class="sync-status">Sync: -</div>
         </div>
     </div>
 
@@ -1380,6 +1389,7 @@
         }
 
         const INVENTARIO_URL = 'https://script.google.com/macros/s/AKfycbx-1uyK9d7XTqjZs2zOsijinRoCkpE1AVf54BmcQRcSy0RsBNS4RGxo40hhvU0PsRY/exec';
+        const REFRESH_INTERVAL = 60000;
 
         function cargarInventario(url, fallback) {
             fetch(url + '?_=' + Date.now())
@@ -1387,6 +1397,7 @@
                 .then(data => {
                     datosInventario = data;
                     cargarModelo3D();
+                    actualizarEstadoSync();
                 })
                 .catch(() => {
                     if (fallback) {
@@ -1398,7 +1409,25 @@
                 });
         }
 
+        function recargarInventarioPeriodico() {
+            fetch(INVENTARIO_URL + '?_=' + Date.now())
+                .then(r => r.json())
+                .then(data => {
+                    datosInventario = data;
+                    updateSceneFromInventario();
+                    updateUsageOverlay();
+                    actualizarEstadoSync();
+                })
+                .catch(() => {});
+        }
+
+        function actualizarEstadoSync() {
+            const el = document.getElementById('sync-status');
+            if (el) el.innerText = 'Sync: ' + new Date().toLocaleTimeString();
+        }
+
         cargarInventario(INVENTARIO_URL, true);
+        setInterval(recargarInventarioPeriodico, REFRESH_INTERVAL);
 
         function cargarModelo3D() {
             if (!THREE.GLTFLoader) {
