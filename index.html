@@ -1,0 +1,2433 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Almacén 3D Interactivo - Consola de Operaciones</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap');
+        
+        :root {
+            --bg-main: #060b11;
+            --bg-surface: rgba(13, 22, 33, 0.85);
+            --bg-surface-solid: #0d1621;
+            --border-color: rgba(0, 255, 157, 0.15);
+            --border-muted: rgba(255, 255, 255, 0.08);
+            
+            --text-primary: #f1f5f9;
+            --text-secondary: #94a3b8;
+            --text-muted: #64748b;
+            
+            --accent: #00ff9d;
+            --accent-glow: rgba(0, 255, 157, 0.2);
+            --warning: #ffb800;
+            --danger: #ff4a4a;
+            --success: #00ff9d;
+            
+            --font-sans: 'Inter', sans-serif;
+            --font-mono: 'JetBrains Mono', monospace;
+
+            /* Panel sizing variables (can be adjusted via .compact / .spacious on body) */
+            --panel-padding: 12px 16px;
+            --panel-radius: 0 4px 4px 0; /* default: follow #controls-legend */
+            --panel-font-size: 12px;
+        }
+
+        html, body { 
+            height: 100%; 
+            margin: 0; 
+            overflow: hidden; 
+            font-family: var(--font-sans); 
+            background-color: var(--bg-main); 
+            color: var(--text-primary);
+            letter-spacing: -0.01em;
+        }
+
+        /* Paneles Base Estilo Enterprise */
+        .enterprise-panel {
+            background: var(--bg-surface);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid var(--border-muted);
+            border-top: 2px solid var(--text-muted);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5);
+            padding: 16px;
+            border-radius: 4px;
+            transition: all 220ms cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        
+        .enterprise-panel.active-border {
+            border-top: 2px solid var(--accent);
+        }
+
+        /* Panel de Información Lateral */
+        #info { 
+            position: absolute; 
+            top: 20px; 
+            left: 20px; 
+            width: 320px;
+            display: none; 
+            opacity: 0;
+            transform: translateY(-10px);
+            z-index: 100;
+        }
+        #info.visible { 
+            display: block; 
+            opacity: 1; 
+            transform: translateY(0); 
+        }
+        #info .info-id-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+            padding-bottom: 8px;
+            border-bottom: 1px solid var(--border-muted);
+        }
+        #info .info-badge {
+            font-family: var(--font-mono);
+            font-size: 10px;
+            font-weight: 600;
+            color: var(--accent);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        #info .info-id-value {
+            font-family: var(--font-mono);
+            font-size: 13px;
+            font-weight: 700;
+            color: #fff;
+        }
+        #info .info-row {
+            display: flex;
+            justify-content: space-between;
+            gap: 12px;
+            margin-bottom: 5px;
+            font-size: var(--panel-font-size);
+        }
+        #info .info-row b {
+            color: var(--accent);
+            font-weight: 600;
+        }
+        #info .info-row span {
+            color: #fff;
+            font-family: var(--font-mono);
+            font-weight: 500;
+        }
+        #info .info-row #rack-cant, #info .info-row #rack-um {
+            color: var(--warning);
+        }
+        #info .info-row #rack-estado.estado-retenido {
+            color: var(--warning);
+        }
+        #info .info-row #rack-estado.estado-rechazado {
+            color: var(--danger);
+        }
+        #info .info-row #rack-estado.estado-liberado {
+            color: var(--accent);
+        }
+        #info button { 
+            margin-top: 12px; 
+            width: 100%;
+        }
+
+        /* Panel Estadístico de Producto */
+        #stats-panel {
+            position: absolute;
+            top: 80px;
+            right: 20px;
+            width: 340px;
+            display: none;
+            opacity: 0;
+            transform: translateX(12px);
+            z-index: 101;
+            transition: opacity 250ms cubic-bezier(0.4, 0, 0.2, 1),
+                        transform 250ms cubic-bezier(0.4, 0, 0.2, 1);
+            max-height: calc(100vh - 120px);
+            overflow-y: auto;
+            scrollbar-width: thin;
+            scrollbar-color: rgba(0,255,157,0.2) transparent;
+        }
+        #stats-panel::-webkit-scrollbar { width: 4px; }
+        #stats-panel::-webkit-scrollbar-track { background: transparent; }
+        #stats-panel::-webkit-scrollbar-thumb { background: rgba(0,255,157,0.2); border-radius: 2px; }
+
+        #stats-panel.visible {
+            display: block;
+            opacity: 1;
+            transform: translateX(0);
+        }
+
+        .stats-header {
+            display: flex;
+            align-items: flex-start;
+            justify-content: space-between;
+            gap: 8px;
+            margin-bottom: 14px;
+        }
+        .stats-header-left {
+            display: flex;
+            flex-direction: column;
+            gap: 3px;
+            flex: 1;
+            min-width: 0;
+        }
+        .stats-badge {
+            font-family: var(--font-mono);
+            font-size: 10px;
+            font-weight: 600;
+            color: var(--accent);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        .stats-product-name {
+            font-family: var(--font-mono);
+            font-size: 13px;
+            font-weight: 600;
+            color: #fff;
+            line-height: 1.3;
+            word-break: break-word;
+        }
+        .stats-sku {
+            font-family: var(--font-mono);
+            font-size: 10px;
+            color: var(--text-muted);
+            letter-spacing: 0.5px;
+        }
+        .stats-close-btn {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid var(--border-muted);
+            color: var(--text-muted);
+            cursor: pointer;
+            font-family: var(--font-mono);
+            font-size: 11px;
+            padding: 4px 10px;
+            border-radius: 2px;
+            flex-shrink: 0;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            font-weight: 500;
+            transition: all 150ms ease;
+        }
+        .stats-close-btn:hover {
+            background: rgba(0, 255, 157, 0.06);
+            border-color: var(--accent);
+            color: var(--accent);
+        }
+
+        .stats-kpis {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
+            margin-bottom: 14px;
+        }
+        .stats-kpi {
+            background: rgba(0, 255, 157, 0.04);
+            border: 1px solid rgba(0, 255, 157, 0.1);
+            border-radius: 4px;
+            padding: 10px 12px;
+            display: flex;
+            flex-direction: column;
+            gap: 3px;
+        }
+        .stats-kpi-value {
+            font-family: var(--font-mono);
+            font-size: 22px;
+            font-weight: 700;
+            color: var(--accent);
+            line-height: 1;
+        }
+        .stats-kpi-label {
+            font-size: 10px;
+            font-weight: 600;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .stats-section-title {
+            font-size: 10px;
+            font-weight: 700;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .stats-section-title::after {
+            content: '';
+            flex: 1;
+            height: 1px;
+            background: rgba(255,255,255,0.05);
+        }
+
+        .stats-lotes-list {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+            margin-bottom: 14px;
+        }
+        .stats-lote-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background: rgba(255,255,255,0.02);
+            border: 1px solid rgba(255,255,255,0.04);
+            border-radius: 3px;
+            padding: 7px 10px;
+            gap: 8px;
+        }
+        .stats-lote-name {
+            font-family: var(--font-mono);
+            font-size: 11px;
+            color: var(--text-secondary);
+            flex: 1;
+            min-width: 0;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+        .stats-lote-meta {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            flex-shrink: 0;
+        }
+        .stats-lote-ubics {
+            font-size: 10px;
+            color: var(--text-muted);
+            white-space: nowrap;
+        }
+        .stats-lote-qty {
+            font-family: var(--font-mono);
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--warning);
+            white-space: nowrap;
+        }
+
+        .stats-ubics-grid {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 5px;
+        }
+        .stats-ubic-tag {
+            font-family: var(--font-mono);
+            font-size: 10px;
+            font-weight: 600;
+            color: var(--text-secondary);
+            background: rgba(255,255,255,0.04);
+            border: 1px solid rgba(255,255,255,0.06);
+            border-radius: 3px;
+            padding: 3px 7px;
+            cursor: pointer;
+            transition: all 120ms;
+        }
+        .stats-ubic-tag:hover {
+            background: rgba(0,255,157,0.1);
+            border-color: rgba(0,255,157,0.3);
+            color: var(--accent);
+        }
+        .stats-ubic-tag.active {
+            background: rgba(0,255,157,0.15);
+            border-color: var(--accent);
+            color: var(--accent);
+        }
+
+        .stats-no-data {
+            font-size: 12px;
+            color: var(--text-muted);
+            text-align: center;
+            padding: 12px 0;
+        }
+
+        /* Botones Consola Moderna Empresarial */
+        .btn-terminal {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid var(--border-muted);
+            color: var(--text-primary);
+            padding: 8px 14px;
+            font-size: 11px;
+            font-weight: 500;
+            border-radius: 2px;
+            cursor: pointer;
+            font-family: var(--font-mono);
+            transition: all 150ms ease;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+        }
+        .btn-terminal:hover {
+            background: rgba(0, 255, 157, 0.06);
+            border-color: var(--accent);
+            color: var(--accent);
+        }
+        .btn-terminal.btn-accent {
+            background: rgba(0, 255, 157, 0.1);
+            color: var(--accent);
+            border: 1px solid var(--accent);
+            font-weight: 600;
+        }
+        .btn-terminal.btn-accent:hover {
+            background: var(--accent);
+            color: var(--bg-main);
+            box-shadow: 0 0 15px var(--accent-glow);
+        }
+
+        #top-right-container {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            z-index: 100;
+            display: flex;
+            flex-direction: column;
+            align-items: flex-end;
+            gap: 10px;
+        }
+        .top-global-actions {
+            display: flex;
+            gap: 8px;
+        }
+        .csv-wrapper {
+            position: relative;
+            width: 144px;
+            height: 34px;
+        }
+        #csv-input { 
+            position: absolute; 
+            top: 0; 
+            left: 0; 
+            width: 100%; 
+            height: 100%; 
+            opacity: 0; 
+            cursor: pointer; 
+            z-index: 12;
+        }
+        #csv-label { 
+            position: absolute; 
+            top: 0; 
+            left: 0; 
+            width: 100%; 
+            height: 100%; 
+            z-index: 11; 
+            box-sizing: border-box;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        /* Panel de Búsqueda y Control Desplegable */
+        #search-panel { 
+            position: absolute; 
+            right: 20px; 
+            bottom: 24px; 
+            z-index: 90; 
+            width: 340px; 
+            display: flex; 
+            flex-direction: column; 
+            gap: 10px; 
+        }
+
+        /* Cabecera para colapsar panel */
+        .panel-header-toggle {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding-bottom: 6px;
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+            margin-bottom: 2px;
+        }
+        .panel-header-title {
+            font-size: 11px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            color: var(--accent);
+            font-family: var(--font-mono);
+        }
+        .btn-toggle-collapse {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid var(--border-muted);
+            color: var(--text-secondary);
+            cursor: pointer;
+            font-family: var(--font-mono);
+            font-size: 11px;
+            padding: 4px 10px;
+            border-radius: 2px;
+            font-weight: 500;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            transition: all 150ms ease;
+        }
+        .btn-toggle-collapse:hover {
+            background: rgba(0, 255, 157, 0.06);
+            border-color: var(--accent);
+            color: var(--accent);
+        }
+
+        /* Contenedor animable para ocultar filtros */
+        .panel-collapsible-content {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            max-height: 500px;
+            opacity: 1;
+            overflow: hidden;
+            transition: max-height 250ms cubic-bezier(0.4, 0, 0.2, 1), opacity 250ms ease;
+        }
+        #search-panel.collapsed .panel-collapsible-content {
+            max-height: 0px;
+            opacity: 0;
+            pointer-events: none;
+            margin-top: 0;
+        }
+        #search-panel.collapsed {
+            gap: 0px;
+            padding-bottom: 10px;
+        }
+        
+        .input-terminal { 
+            width: 100%; 
+            box-sizing: border-box;
+            padding: 10px 12px; 
+            border-radius: 4px; 
+            border: 1px solid var(--border-muted); 
+            background: rgba(5, 10, 15, 0.6); 
+            color: #fff; 
+            font-size: 13px;
+            font-family: var(--font-sans);
+            outline: none; 
+            transition: border-color 150ms ease;
+        }
+        .input-terminal:focus {
+            border-color: var(--accent);
+            box-shadow: 0 0 10px rgba(0, 255, 157, 0.05);
+        }
+        .input-terminal::placeholder { 
+            color: var(--text-muted); 
+        }
+
+        #search-actions { 
+            display: flex; 
+            gap: 8px; 
+        }
+        #search-actions button {
+            flex: 1;
+        }
+        
+
+
+        /* Sugerencias de Búsqueda Avanzada */
+        #search-suggestions { 
+            width: 100%; 
+            max-height: 190px; 
+            overflow-y: auto; 
+            background: var(--bg-surface-solid); 
+            border: 1px solid var(--border-muted); 
+            border-radius: 4px; 
+            box-shadow: 0 12px 36px rgba(0,0,0,0.5); 
+            display: none;
+        }
+        #search-suggestions button { 
+            width: 100%; 
+            text-align: left; 
+            border: none; 
+            background: transparent; 
+            color: var(--text-secondary); 
+            padding: 10px 12px; 
+            cursor: pointer; 
+            font-size: 12px; 
+            font-family: var(--font-mono);
+            border-bottom: 1px solid rgba(255,255,255,0.02); 
+        }
+        #search-suggestions button:hover { 
+            background: rgba(0, 255, 157, 0.05); 
+            color: var(--accent);
+        }
+
+        .control-group {
+            border-top: 1px solid var(--border-muted);
+            margin-top: 4px;
+            padding-top: 12px;
+        }
+        .control-label { 
+            color: var(--text-secondary); 
+            font-weight: 600; 
+            font-size: 11px; 
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin-bottom: 6px;
+        }
+
+        /* Nueva Rejilla y Botones para Pasillos */
+        .pasillos-grid {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 6px;
+            margin-top: 6px;
+        }
+        .btn-pasillo {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid var(--border-muted);
+            color: var(--text-secondary);
+            padding: 7px 2px;
+            font-size: 10px;
+            font-family: var(--font-mono);
+            font-weight: 500;
+            text-align: center;
+            border-radius: 2px;
+            cursor: pointer;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            transition: all 150ms ease;
+        }
+        .btn-pasillo:hover {
+            background: rgba(0, 255, 157, 0.06);
+            border-color: var(--accent);
+            color: var(--accent);
+        }
+        .btn-pasillo.active {
+            background: rgba(0, 255, 157, 0.12);
+            border-color: var(--accent);
+            color: var(--accent);
+            font-weight: 600;
+            box-shadow: 0 0 8px rgba(0, 255, 157, 0.15);
+        }
+
+        /* Selectores de Importación CSV */
+        select { 
+            width: 100%; 
+            background: rgba(5, 10, 15, 0.8) !important; 
+            color: var(--text-primary); 
+            border: 1px solid var(--border-muted); 
+            padding: 8px 10px; 
+            border-radius: 4px; 
+            font-family: var(--font-sans); 
+            font-size: 13px;
+            outline: none; 
+            cursor: pointer;
+            -webkit-appearance: none;
+            -moz-appearance: none;
+            appearance: none;
+            background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'><path fill='%2394a3b8' d='M0 0l5 5 5-5z'/></svg>");
+            background-repeat: no-repeat;
+            background-position: right 12px center;
+        }
+        select:focus {
+            border-color: var(--accent);
+        }
+        select option {
+            background-color: var(--bg-surface-solid);
+            color: var(--text-primary);
+            padding: 8px;
+        }
+
+        /* Panel de Importación CSV */
+
+        #csv-map { 
+            width: 320px; 
+            display: none; 
+            opacity: 0; 
+            transform: translateY(-8px); 
+        }
+        #csv-map.visible { 
+            display: block; 
+            opacity: 1; 
+            transform: translateY(0); 
+        }
+        #csv-map .apply { 
+            background: var(--success); 
+            color: var(--bg-main); 
+            font-weight: 600;
+        }
+        #csv-map .cancel { 
+            background: rgba(255,255,255,0.05); 
+            color: var(--text-primary); 
+        }
+        #csv-map .cancel:hover {
+            background: var(--danger);
+            color: #fff;
+        }
+
+        /* Botón Flotante Central Inferior */
+        #reset-view-bottom { 
+            position: absolute; 
+            left: 50%; 
+            bottom: 24px; 
+            transform: translateX(-50%) translateY(8px); 
+            z-index: 80; 
+            padding: 10px 20px; 
+            border-radius: 4px; 
+            border: 1px solid var(--accent); 
+            background: rgba(0, 255, 157, 0.08); 
+            color: var(--accent); 
+            font-size: 11px;
+            font-weight: 600; 
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            cursor: pointer; 
+            opacity: 0; 
+            pointer-events: none; 
+            transition: all 220ms cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        #reset-view-bottom.visible { 
+            opacity: 1; 
+            pointer-events: auto; 
+            transform: translateX(-50%) translateY(0); 
+        }
+        #reset-view-bottom:hover {
+            background: var(--accent);
+            color: var(--bg-main);
+            box-shadow: 0 0 15px var(--accent-glow);
+        }
+
+        /* Loader de Carga de Paletas */
+        #loader { 
+            position: absolute; 
+            left: 50%; 
+            top: 50%; 
+            transform: translate(-50%,-50%); 
+            z-index: 200; 
+            width: 280px; 
+            background: #090f16;
+            border: 1px solid var(--accent); 
+            padding: 14px; 
+            border-radius: 2px; 
+            display: none; 
+            box-shadow: 0 25px 50px rgba(0,0,0,0.7); 
+        }
+        #loader .label { 
+            font-family: var(--font-mono);
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: var(--accent); 
+            margin-bottom: 8px; 
+        }
+        #loader .bar { 
+            height: 4px; 
+            background: rgba(255,255,255,0.05); 
+            border-radius: 0; 
+            overflow: hidden; 
+        }
+        #loader .bar > i { 
+            display: block; 
+            height: 100%; 
+            width: 0%; 
+            background: var(--accent); 
+            transition: width 120ms linear; 
+        }
+        #loader.visible { 
+            display: block; 
+        }
+
+        /* Contenedor Unificado de Telemetría Inferior Izquierdo */
+        #bottom-left-container {
+            position: absolute;
+            left: 20px;
+            bottom: 24px;
+            z-index: 90;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        /* Terminal de Telemetría 3D */
+        #coords-overlay { 
+            background: rgba(6, 11, 17, 0.7); 
+            border-left: 2px solid var(--text-muted);
+            border-top: 1px solid rgba(255,255,255,0.03);
+            border-right: 1px solid rgba(255,255,255,0.03);
+            border-bottom: 1px solid rgba(255,255,255,0.03);
+            padding: 10px 14px; 
+            border-radius: 0 4px 4px 0; 
+            color: var(--text-secondary); 
+            font-family: var(--font-mono);
+            font-size: 11px; 
+            min-width: 240px; 
+            backdrop-filter: blur(6px); 
+            line-height: 1.6;
+        }
+        #coords-overlay b { 
+            color: var(--text-primary); 
+            display: inline-block; 
+            width: 64px; 
+            font-weight: 500;
+        }
+        #coords-overlay span {
+            color: var(--accent);
+        }
+
+        #usage-overlay {
+            min-width: 280px;
+            max-width: 320px;
+            box-shadow: 0 0 24px rgba(0, 255, 157, 0.08);
+        }
+        #usage-overlay.legend-style {
+            border-left: 3px solid var(--accent);
+        }
+        #usage-overlay .usage-group-overview {
+            margin-top: 10px;
+            padding: 10px 12px;
+            background: rgba(255,255,255,0.03);
+            border: 1px solid var(--border-muted);
+        }
+        #usage-overlay .usage-group-item {
+            display: flex;
+            justify-content: space-between;
+            gap: 12px;
+            margin-bottom: 5px;
+            font-size: 11px;
+        }
+        #usage-overlay .usage-group-item:last-child {
+            margin-bottom: 0;
+        }
+        #usage-overlay .usage-group-item span {
+            display: inline-block;
+            color: var(--text-secondary);
+        }
+        #usage-overlay .usage-group-name {
+            color: var(--accent);
+            font-weight: 600;
+        }
+        #usage-overlay b {
+            color: var(--accent);
+            display: inline-block;
+            width: 80px;
+            font-weight: 600;
+        }
+        #usage-overlay .usage-bar {
+            width: 100%;
+            height: 6px;
+            background: rgba(255,255,255,0.06);
+            overflow: hidden;
+            margin-top: 8px;
+            display: flex;
+        }
+        #usage-overlay .usage-bar-liberado {
+            height: 100%;
+            width: 0%;
+            background: var(--accent);
+            transition: width 250ms ease;
+        }
+        #usage-overlay .usage-bar-retenido {
+            height: 100%;
+            width: 0%;
+            background: var(--warning);
+            transition: width 250ms ease;
+        }
+        #usage-overlay .usage-bar-rechazado {
+            height: 100%;
+            width: 0%;
+            background: var(--danger);
+            transition: width 250ms ease;
+        }
+        #usage-overlay .usage-bar-empty {
+            height: 100%;
+            width: 0%;
+            background: rgba(255,255,255,0.08);
+            transition: width 250ms ease;
+        }
+        #usage-overlay .usage-status {
+            margin-top: 8px;
+            padding: 6px 10px;
+            background: rgba(0, 255, 157, 0.06);
+            border: 1px solid var(--border-muted);
+            color: var(--text-secondary);
+            font-size: 10px;
+            text-align: center;
+            transition: background 250ms ease, color 250ms ease;
+        }
+        #usage-overlay .usage-status.warning {
+            background: rgba(255, 184, 0, 0.12);
+            border-color: rgba(255, 184, 0, 0.3);
+            color: var(--warning);
+        }
+        #usage-overlay .usage-status.danger {
+            background: rgba(255, 74, 74, 0.12);
+            border-color: rgba(255, 74, 74, 0.3);
+            color: var(--danger);
+        }
+        #usage-overlay .usage-top-products {
+            margin-top: 8px;
+            padding: 8px 10px;
+            background: rgba(255,255,255,0.02);
+            border: 1px solid var(--border-muted);
+        }
+        #usage-overlay .usage-section-title {
+            font-size: 9px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            color: var(--text-muted);
+            margin-bottom: 5px;
+        }
+        #usage-overlay .usage-top-item {
+            display: flex;
+            justify-content: space-between;
+            gap: 8px;
+            font-size: 10px;
+            padding: 2px 0;
+            font-family: var(--font-mono);
+        }
+        #usage-overlay .usage-top-item span:first-child {
+            color: var(--text-secondary);
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            flex: 1;
+            min-width: 0;
+        }
+        #usage-overlay .usage-top-item span:last-child {
+            color: var(--accent);
+            flex-shrink: 0;
+        }
+        #usage-overlay .usage-status-breakdown {
+            font-size: 10px;
+            color: var(--text-muted);
+            margin-top: 6px;
+            display: flex;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 2px;
+        }
+        #usage-overlay .usage-status-breakdown .status-dot {
+            display: inline-block;
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            flex-shrink: 0;
+        }
+        #usage-overlay .usage-status-breakdown span:not(.status-dot) {
+            font-family: var(--font-mono);
+            color: var(--text-secondary);
+            margin-left: 1px;
+        }
+
+        /* Nueva Leyenda de Controles */
+        #controls-legend {
+            background: rgba(6, 11, 17, 0.7);
+            border-left: 2px solid var(--accent);
+            border-top: 1px solid rgba(255,255,255,0.03);
+            border-right: 1px solid rgba(255,255,255,0.03);
+            border-bottom: 1px solid rgba(255,255,255,0.03);
+            padding: 10px 14px;
+            border-radius: 0 4px 4px 0;
+            color: var(--text-secondary);
+            font-family: var(--font-mono);
+            font-size: 10.5px;
+            min-width: 240px;
+            backdrop-filter: blur(6px);
+            line-height: 1.7;
+        }
+            /* Reusable legend-style to unify panel visuals */
+            .legend-style {
+                background: rgba(6, 11, 17, 0.7);
+                border-left: 2px solid var(--accent);
+                border-top: 1px solid rgba(255,255,255,0.03);
+                border-right: 1px solid rgba(255,255,255,0.03);
+                border-bottom: 1px solid rgba(255,255,255,0.03);
+                padding: var(--panel-padding);
+                border-radius: var(--panel-radius);
+                color: var(--text-secondary);
+                font-family: var(--font-mono);
+                font-size: var(--panel-font-size);
+                min-width: 240px;
+                backdrop-filter: blur(8px);
+                line-height: 1.6;
+            }
+
+
+        #controls-legend div {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        #controls-legend .key {
+            color: #fff;
+            background: rgba(255, 255, 255, 0.08);
+            padding: 1px 5px;
+            border-radius: 3px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            font-size: 9.5px;
+            font-weight: 600;
+        }
+    </style>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/GLTFLoader.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+</head>
+<body>
+
+    <div id="info" class="enterprise-panel active-border legend-style">
+        <div class="info-id-row">
+            <span class="info-badge">• LOC_IDID</span>
+            <span class="info-id-value" id="rack-id">-</span>
+        </div>
+        <div class="info-row"><b>Producto</b> <span id="rack-prod">-</span></div>
+        <div class="info-row"><b>Código</b> <span id="rack-cod">-</span></div>
+        <div class="info-row"><b>Lote</b> <span id="rack-lote">-</span></div>
+        <div class="info-row"><b>Cantidad</b> <span><span id="rack-cant">-</span>&nbsp;<span id="rack-um"></span></span></div>
+        <div class="info-row"><b>Estado</b> <span id="rack-estado">-</span></div>
+        <button id="info-close" class="btn-terminal">Cerrar Detalle</button>
+    </div>
+
+    <!-- Panel Estadístico de Producto -->
+    <div id="stats-panel" class="enterprise-panel active-border legend-style">
+        <div class="stats-header">
+            <div class="stats-header-left">
+                <span class="stats-badge">• PRODUCT_STATS</span>
+                <span class="stats-product-name" id="stats-product-name">-</span>
+                <span class="stats-sku" id="stats-sku">-</span>
+            </div>
+            <button class="stats-close-btn" id="stats-close">✕</button>
+        </div>
+
+        <div class="stats-kpis">
+            <div class="stats-kpi">
+                <span class="stats-kpi-value" id="stats-total-ubics">-</span>
+                <span class="stats-kpi-label">Ubicaciones</span>
+            </div>
+            <div class="stats-kpi">
+                <span class="stats-kpi-value" id="stats-total-qty">-</span>
+                <span class="stats-kpi-label" id="stats-um-label">Unidades</span>
+            </div>
+        </div>
+
+        <div class="stats-section-title">Lotes</div>
+        <div class="stats-lotes-list" id="stats-lotes-list">
+            <div class="stats-no-data">Sin datos</div>
+        </div>
+
+        <div class="stats-section-title">Ubicaciones</div>
+        <div class="stats-ubics-grid" id="stats-ubics-grid">
+            <div class="stats-no-data">Sin datos</div>
+        </div>
+    </div>
+
+    <div id="top-right-container">
+        <div class="top-global-actions">
+            <button id="reset-view" class="btn-terminal">Vista Global</button>
+            <div class="csv-wrapper">
+                <input id="csv-input" type="file" accept=".csv" />
+                <label id="csv-label" for="csv-input" class="btn-terminal">Importar CSV</label>
+            </div>
+        </div>
+
+        <div id="csv-map" class="enterprise-panel active-border legend-style">
+            <div style="font-weight: 600; font-size: 13px; margin-bottom: 12px; font-family: var(--font-mono); text-transform: uppercase; color: var(--accent);">Mapeo de Campos ERP</div>
+            <div style="font-size:12px; margin-bottom:8px; color: var(--text-secondary)">ID Ubicación <select id="map-id"></select></div>
+            <div style="font-size:12px; margin-bottom:8px; color: var(--text-secondary)">Descripción Producto <select id="map-product"></select></div>
+            <div style="font-size:12px; margin-bottom:8px; color: var(--text-secondary)">Código Alterno / SKU <select id="map-codigo"></select></div>
+            <div style="font-size:12px; margin-bottom:8px; color: var(--text-secondary)">Identificador Lote <select id="map-lote"></select></div>
+            <div style="font-size:12px; margin-bottom:8px; color: var(--text-secondary)">Cantidad Física <select id="map-cant"></select></div>
+            <div style="font-size:12px; margin-bottom:8px; color: var(--text-secondary)">Unidad de Medida <select id="map-um"></select></div>
+            <div style="font-size:12px; margin-bottom:14px; color: var(--text-secondary)">Estado Lote (R/X/vacío) <select id="map-estado"></select></div>
+            <div style="display:flex; gap:8px;">
+                <button id="map-apply" class="btn-terminal apply" style="flex:1;">Procesar</button>
+                <button id="map-cancel" class="btn-terminal cancel" style="flex:1;">Abortar</button>
+            </div>
+        </div>
+    </div>
+
+    <button id="reset-view-bottom" class="legend-style">Restablecer Sistema Visual</button>
+    
+    <div id="search-panel" class="enterprise-panel legend-style">
+        <div class="panel-header-toggle">
+            <span class="panel-header-title">Filtros de Control</span>
+            <button id="btn-collapse-search" class="btn-toggle-collapse">[─]</button>
+        </div>
+        
+        <div class="panel-collapsible-content" id="search-panel-content">
+            <input id="search-input" type="text" class="input-terminal" placeholder="Buscar SKU, ubicación o producto..." autocomplete="off" />
+            <div id="search-actions">
+                <button id="search-button" class="btn-terminal btn-accent">Filtrar</button>
+                <button id="clear-search" class="btn-terminal">Limpiar</button>
+            </div>
+            <div id="search-suggestions"></div>
+            
+            <div class="control-group">
+                <div class="control-label">Navegación por Pasillo</div>
+                <div class="pasillos-grid" id="pasillo-buttons-container">
+                    <button type="button" class="btn-pasillo active" data-pasillo="todos">Todos</button>
+                    <button type="button" class="btn-pasillo" data-pasillo="1">01</button>
+                    <button type="button" class="btn-pasillo" data-pasillo="2">02</button>
+                    <button type="button" class="btn-pasillo" data-pasillo="3">03</button>
+                    <button type="button" class="btn-pasillo" data-pasillo="4">04</button>
+                    <button type="button" class="btn-pasillo" data-pasillo="5">05</button>
+                    <button type="button" class="btn-pasillo" data-pasillo="6">06</button>
+                    <button type="button" class="btn-pasillo" data-pasillo="7">07</button>
+                    <button type="button" class="btn-pasillo" data-pasillo="8">08</button>
+                    <button type="button" class="btn-pasillo" data-pasillo="9">09</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="loader" class="legend-style">
+        <div class="label">Sincronizando Óptica...</div>
+        <div class="bar"><i></i></div>
+    </div>
+
+    <div id="bottom-left-container">
+        <div id="usage-overlay" class="enterprise-panel legend-style" aria-live="polite">
+            <div><b>Pasillo:</b> <span id="usage-aisle">Todos</span></div>
+            <div><b>Grupo:</b> <span id="usage-group">Todas las zonas</span></div>
+            <div><b>Utilización:</b> <span id="usage-summary">-</span></div>
+            <div class="usage-bar">
+                <div id="usage-bar-liberado" class="usage-bar-liberado"></div>
+                <div id="usage-bar-retenido" class="usage-bar-retenido"></div>
+                <div id="usage-bar-rechazado" class="usage-bar-rechazado"></div>
+                <div id="usage-bar-empty" class="usage-bar-empty"></div>
+            </div>
+            <div class="usage-status-breakdown" id="usage-status-breakdown">
+                <span class="status-dot" style="background:var(--accent)"></span> Liberado
+                <span class="status-dot" style="background:var(--warning);margin-left:8px"></span> Retenido <span id="usage-retenido">-</span>
+                <span class="status-dot" style="background:var(--danger);margin-left:8px"></span> Rechazado <span id="usage-rechazado">-</span>
+            </div>
+            <div id="usage-group-overview" class="usage-group-overview" style="display:none;">
+                <div class="usage-group-item" id="usage-group-primary"><span class="usage-group-name">Almacén Principal</span><span id="usage-primary">-</span></div>
+                <div class="usage-group-item" id="usage-group-cava"><span class="usage-group-name">CAVA</span><span id="usage-cava">-</span></div>
+            </div>
+            <div class="usage-top-products" id="usage-top-products" style="display:none;">
+                <div class="usage-section-title">Top Productos</div>
+                <div id="usage-top-list"></div>
+            </div>
+            <div id="usage-status" class="usage-status">-</div>
+        </div>
+        <div id="controls-legend" class="legend-style" aria-label="Controles de cámara">
+            <div><span class="key">Click Izq + Arrastrar</span> Rotar Óptica</div>
+            <div><span class="key">Click Der + Arrastrar</span> Desplazar Cámara</div>
+            <div><span class="key">Rueda del Ratón</span> Zoom +/-</div>
+            <div><span class="key">Click en Rack</span> Seleccionar Ubicación</div>
+            <div><span class="key">Click Sostenido</span> Enfocar Detalle</div>
+        </div>
+
+        <div id="coords-overlay" class="enterprise-panel legend-style" aria-live="polite">
+            <div><b>CAM_POS:</b> <span id="coords-camera">-</span></div>
+            <div><b>CAM_TGT:</b> <span id="coords-target">-</span></div>
+            <div><b>RACK_CTR:</b> <span id="coords-pallet">-</span></div>
+        </div>
+    </div>
+
+    <script>
+        // Configuración de la escena 3D
+        const scene = new THREE.Scene();
+        scene.background = new THREE.Color(0x060b11);
+        
+        const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+        camera.position.set(10, 15, 20);
+
+        const renderer = new THREE.WebGLRenderer({ antialias: true });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        document.body.appendChild(renderer.domElement);
+
+        let lastSelectedMesh = null;
+        let pasilloSeleccionado = 'todos'; 
+
+        function vecToStr(v) {
+            if (!v) return '-';
+            return `X:${v.x.toFixed(2)} Y:${v.y.toFixed(2)} Z:${v.z.toFixed(2)}`;
+        }
+
+        function updateCoordsOverlay() {
+            const camEl = document.getElementById('coords-camera');
+            const tgtEl = document.getElementById('coords-target');
+            const palEl = document.getElementById('coords-pallet');
+            if (camEl) camEl.innerText = vecToStr(camera.position);
+            if (tgtEl) tgtEl.innerText = vecToStr(controls.target);
+            if (palEl) {
+                if (lastSelectedMesh) {
+                    const box = new THREE.Box3().setFromObject(lastSelectedMesh);
+                    const c = new THREE.Vector3(); box.getCenter(c);
+                    palEl.innerText = vecToStr(c) + ' [' + (lastSelectedMesh.userData && lastSelectedMesh.userData.id ? lastSelectedMesh.userData.id : '-') + ']';
+                } else {
+                    palEl.innerText = '-';
+                }
+            }
+            updateUsageOverlay();
+        }
+
+        function getAisleGroupLabel(aisle) {
+            if (aisle === 'todos') return 'Todas las zonas';
+            const index = Number(aisle);
+            if (index >= 1 && index <= 4) return 'Almacén Principal';
+            if (index >= 5 && index <= 9) return 'CAVA';
+            return 'Zona desconocida';
+        }
+
+        function calculateCapacityUsageForAisle(aisle) {
+            const countedIds = new Set();
+            let total = 0;
+            let used = 0;
+            scene.traverse((obj) => {
+                if (!obj.isMesh || !obj.userData || !obj.userData.id) return;
+                const idStr = String(obj.userData.id).trim();
+                if (!idStr || countedIds.has(idStr)) return;
+                const pasillo = idStr.charAt(0);
+                if (aisle !== 'todos' && pasillo !== aisle) return;
+                countedIds.add(idStr);
+                total += 1;
+                if (!isEmptyRack(obj.userData)) used += 1;
+            });
+            const empty = total - used;
+            const percent = total === 0 ? 0 : Math.round((used / total) * 100);
+            return { total, used, empty, percent };
+        }
+
+        function calculateCapacityUsageForAisleGroup(aisleDigits) {
+            const countedIds = new Set();
+            let total = 0;
+            let used = 0;
+            scene.traverse((obj) => {
+                if (!obj.isMesh || !obj.userData || !obj.userData.id) return;
+                const idStr = String(obj.userData.id).trim();
+                if (!idStr || countedIds.has(idStr)) return;
+                const pasillo = idStr.charAt(0);
+                if (!aisleDigits.includes(pasillo)) return;
+                countedIds.add(idStr);
+                total += 1;
+                if (!isEmptyRack(obj.userData)) used += 1;
+            });
+            const empty = total - used;
+            const percent = total === 0 ? 0 : Math.round((used / total) * 100);
+            return { total, used, empty, percent };
+        }
+
+        function computeTopProducts(aisle, limit) {
+            const productCount = {};
+            const countedIds = new Set();
+            scene.traverse((obj) => {
+                if (!obj.isMesh || !obj.userData || !obj.userData.id) return;
+                const idStr = String(obj.userData.id).trim();
+                if (!idStr || countedIds.has(idStr)) return;
+                const pasillo = idStr.charAt(0);
+                if (aisle !== 'todos' && pasillo !== aisle) return;
+                countedIds.add(idStr);
+                const prodName = obj.userData.producto || 'Sin producto';
+                if (!isEmptyRack(obj.userData)) {
+                    productCount[prodName] = (productCount[prodName] || 0) + 1;
+                }
+            });
+            return Object.entries(productCount)
+                .sort((a, b) => b[1] - a[1])
+                .slice(0, limit)
+                .map(([name, count]) => ({ name, count }));
+        }
+
+        function calculateStatusBreakdown(aisle) {
+            const counted = { retenido: 0, rechazado: 0, liberado: 0 };
+            const countedIds = new Set();
+            scene.traverse((obj) => {
+                if (!obj.isMesh || !obj.userData || !obj.userData.id) return;
+                const idStr = String(obj.userData.id).trim();
+                if (!idStr || countedIds.has(idStr)) return;
+                const pasillo = idStr.charAt(0);
+                if (aisle !== 'todos' && pasillo !== aisle) return;
+                countedIds.add(idStr);
+                if (isEmptyRack(obj.userData)) return;
+                const estado = (obj.userData.estado || 'liberado').toLowerCase();
+                if (counted[estado] !== undefined) counted[estado]++;
+            });
+            const totalConEstado = counted.retenido + counted.rechazado + counted.liberado;
+            const pct = (v) => totalConEstado === 0 ? 0 : Math.round((v / totalConEstado) * 100);
+            return {
+                retenido: counted.retenido,
+                rechazado: counted.rechazado,
+                liberado: counted.liberado,
+                pctRetenido: pct(counted.retenido),
+                pctRechazado: pct(counted.rechazado)
+            };
+        }
+
+        function updateUsageOverlay(aisleOverride) {
+            const aisleEl = document.getElementById('usage-aisle');
+            const groupEl = document.getElementById('usage-group');
+            const summaryEl = document.getElementById('usage-summary');
+            const statusEl = document.getElementById('usage-status');
+            const barLiberado = document.getElementById('usage-bar-liberado');
+            const barRetenido = document.getElementById('usage-bar-retenido');
+            const barRechazado = document.getElementById('usage-bar-rechazado');
+            const barEmpty = document.getElementById('usage-bar-empty');
+            const groupOverview = document.getElementById('usage-group-overview');
+            const primaryEl = document.getElementById('usage-primary');
+            const cavaEl = document.getElementById('usage-cava');
+            const topSection = document.getElementById('usage-top-products');
+            const topList = document.getElementById('usage-top-list');
+            if (!aisleEl || !groupEl || !summaryEl || !statusEl || !barLiberado || !barEmpty || !groupOverview || !primaryEl || !cavaEl || !topSection || !topList) return;
+
+            const effectiveAisle = aisleOverride !== undefined ? aisleOverride : pasilloSeleccionado;
+            const metrics = calculateCapacityUsageForAisle(effectiveAisle);
+            const aisleLabel = effectiveAisle === 'todos' ? 'Todos' : 'Pasillo ' + effectiveAisle;
+            aisleEl.innerText = aisleLabel;
+            groupEl.innerText = getAisleGroupLabel(effectiveAisle);
+            summaryEl.innerText = `${metrics.used} / ${metrics.total} (${metrics.percent}%)`;
+
+            // Desglose por estado (liberado / retenido / rechazado)
+            const breakdown = calculateStatusBreakdown(effectiveAisle);
+
+            // Barra apilada: liberado + retenido + rechazado + vacíos
+            const total = metrics.total;
+            const pct = (v) => total === 0 ? 0 : (v / total) * 100;
+            barLiberado.style.width = pct(breakdown.liberado) + '%';
+            barRetenido.style.width = pct(breakdown.retenido) + '%';
+            barRechazado.style.width = pct(breakdown.rechazado) + '%';
+            barEmpty.style.width = pct(metrics.empty) + '%';
+
+            // Alerta de capacidad
+            statusEl.classList.remove('warning', 'danger');
+            if (metrics.total === 0) {
+                statusEl.innerText = 'Sin ubicaciones';
+            } else if (metrics.percent > 95) {
+                statusEl.classList.add('danger');
+                statusEl.innerText = `⚠ ${metrics.percent}% — Capacidad crítica`;
+            } else if (metrics.percent > 85) {
+                statusEl.classList.add('warning');
+                statusEl.innerText = `⚠ ${metrics.percent}% — Capacidad alta`;
+            } else {
+                statusEl.innerText = `${metrics.percent}% ocupado — Operación normal`;
+            }
+
+            // Texto desglose por estado
+            const retenidoEl = document.getElementById('usage-retenido');
+            const rechazadoEl = document.getElementById('usage-rechazado');
+            if (retenidoEl && rechazadoEl) {
+                retenidoEl.innerText = breakdown.retenido > 0 ? `${breakdown.retenido} (${breakdown.pctRetenido}%)` : '0';
+                rechazadoEl.innerText = breakdown.rechazado > 0 ? `${breakdown.rechazado} (${breakdown.pctRechazado}%)` : '0';
+            }
+
+            // Top 3 productos más ocupados
+            const topProducts = computeTopProducts(effectiveAisle, 3);
+            if (topProducts.length > 0) {
+                topSection.style.display = 'block';
+                topList.innerHTML = topProducts.map(p =>
+                    `<div class="usage-top-item"><span>${p.name}</span><span>${p.count} ubic.</span></div>`
+                ).join('');
+            } else {
+                topSection.style.display = 'none';
+            }
+
+            // Desglose por grupo: solo el grupo del pasillo seleccionado (o ambos si es "Todos")
+            const groupPrimary = document.getElementById('usage-group-primary');
+            const groupCava = document.getElementById('usage-group-cava');
+            if (aisleOverride === undefined && groupPrimary && groupCava) {
+                const principalMetrics = calculateCapacityUsageForAisleGroup(['1', '2', '3', '4']);
+                const cavaMetrics = calculateCapacityUsageForAisleGroup(['5', '6', '7', '8', '9']);
+                primaryEl.innerText = `${principalMetrics.used} / ${principalMetrics.total} (${principalMetrics.percent}%)`;
+                cavaEl.innerText = `${cavaMetrics.used} / ${cavaMetrics.total} (${cavaMetrics.percent}%)`;
+                if (effectiveAisle === 'todos') {
+                    groupPrimary.style.display = '';
+                    groupCava.style.display = '';
+                } else {
+                    const aisleNum = Number(effectiveAisle);
+                    if (aisleNum >= 1 && aisleNum <= 4) {
+                        groupPrimary.style.display = '';
+                        groupCava.style.display = 'none';
+                    } else {
+                        groupPrimary.style.display = 'none';
+                        groupCava.style.display = '';
+                    }
+                }
+                groupOverview.style.display = 'block';
+            } else {
+                groupOverview.style.display = 'none';
+            }
+        }
+
+        const controls = new THREE.OrbitControls(camera, renderer.domElement);
+        controls.enableDamping = true;
+        controls.dampingFactor = 0.05;
+        const defaultCameraPosition = camera.position.clone();
+        const defaultControlTarget = controls.target.clone();
+        const focusDistanceFactor = 6; 
+        
+        const light = new THREE.AmbientLight(0xffffff, 0.7);
+        scene.add(light);
+        const dirLight = new THREE.DirectionalLight(0xffffff, 0.5);
+        dirLight.position.set(10, 20, 10);
+        scene.add(dirLight);
+
+        let datosInventario = [];
+
+        function getRackMaterial(infoRack) {
+            const rackInfo = infoRack || {};
+            const empty = isEmptyRack(rackInfo);
+            if (empty) {
+                return new THREE.MeshStandardMaterial({
+                    color: 0x272932,
+                    roughness: 0.35,
+                    metalness: 0.1,
+                    transparent: false,
+                    opacity: 0.90
+                });
+            }
+            const estado = (rackInfo.estado || '').toLowerCase();
+            let color;
+            if (estado === 'rechazado') {
+                color = 0xdc2626; // rojo
+            } else if (estado === 'retenido') {
+                color = 0xf59e0b; // ámbar
+            } else {
+                color = 0x0065F8; // azul (liberado / por defecto)
+            }
+            return new THREE.MeshStandardMaterial({
+                color: color,
+                roughness: 0.35,
+                metalness: 0.1,
+                transparent: false,
+                opacity: 0.90
+            });
+        }
+
+        fetch('inventario.json?' + Date.now())
+            .then(response => response.json())
+            .then(data => {
+                datosInventario = data;
+                cargarModelo3D(); 
+            })
+            .catch(err => console.error('Error cargando inventario:', err));
+
+        function cargarModelo3D() {
+            if (!THREE.GLTFLoader) {
+                console.error('GLTFLoader no está disponible.');
+                return;
+            }
+            const loader = new THREE.GLTFLoader();
+            loader.load('almacen.glb', function (gltf) {
+                const modelo = gltf.scene;
+                
+                modelo.traverse((child) => {
+                    if (child.isMesh) {
+                        const esUbicacion = /^[1-9]/.test(child.name);
+                        
+                        if (esUbicacion) {
+                            const infoRack = datosInventario.find(item => item.id === child.name);
+                            if (infoRack) {
+                                child.userData = infoRack;
+                            } else {
+                                child.userData = {
+                                    id: child.name, producto: '', codigo: '', lote: '', cantidad: 0, um: '', estado: 'liberado'
+                                };
+                            }
+                            child.material = getRackMaterial(child.userData);
+                        }
+                    }
+                });
+
+                scene.add(modelo);
+            }, undefined, function(error){
+                console.error('Error cargando almacen.glb:', error);
+            });
+        }
+
+        const raycaster = new THREE.Raycaster();
+        const mouse = new THREE.Vector2();
+        const infoPanel = document.getElementById('info');
+        const infoClose = document.getElementById('info-close');
+        const resetViewButton = document.getElementById('reset-view');
+        const resetViewBottomButton = document.getElementById('reset-view-bottom');
+        const searchInput = document.getElementById('search-input');
+        const searchButton = document.getElementById('search-button');
+        const clearSearchButton = document.getElementById('clear-search');
+        const searchSuggestions = document.getElementById('search-suggestions');
+        const canvas = renderer.domElement;
+        canvas.style.touchAction = 'none';
+
+        const csvInput = document.getElementById('csv-input');
+
+        function parseLine(line) {
+            const pattern = /,(?=(?:[^\"]*\"[^\"]*\")*[^\"]*$)/;
+            const parts = line.split(pattern);
+            return parts.map(p => {
+                let s = p.trim();
+                if (s.startsWith('"') && s.endsWith('"')) {
+                    s = s.slice(1, -1).replace(/""/g, '"');
+                }
+                return s;
+            });
+        }
+
+        function csvToObjects(text) {
+            const lines = text.split(/\r\n|\n/).filter(l => l.trim() !== '');
+            if (lines.length === 0) return [];
+            const headers = parseLine(lines[0]).map(h => h.trim());
+            const rows = [];
+            for (let i = 1; i < lines.length; i++) {
+                const values = parseLine(lines[i]);
+                if (values.length === 0) continue;
+                const obj = {};
+                for (let j = 0; j < headers.length; j++) {
+                    obj[headers[j]] = values[j] !== undefined ? values[j] : '';
+                }
+                rows.push(obj);
+            }
+            return rows;
+        }
+
+        let currentSearchTerm = '';
+
+        function isEmptyRack(rackData) {
+            if (!rackData) return true;
+            if (rackData.ocupacion !== undefined) return rackData.ocupacion === 0;
+            if (rackData.cantidad !== undefined) return rackData.cantidad === 0;
+            return true;
+        }
+
+        function renderSearchSuggestions() {
+            const term = currentSearchTerm.trim().toLowerCase();
+            searchSuggestions.innerHTML = '';
+            if (!term) {
+                searchSuggestions.style.display = 'none';
+                return;
+            }
+            const seen = new Set();
+            const matches = [];
+            for (const item of datosInventario) {
+                const prod = item.producto ? String(item.producto).toLowerCase() : '';
+                const code = item.codigo ? String(item.codigo).toLowerCase() : '';
+                const id = item.id ? String(item.id).toLowerCase() : '';
+                if (prod.includes(term) || code.includes(term) || id.includes(term)) {
+                    const key = prod || code || id;
+                    if (seen.has(key)) continue;
+                    seen.add(key);
+                    matches.push(item);
+                    if (matches.length >= 8) break;
+                }
+            }
+            if (matches.length === 0) {
+                const noResult = document.createElement('div');
+                noResult.style.padding = '10px 12px';
+                noResult.style.color = 'var(--text-muted)';
+                noResult.textContent = 'Sin Coincidencias de Telemetría';
+                searchSuggestions.appendChild(noResult);
+                searchSuggestions.style.display = 'block';
+                return;
+            }
+            for (const item of matches) {
+                const button = document.createElement('button');
+                button.type = 'button';
+                button.innerText = item.producto || item.id || item.codigo || 'Sin nombre';
+                button.addEventListener('click', () => {
+                    searchInput.value = item.producto || item.id || item.codigo || '';
+                    currentSearchTerm = searchInput.value;
+                    searchSuggestions.style.display = 'none';
+                });
+                searchSuggestions.appendChild(button);
+            }
+            searchSuggestions.style.display = 'block';
+        }
+
+        function normalizeLocationId(id) {
+            if (!id) return null;
+            const candidate = String(id).trim();
+            const match = candidate.match(/^\d(\d{2})\d{2}$/);
+            if (match && candidate.length === 5) {
+                const centerValue = parseInt(match[1], 10);
+                if (centerValue >= 0 && centerValue <= 15) {
+                    return candidate;
+                }
+            }
+            return null;
+        }
+
+        function isFrontFacingLocation(id) {
+            const normalized = normalizeLocationId(id);
+            if (!normalized) return false;
+            
+            const pasillo = normalized.charAt(0);
+            const digits = normalized.slice(1, 3);
+            const value = parseInt(digits, 10);
+            if (Number.isNaN(value)) return false;
+            
+            if (pasillo === '5') {
+                // El Pasillo 5 mantiene su corte especial: del 00 al 08 es Frontal
+                return value >= 0 && value <= 8;
+            } else if (pasillo === '6' || pasillo === '7' || pasillo === '8') {
+                // CORRECCIÓN: Pasillos 6, 7 y 8 ahora son Frontales solo del 00 al 06
+                return value >= 0 && value <= 6;
+            }
+            
+            // Pasillos del 1 al 4 (o cualquier otro por defecto)
+            return value >= 0 && value <= 15;
+        }
+
+        function getFrontDirectionFromId(id) {
+            const normalized = normalizeLocationId(id);
+            if (!normalized) return null;
+            
+            const pasillo = normalized.charAt(0);
+            const digits = normalized.slice(1, 3);
+            const value = parseInt(digits, 10);
+            
+            let sideDirection;
+            
+            if (pasillo === '5') {
+                // El Pasillo 5 mantiene su corte especial en el 08
+                sideDirection = value <= 8 ? -1 : 1;
+            } else if (pasillo === '6' || pasillo === '7' || pasillo === '8') {
+                // CORRECCIÓN: Pasillos 6, 7 y 8 ahora hacen el corte en el 07
+                // Del 00 al 06 devuelven -1, y del 08 en adelante devuelven 1
+                sideDirection = value <= 6 ? -1 : 1;
+            } else {
+                // Pasillos 1, 2, 3 y 4 (corte estándar en el 07)
+                sideDirection = value <= 15 ? -1 : 1;
+            }
+            
+            return new THREE.Vector3(0, 0, sideDirection); 
+        }
+
+        function getSearchMatches() {   
+            const term = currentSearchTerm.trim().toLowerCase();
+            
+            const results = [];
+            scene.traverse((child) => {
+                if (!child.isMesh || !child.userData || !child.userData.id) return;
+                
+                const idStr = String(child.userData.id).trim();
+                const primerDigito = idStr.charAt(0);
+                const cumplePasillo = (pasilloSeleccionado === 'todos' || primerDigito === pasilloSeleccionado);
+                
+                let cumpleProducto = true;
+                if (term !== "") {
+                    const productName = child.userData.producto ? String(child.userData.producto).toLowerCase() : '';
+                    const codeName = child.userData.codigo ? String(child.userData.codigo).toLowerCase() : '';
+                    cumpleProducto = productName.includes(term) || codeName.includes(term) || idStr.toLowerCase().includes(term);
+                }
+                
+                if (cumplePasillo && cumpleProducto) {
+                    results.push(child);
+                }
+            });
+            return results;
+        }
+
+        function focusSearchMatches(duration = 1100) {
+            const matches = getSearchMatches();
+            if (matches.length === 0) return;
+            
+            if (matches.length === 1) {
+                const mesh = matches[0];
+                if (isFrontFacingLocation(mesh.userData && mesh.userData.id)) {
+                    focusObjectFront(mesh, duration);
+                } else {
+                    smoothFocus(mesh, duration);
+                }
+                return;
+            }
+            
+            const box = new THREE.Box3();
+            for (const mesh of matches) {
+                box.expandByObject(mesh);
+            }
+            const center = new THREE.Vector3();
+            box.getCenter(center);
+            
+            const targetCenter = new THREE.Vector3(center.x, -0.51, center.z);
+            const targetPos = new THREE.Vector3(
+                targetCenter.x - 1.05,  
+                12.28,                  
+                targetCenter.z + 32.0   
+            );
+
+            const startPos = camera.position.clone();
+            const startTarget = controls.target.clone();
+            const startTime = performance.now();
+            
+            function step(now) {
+                const t = Math.min(1, (now - startTime) / duration);
+                const ease = t < 0.5 ? 4*t*t*t : 1 - Math.pow(-2*t + 2, 3) / 2;
+                
+                camera.position.lerpVectors(startPos, targetPos, ease);
+                controls.target.lerpVectors(startTarget, targetCenter, ease);
+                controls.update();
+                
+                if (t < 1) requestAnimationFrame(step);
+            }
+            requestAnimationFrame(step);
+        }
+
+        function applySearchFilter() {
+            const term = currentSearchTerm.toLowerCase().trim();
+
+            scene.traverse((obj) => {
+                if (obj.isMesh && obj.userData && obj.userData.id) {
+                    const idStr = String(obj.userData.id).trim();
+                    const primerDigito = idStr.charAt(0);
+                    const empty = isEmptyRack(obj.userData);
+                    const cumplePasillo = (pasilloSeleccionado === 'todos' || primerDigito === pasilloSeleccionado);
+
+                    let cumpleProducto = true;
+                    if (term !== "") {
+                        const pName = (obj.userData.producto || "").toLowerCase();
+                        const pRef = (obj.userData.referencia || "").toLowerCase();
+                        cumpleProducto = pName.includes(term) || pRef.includes(term) || idStr.toLowerCase().includes(term);
+                    }
+
+                    const pasaFiltrosActivos = cumplePasillo && cumpleProducto;
+
+                    if (!pasaFiltrosActivos) {
+                        obj.visible = true;
+                        if (obj.material) {
+                            obj.material.transparent = true;
+                            obj.material.opacity = 0.03; 
+                        }
+                    } else {
+                        obj.visible = true;
+                        if (obj.material) {
+                            obj.material.transparent = false;
+                            obj.material.opacity = 1.0;
+                        }
+                    }
+                }
+            });
+        }
+
+        function updateSceneFromInventario() {
+            scene.traverse((child) => {
+                if (child.isMesh) {
+                    const esUbicacion = /^[1-9]/.test(child.name);
+                    if (esUbicacion) {
+                        const infoRack = datosInventario.find(item => item.id === child.name);
+                        if (infoRack) {
+                            child.userData = infoRack;
+                        } else {
+                            child.userData = {
+                                id: child.name, producto: '', codigo: '', lote: '', cantidad: 0, um: '', estado: 'liberado'
+                            };
+                        }
+                        child.material = getRackMaterial(child.userData);
+                    }
+                }
+            });
+            applySearchFilter();
+        }
+
+        function downloadInventarioJson(arrayData) {
+            const blob = new Blob([JSON.stringify(arrayData, null, 2)], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'inventario.json';
+            document.body.appendChild(a);
+            a.click();
+            a.remove();
+            URL.revokeObjectURL(url);
+        }
+
+        let parsedCsvRows = [];
+        const csvMapPanel = document.getElementById('csv-map');
+        const mapIdSelect = document.getElementById('map-id');
+        const mapProductSelect = document.getElementById('map-product');
+        const mapCodigoSelect = document.getElementById('map-codigo');
+        const mapLoteSelect = document.getElementById('map-lote');
+        const mapCantSelect = document.getElementById('map-cant');
+        const mapUmSelect = document.getElementById('map-um');
+        const mapEstadoSelect = document.getElementById('map-estado');
+        const mapApplyBtn = document.getElementById('map-apply');
+        const mapCancelBtn = document.getElementById('map-cancel');
+
+        const highQuantityThreshold = 100; 
+        const medQuantityThreshold = 40;
+
+        function clearSelect(sel) {
+            while (sel.firstChild) sel.removeChild(sel.firstChild);
+        }
+
+        function populateSelects(headers) {
+            clearSelect(mapIdSelect);
+            clearSelect(mapProductSelect);
+            clearSelect(mapCodigoSelect);
+            clearSelect(mapLoteSelect);
+            clearSelect(mapCantSelect);
+            clearSelect(mapUmSelect);
+            clearSelect(mapEstadoSelect);
+            for (const h of headers) {
+                const o1 = document.createElement('option'); o1.value = h; o1.text = h; mapIdSelect.appendChild(o1);
+                const o2 = document.createElement('option'); o2.value = h; o2.text = h; mapProductSelect.appendChild(o2);
+                const o3 = document.createElement('option'); o3.value = h; o3.text = h; mapCodigoSelect.appendChild(o3);
+                const o4 = document.createElement('option'); o4.value = h; o4.text = h; mapLoteSelect.appendChild(o4);
+                const o5 = document.createElement('option'); o5.value = h; o5.text = h; mapCantSelect.appendChild(o5);
+                const o6 = document.createElement('option'); o6.value = h; o6.text = h; mapUmSelect.appendChild(o6);
+                const o7 = document.createElement('option'); o7.value = h; o7.text = h; mapEstadoSelect.appendChild(o7);
+            }
+            const lower = headers.map(h => h.toLowerCase());
+            function findPref(prefs) {
+                for (const p of prefs) {
+                    const idx = lower.indexOf(p);
+                    if (idx !== -1) return headers[idx];
+                }
+                return headers[0];
+            }
+            mapIdSelect.value = findPref(['id','sku','codigo','code']);
+            mapProductSelect.value = findPref(['producto','product','nombre','name']);
+            mapCodigoSelect.value = findPref(['codigo','code','sku','barcode']);
+            mapLoteSelect.value = findPref(['lote','batch','lot']);
+            mapCantSelect.value = findPref(['cantidad','quantity','qty','amount','stock']);
+            mapUmSelect.value = findPref(['um','unidad','unidad de medida','uom','unit']);
+            mapEstadoSelect.value = findPref(['estado','lote_estado','status','state','condicion']);
+        }
+
+        csvInput.addEventListener('change', (event) => {
+            const file = event.target.files && event.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                try {
+                    const text = e.target.result;
+                    const rows = csvToObjects(text);
+                    if (rows.length === 0) {
+                        alert('CSV sin registros legibles.');
+                        return;
+                    }
+                    parsedCsvRows = rows;
+                    const headers = Object.keys(rows[0]);
+                    populateSelects(headers);
+                    showPanel(csvMapPanel);
+                } catch (err) {
+                    console.error('Error procesando CSV:', err);
+                }
+            };
+            reader.readAsText(file);
+            event.target.value = '';
+        });
+
+        mapApplyBtn.addEventListener('click', () => {
+            if (!parsedCsvRows || parsedCsvRows.length === 0) return;
+            const idKey = mapIdSelect.value;
+            const prodKey = mapProductSelect.value;
+            const codKey = mapCodigoSelect.value;
+            const loteKey = mapLoteSelect.value;
+            const cantKey = mapCantSelect.value;
+            const umKey = mapUmSelect.value;
+            const estadoKey = mapEstadoSelect.value;
+            const mapped = parsedCsvRows.map(r => {
+                const obj = Object.assign({}, r);
+                obj.id = r[idKey];
+                obj.producto = r[prodKey];
+                obj.codigo = r[codKey] !== undefined ? r[codKey] : '';
+                obj.lote = r[loteKey] !== undefined ? r[loteKey] : '';
+                let cant = parseFloat(r[cantKey]);
+                if (Number.isNaN(cant)) cant = 0;
+                obj.cantidad = cant;
+                obj.um = r[umKey] !== undefined ? r[umKey] : '';
+                const rawEstado = r[estadoKey] !== undefined ? String(r[estadoKey]).trim().toUpperCase() : '';
+                obj.estado = rawEstado === 'R' ? 'retenido' : rawEstado === 'X' ? 'rechazado' : 'liberado';
+                return obj;
+            });
+            datosInventario = mapped;
+            updateSceneFromInventario();
+            downloadInventarioJson(datosInventario);
+            hidePanel(csvMapPanel);
+        });
+
+        mapCancelBtn.addEventListener('click', () => {
+            parsedCsvRows = [];
+            hidePanel(csvMapPanel);
+        });
+
+        function mostrarInfo(infoRack) {
+            if (!infoRack) return;
+            document.getElementById('rack-id').innerText = infoRack.id || '-';
+            document.getElementById('rack-prod').innerText = infoRack.producto || '-';
+            document.getElementById('rack-cod').innerText = infoRack.codigo || '-';
+            document.getElementById('rack-lote').innerText = infoRack.lote || '-';
+            document.getElementById('rack-cant').innerText = (infoRack.cantidad !== undefined) ? infoRack.cantidad : (infoRack.ocupacion !== undefined ? infoRack.ocupacion : '-');
+            document.getElementById('rack-um').innerText = infoRack.um || '';
+            const estadoEl = document.getElementById('rack-estado');
+            const estado = (infoRack.estado || 'liberado').toLowerCase();
+            estadoEl.classList.remove('estado-retenido', 'estado-rechazado', 'estado-liberado');
+            if (estado === 'retenido') {
+                estadoEl.innerText = 'RETENIDO';
+                estadoEl.classList.add('estado-retenido');
+            } else if (estado === 'rechazado') {
+                estadoEl.innerText = 'RECHAZADO';
+                estadoEl.classList.add('estado-rechazado');
+            } else {
+                estadoEl.innerText = 'LIBERADO';
+                estadoEl.classList.add('estado-liberado');
+            }
+            showPanel(infoPanel);
+            
+            lastSelectedMesh = null;
+            if (infoRack && infoRack.id) {
+                scene.traverse((child) => {
+                    if (!child.isMesh) return;
+                    if (child.userData && child.userData.id === infoRack.id) {
+                        lastSelectedMesh = child;
+                    }
+                });
+            }
+
+            // Mostrar panel estadístico y botón de restablecer solo en click sostenido
+            if (infoRack._showStats && infoRack.producto) {
+                showPanel(resetViewBottomButton);
+                setTimeout(() => mostrarStatsPanel(infoRack.producto, infoRack.codigo), 60);
+            }
+        }
+
+        function ocultarInfo() {
+            hidePanel(infoPanel);
+            hidePanel(resetViewBottomButton);
+        }
+
+        function showPanel(panel) {
+            panel.style.display = 'block';
+            requestAnimationFrame(() => panel.classList.add('visible'));
+        }
+
+        function hidePanel(panel) {
+            panel.classList.remove('visible');
+            setTimeout(() => { panel.style.display = 'none'; }, 300);
+        }
+
+        const loader = document.getElementById('loader');
+        const loaderBar = loader ? loader.querySelector('.bar > i') : null;
+        function showLoader() { if (!loader) return; loader.classList.add('visible'); if (loaderBar) loaderBar.style.width = '0%'; }
+        function updateLoader(pct) { if (!loaderBar) return; const v = Math.max(0, Math.min(100, pct*100)); loaderBar.style.width = v + '%'; }
+        function hideLoader() { if (!loader) return; loader.classList.remove('visible'); if (loaderBar) loaderBar.style.width = '0%'; }
+
+        function smoothFocus(object, duration = 900) {
+            const box = new THREE.Box3().setFromObject(object);
+            const center = new THREE.Vector3();
+            box.getCenter(center);
+            const size = new THREE.Vector3();
+            box.getSize(size);
+            
+            const maxDim = Math.max(size.x, size.y, size.z);
+            const id = object.userData && object.userData.id ? object.userData.id : null;
+            
+            let frontDir = getFrontDirectionFromId(id);
+            let signZ = frontDir ? frontDir.z : Math.sign(camera.position.z - center.z || 1);
+            
+            const inclinacionX = 2.0; 
+            let inclinacionY = 0.55; 
+            let factorProfundidadZ = signZ * -1.0; 
+            
+            if (center.y < 3.2) { 
+                inclinacionY = 1.1;         
+                factorProfundidadZ = signZ * -0.55; 
+            } else if (center.y < 5.5) {
+                inclinacionY = 0.75;
+                factorProfundidadZ = signZ * -0.8;
+            }
+
+            const baseDir = new THREE.Vector3(inclinacionX, inclinacionY, factorProfundidadZ).normalize();
+            const distance = maxDim * (focusDistanceFactor * 0.58);
+            const targetPos = center.clone().add(baseDir.multiplyScalar(distance));
+
+            const startPos = camera.position.clone();
+            const startTarget = controls.target.clone();
+            const startTime = performance.now();
+
+            function step(now) {
+                const t = Math.min(1, (now - startTime) / duration);
+                const ease = t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
+                
+                camera.position.lerpVectors(startPos, targetPos, ease);
+                controls.target.lerpVectors(startTarget, center, ease);
+                controls.update(); 
+                
+                if (t < 1) requestAnimationFrame(step);
+            }
+            requestAnimationFrame(step);
+        }
+
+        function restablecerVista() {
+            lastSelectedMesh = null;
+            ocultarInfo();
+            ocultarStatsPanel();
+
+            let targetPos, targetCenter;
+
+            if (pasilloSeleccionado !== 'todos') {
+                const matches = getSearchMatches();
+                if (matches.length > 0) {
+                    const box = new THREE.Box3();
+                    for (const mesh of matches) {
+                        box.expandByObject(mesh);
+                    }
+                    const center = new THREE.Vector3();
+                    box.getCenter(center);
+
+                    targetCenter = new THREE.Vector3(center.x, -0.51, center.z);
+                    targetPos = new THREE.Vector3(
+                        targetCenter.x - 1.05, 
+                        12.28, 
+                        targetCenter.z + 32.0
+                    );
+                } else {
+                    targetPos = defaultCameraPosition.clone();
+                    targetCenter = defaultControlTarget.clone();
+                }
+            } else {
+                targetPos = defaultCameraPosition.clone();
+                targetCenter = defaultControlTarget.clone();
+            }
+
+            const startPos = camera.position.clone();
+            const startTarget = controls.target.clone();
+            const startTime = performance.now();
+            const duration = 1000;
+
+            function step(now) {
+                const t = Math.min(1, (now - startTime) / duration);
+                const ease = t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
+
+                camera.position.lerpVectors(startPos, targetPos, ease);
+                controls.target.lerpVectors(startTarget, targetCenter, ease);
+                controls.update();
+
+                if (t < 1) requestAnimationFrame(step);
+            }
+            requestAnimationFrame(step);
+        }
+
+        function focusObject(object) {
+            const id = object.userData && object.userData.id;
+            if (isFrontFacingLocation(id)) {
+                focusObjectFront(object);
+            } else {
+                smoothFocus(object);
+            }
+        }
+
+        function focusObjectFront(object, duration = 900) {
+            const box = new THREE.Box3().setFromObject(object);
+            const center = new THREE.Vector3();
+            box.getCenter(center);
+            const size = new THREE.Vector3();
+            box.getSize(size);
+            
+            const maxDim = Math.max(size.x, size.y, size.z);
+            const id = object.userData && object.userData.id ? object.userData.id : null;
+            
+            let frontDir = getFrontDirectionFromId(id);
+            let signZ = frontDir ? frontDir.z : 1.0;
+
+            const inclinacionX = -2.0; 
+            let inclinacionY = 0.55; 
+            let factorProfundidadZ = signZ; 
+            
+            if (center.y < 3.2) { 
+                inclinacionY = 1.15;         
+                factorProfundidadZ = signZ * 0.75;  
+            } else if (center.y < 5.5) {
+                inclinacionY = 0.80;
+                factorProfundidadZ = signZ * 0.85;
+            } else {
+                factorProfundidadZ = signZ * 1.2;
+            }
+
+            const baseDir = new THREE.Vector3(
+                inclinacionX, 
+                inclinacionY, 
+                factorProfundidadZ
+            ).normalize(); 
+
+            const distance = maxDim * (focusDistanceFactor * 0.58); 
+            const targetPos = center.clone().add(baseDir.multiplyScalar(distance)); 
+
+            const startPos = camera.position.clone(); 
+            const startTarget = controls.target.clone(); 
+            const startTime = performance.now(); 
+
+            function step(now) {
+                const t = Math.min(1, (now - startTime) / duration); 
+                const ease = t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2; 
+                
+                camera.position.lerpVectors(startPos, targetPos, ease); 
+                controls.target.lerpVectors(startTarget, center, ease); 
+                controls.update(); 
+                
+                if (t < 1) requestAnimationFrame(step); 
+            }
+            requestAnimationFrame(step); 
+        }
+
+        function calcularInterseccion(event) {
+            const rect = canvas.getBoundingClientRect();
+            mouse.x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
+            mouse.y = -((event.clientY - rect.top) / rect.height) * 2 + 1;
+            raycaster.setFromCamera(mouse, camera);
+            const intersects = raycaster.intersectObjects(scene.children, true);
+            
+            return intersects.filter(i => {
+                if (!i.object) return false;
+
+                let obj = i.object;
+                while (obj && obj.parent && (!obj.userData || !obj.userData.id)) {
+                    obj = obj.parent;
+                }
+
+                const isHidden = (obj && obj.visible === false) || i.object.visible === false;
+                if (isHidden) return false;
+
+                const empty = isEmptyRack(i.object.userData);
+                
+                const isFaded = i.object.material && 
+                                i.object.material.transparent && 
+                                i.object.material.opacity < 0.3; 
+
+                if (isFaded) return false;
+
+                if (empty && (!i.object.material || (i.object.material.transparent && i.object.material.opacity < 0.5))) {
+                    return false;
+                }
+                return true;
+            });
+        }
+
+        const longPressDuration = 600; 
+        let pressStartX = 0, pressStartY = 0;
+        let longPressed = false;
+        let pressedObject = null;
+        let longPressTimer = null;
+        let pressAnimationId = null;
+        let pressStartTime = 0;
+
+        canvas.addEventListener('pointerdown', (event) => {
+            pressStartX = event.clientX; pressStartY = event.clientY;
+            longPressed = false;
+            const intersects = calcularInterseccion(event);
+            pressedObject = (intersects.length > 0) ? intersects[0].object : null;
+            
+            if (!pressedObject) return;
+            
+            pressStartTime = performance.now();
+            let loaderShown = false;
+            function holdProgress(now) {
+                const elapsed = now - pressStartTime;
+                const pct = Math.min(1, elapsed / longPressDuration);
+                if (!loaderShown && pct > 0.25) {
+                    loaderShown = true;
+                    if (loader) {
+                        loader.style.left = '50%';
+                        loader.style.top = 'auto';
+                        loader.style.bottom = '24px';
+                        loader.style.transform = 'translateX(-50%)';
+                    }
+                    showLoader();
+                }
+                updateLoader(pct);
+                if (pct >= 1) {
+                    longPressed = true;
+                    if (pressedObject && pressedObject.userData && pressedObject.userData.id) {
+                        const dataWithStats = Object.assign({}, pressedObject.userData, { _showStats: true });
+                        mostrarInfo(dataWithStats);
+                        updateLoader(1);
+                        focusObject(pressedObject);
+                        hideLoader();
+                    } else {
+                        hideLoader();
+                    }
+                    pressAnimationId = null;
+                    return;
+                }
+                pressAnimationId = requestAnimationFrame(holdProgress);
+            }
+            pressAnimationId = requestAnimationFrame(holdProgress);
+        });
+
+        canvas.addEventListener('pointerup', (event) => {
+            if (longPressTimer) { clearTimeout(longPressTimer); longPressTimer = null; }
+            if (pressAnimationId) { cancelAnimationFrame(pressAnimationId); pressAnimationId = null; }
+            if (!longPressed) {
+                const intersects = calcularInterseccion(event);
+                if (intersects.length > 0) {
+                    const objetoTocado = intersects[0].object;
+                    if (objetoTocado.userData && objetoTocado.userData.id) {
+                        mostrarInfo(objetoTocado.userData);
+                    }
+                }
+                hideLoader();
+            }
+            pressedObject = null;
+            longPressed = false;
+        });
+
+        canvas.addEventListener('pointermove', (event) => {
+            if (!pressAnimationId && !longPressTimer) return;
+            const dx = event.clientX - pressStartX;
+            const dy = event.clientY - pressStartY;
+            if ((dx * dx + dy * dy) > (6 * 6)) { 
+                if (pressAnimationId) { cancelAnimationFrame(pressAnimationId); pressAnimationId = null; }
+                if (longPressTimer) { clearTimeout(longPressTimer); longPressTimer = null; }
+                pressedObject = null;
+                hideLoader();
+            }
+        });
+
+        canvas.addEventListener('pointercancel', () => {
+            if (longPressTimer) { clearTimeout(longPressTimer); longPressTimer = null; }
+            pressedObject = null;
+            longPressed = false;
+        });
+
+        // ─── PANEL ESTADÍSTICO DE PRODUCTO ────────────────────────────────────────
+
+        const statsPanel = document.getElementById('stats-panel');
+        const statsClose = document.getElementById('stats-close');
+
+        function computeProductStats(productName, codigoRef) {
+            // Busca todas las filas del inventario que coincidan con el producto
+            const term = (productName || codigoRef || '').toLowerCase().trim();
+            if (!term) return null;
+
+            // Recopilar todas las entradas del inventario que coincidan
+            const matchingRows = datosInventario.filter(item => {
+                const prod = (item.producto || '').toLowerCase();
+                const cod  = (item.codigo  || '').toLowerCase();
+                return prod === term || cod === term || prod.includes(term) || cod.includes(term);
+            });
+
+            if (matchingRows.length === 0) return null;
+
+            // Nombre y código canónicos (del primer resultado)
+            const canonName = matchingRows[0].producto || productName || '-';
+            const canonCod  = matchingRows[0].codigo  || codigoRef  || '-';
+
+            // Total ubicaciones únicas con el producto
+            const ubicSet = new Set();
+            matchingRows.forEach(r => { if (r.id && String(r.id).trim()) ubicSet.add(String(r.id).trim()); });
+
+            // Total unidades sumadas
+            let totalQty = 0;
+            matchingRows.forEach(r => {
+                const v = parseFloat(r.cantidad);
+                if (!isNaN(v)) totalQty += v;
+            });
+
+            // Lotes: agrupar por lote, sumar cantidad y listar ubicaciones
+            const lotesMap = {};
+            matchingRows.forEach(r => {
+                const lote = (r.lote || 'Sin lote').trim();
+                const id   = (r.id || '').trim();
+                const qty  = parseFloat(r.cantidad) || 0;
+                if (!lotesMap[lote]) lotesMap[lote] = { qty: 0, ubics: new Set() };
+                lotesMap[lote].qty += qty;
+                if (id) lotesMap[lote].ubics.add(id);
+            });
+
+            const lotes = Object.entries(lotesMap)
+                .map(([name, data]) => ({ name, qty: data.qty, ubics: [...data.ubics] }))
+                .sort((a, b) => b.qty - a.qty);
+
+            // Unidad de medida: tomar la más frecuente entre las filas
+            const umCount = {};
+            matchingRows.forEach(r => {
+                const um = (r.um || '').trim();
+                if (um) umCount[um] = (umCount[um] || 0) + 1;
+            });
+            const canonUm = Object.entries(umCount).sort((a, b) => b[1] - a[1]).map(e => e[0])[0] || '';
+
+            // Lista de ubicaciones únicas (ordenadas)
+            const ubicaciones = [...ubicSet].sort();
+
+            return { canonName, canonCod, totalUbics: ubicSet.size, totalQty, lotes, ubicaciones, canonUm };
+        }
+
+        function mostrarStatsPanel(productName, codigoRef) {
+            const stats = computeProductStats(productName, codigoRef);
+
+            if (!stats) {
+                ocultarStatsPanel();
+                return;
+            }
+
+            document.getElementById('stats-product-name').innerText = stats.canonName;
+            document.getElementById('stats-sku').innerText = `SKU: ${stats.canonCod}`;
+            document.getElementById('stats-total-ubics').innerText = stats.totalUbics;
+
+            // Formatear cantidad total: punto decimal, sin separador de miles
+            const qtyFormatted = stats.totalQty % 1 === 0
+                ? stats.totalQty
+                : stats.totalQty.toFixed(2);
+            document.getElementById('stats-total-qty').innerText = qtyFormatted;
+            // Mostrar la unidad de medida real del producto
+            document.getElementById('stats-um-label').innerText = stats.canonUm || 'Unidades';
+
+            // Lotes
+            const lotesEl = document.getElementById('stats-lotes-list');
+            if (stats.lotes.length === 0) {
+                lotesEl.innerHTML = '<div class="stats-no-data">Sin lotes registrados</div>';
+            } else {
+                lotesEl.innerHTML = stats.lotes.map(l => `
+                    <div class="stats-lote-row">
+                        <span class="stats-lote-name" title="${l.name}">${l.name}</span>
+                        <span class="stats-lote-meta">
+                            <span class="stats-lote-ubics">${l.ubics.length} ubic.</span>
+                            <span class="stats-lote-qty">${l.qty >= 1000 ? l.qty.toLocaleString('es') : l.qty}</span>
+                        </span>
+                    </div>`).join('');
+            }
+
+            // Ubicaciones como tags clicables
+            const ubicsEl = document.getElementById('stats-ubics-grid');
+            if (stats.ubicaciones.length === 0) {
+                ubicsEl.innerHTML = '<div class="stats-no-data">Sin ubicaciones en almacén</div>';
+            } else {
+                ubicsEl.innerHTML = stats.ubicaciones.map(id => `
+                    <span class="stats-ubic-tag" data-ubic-id="${id}">${id}</span>`
+                ).join('');
+
+                // Click en tag de ubicación: enfocar rack
+                ubicsEl.querySelectorAll('.stats-ubic-tag').forEach(tag => {
+                    tag.addEventListener('click', () => {
+                        const targetId = tag.getAttribute('data-ubic-id');
+                        // Resaltar el tag activo
+                        ubicsEl.querySelectorAll('.stats-ubic-tag').forEach(t => t.classList.remove('active'));
+                        tag.classList.add('active');
+                        // Buscar el mesh en la escena y enfocar
+                        let targetMesh = null;
+                        scene.traverse(child => {
+                            if (child.isMesh && child.userData && child.userData.id === targetId) {
+                                targetMesh = child;
+                            }
+                        });
+                        if (targetMesh) {
+                            mostrarInfo(targetMesh.userData);
+                            focusObject(targetMesh);
+                        }
+                    });
+                });
+            }
+
+            // Posicionamiento: si #info está visible, colocar stats debajo
+            posicionarStatsPanel();
+
+            statsPanel.style.display = 'block';
+            requestAnimationFrame(() => statsPanel.classList.add('visible'));
+        }
+
+        function posicionarStatsPanel() {
+            statsPanel.style.top = '80px';
+            statsPanel.style.right = '20px';
+            // Limitar altura máxima para no solaparse con el panel de filtros
+            const searchPanelEl = document.getElementById('search-panel');
+            if (searchPanelEl) {
+                const searchRect = searchPanelEl.getBoundingClientRect();
+                const statsTop = 80;
+                const available = searchRect.top - statsTop - 32;
+                statsPanel.style.maxHeight = Math.max(100, available) + 'px';
+            }
+        }
+
+        function ocultarStatsPanel() {
+            statsPanel.classList.remove('visible');
+            setTimeout(() => {
+                if (!statsPanel.classList.contains('visible')) {
+                    statsPanel.style.display = 'none';
+                }
+            }, 300);
+        }
+
+        statsClose.addEventListener('click', ocultarStatsPanel);
+
+        // ─── FIN PANEL ESTADÍSTICO ─────────────────────────────────────────────────
+
+        infoClose.addEventListener('click', ocultarInfo);
+        resetViewButton.addEventListener('click', restablecerVista);
+        searchButton.addEventListener('click', () => {
+            currentSearchTerm = searchInput.value;
+            searchSuggestions.style.display = 'none';
+            applySearchFilter();
+            focusSearchMatches();
+            // Mostrar stats si hay término de búsqueda
+            if (currentSearchTerm.trim()) {
+                const firstMatch = datosInventario.find(item => {
+                    const prod = (item.producto || '').toLowerCase();
+                    const cod  = (item.codigo  || '').toLowerCase();
+                    const id   = (item.id      || '').toLowerCase();
+                    const t = currentSearchTerm.toLowerCase().trim();
+                    return prod.includes(t) || cod.includes(t) || id.includes(t);
+                });
+                if (firstMatch) mostrarStatsPanel(firstMatch.producto, firstMatch.codigo);
+                else ocultarStatsPanel();
+            } else {
+                ocultarStatsPanel();
+            }
+        });
+        clearSearchButton.addEventListener('click', () => {
+            currentSearchTerm = '';
+            searchInput.value = '';
+            renderSearchSuggestions();
+            applySearchFilter();
+            ocultarStatsPanel();
+        });
+        searchInput.addEventListener('input', () => {
+            currentSearchTerm = searchInput.value;
+            renderSearchSuggestions();
+            applySearchFilter();
+            ocultarStatsPanel();
+        });
+        searchInput.addEventListener('keydown', (event) => {
+            if (event.key === 'Enter') {
+                event.preventDefault();
+                currentSearchTerm = searchInput.value;
+                renderSearchSuggestions();
+                applySearchFilter();
+                focusSearchMatches();
+            }
+        });
+        resetViewBottomButton.addEventListener('click', restablecerVista);
+
+        // Lógica interactiva para la nueva botonera de Pasillos
+        const pasilloContainer = document.getElementById('pasillo-buttons-container');
+        if (pasilloContainer) {
+            pasilloContainer.addEventListener('click', (event) => {
+                const targetButton = event.target.closest('.btn-pasillo');
+                if (!targetButton) return;
+
+                pasilloContainer.querySelectorAll('.btn-pasillo').forEach(btn => {
+                    btn.classList.remove('active');
+                });
+
+                targetButton.classList.add('active');
+                pasilloSeleccionado = targetButton.getAttribute('data-pasillo');
+
+                applySearchFilter();
+                focusSearchMatches(); 
+            });
+
+            // Hover: mostrar capacidad del pasillo sin cambiar filtro
+            pasilloContainer.querySelectorAll('.btn-pasillo').forEach(btn => {
+                btn.addEventListener('mouseenter', () => {
+                    const aisle = btn.getAttribute('data-pasillo');
+                    if (aisle !== pasilloSeleccionado) {
+                        updateUsageOverlay(aisle);
+                    }
+                });
+                btn.addEventListener('mouseleave', () => {
+                    updateUsageOverlay(pasilloSeleccionado);
+                });
+            });
+        }
+
+        // Lógica interactiva para ocultar y mostrar el menú de filtrado
+        const btnCollapseSearch = document.getElementById('btn-collapse-search');
+        const searchPanel = document.getElementById('search-panel');
+        
+        btnCollapseSearch.addEventListener('click', () => {
+            const isCollapsed = searchPanel.classList.toggle('collapsed');
+            btnCollapseSearch.innerText = isCollapsed ? '[+]' : '[─]';
+            if (statsPanel.classList.contains('visible')) {
+                posicionarStatsPanel();
+            }
+        });
+
+        function animate() {
+            requestAnimationFrame(animate);
+            controls.update();
+            updateCoordsOverlay();
+            renderer.render(scene, camera);
+        }
+        animate();
+
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        });
+    </script>
+</body>
+</html>

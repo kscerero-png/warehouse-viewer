@@ -1,0 +1,18 @@
+# Backups and old versions
+index copy.html
+index_V1.html
+gemini-code-1780865103795.html
+Modelo de estilo.html
+
+# Blender source files
+*.blend
+*.blend1
+
+# CSV extras
+20260607 INVENTARIO 2.csv
+20260607 INVENTARIO.csv
+Inventario.csv
+R5741R08_ARC001_3481277_PDF.csv
+
+# Duplicate inventory
+inventario (1).json
