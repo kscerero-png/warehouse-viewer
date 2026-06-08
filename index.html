@@ -1379,13 +1379,26 @@
             });
         }
 
-        fetch('inventario.json?' + Date.now())
-            .then(response => response.json())
-            .then(data => {
-                datosInventario = data;
-                cargarModelo3D(); 
-            })
-            .catch(err => console.error('Error cargando inventario:', err));
+        const INVENTARIO_URL = 'https://script.google.com/macros/s/AKfycbzQYo4cs3qFCu27CDNNIFNheXx3lQ0lktG9m_gSUri2U9fN3iUO5EQkFKExrQBnRDw0/exec';
+
+        function cargarInventario(url, fallback) {
+            fetch(url + '?_=' + Date.now())
+                .then(r => r.json())
+                .then(data => {
+                    datosInventario = data;
+                    cargarModelo3D();
+                })
+                .catch(() => {
+                    if (fallback) {
+                        console.warn('Google Sheets no disponible, usando inventario.json');
+                        cargarInventario('inventario.json?' + Date.now(), null);
+                    } else {
+                        console.error('Error cargando inventario');
+                    }
+                });
+        }
+
+        cargarInventario(INVENTARIO_URL, true);
 
         function cargarModelo3D() {
             if (!THREE.GLTFLoader) {
