@@ -1170,6 +1170,21 @@
             return 'Zona desconocida';
         }
 
+        function getCapacityForObj(obj) {
+            const idStr = String(obj.userData.id).trim();
+            if (/^T\d{2}$/.test(idStr)) {
+                var entries = obj.userData.entries || [obj.userData];
+                var tot = 0, usd = 0;
+                for (var i = 0; i < entries.length; i++) {
+                    tot += getEffectivePositions(entries[i]);
+                    usd += parseInt(entries[i].paletas) || 0;
+                }
+                return { total: tot, used: usd };
+            }
+            var n = countEntries(obj.userData);
+            return { total: n, used: isEmptyRack(obj.userData) ? 0 : n };
+        }
+
         function calculateCapacityUsageForAisle(aisle) {
             const countedIds = new Set();
             let total = 0;
@@ -1182,9 +1197,9 @@
                 const pasillo = idStr.charAt(0);
                 if (aisle !== 'todos' && pasillo !== aisle) return;
                 countedIds.add(idStr);
-                var n = countEntries(obj.userData);
-                total += n;
-                if (!isEmptyRack(obj.userData)) used += n;
+                var cap = getCapacityForObj(obj);
+                total += cap.total;
+                used += cap.used;
             });
             const empty = total - used;
             const percent = total === 0 ? 0 : Math.round((used / total) * 100);
@@ -1203,9 +1218,9 @@
                 const pasillo = idStr.charAt(0);
                 if (!aisleDigits.includes(pasillo)) return;
                 countedIds.add(idStr);
-                var n = countEntries(obj.userData);
-                total += n;
-                if (!isEmptyRack(obj.userData)) used += n;
+                var cap = getCapacityForObj(obj);
+                total += cap.total;
+                used += cap.used;
             });
             const empty = total - used;
             const percent = total === 0 ? 0 : Math.round((used / total) * 100);
