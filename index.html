@@ -1180,6 +1180,14 @@
                     usd += parseInt(entries[i].paletas) || 0;
                 }
                 if (tot === 0) {
+                    for (var i = 0; i < datosInventario.length; i++) {
+                        var item = datosInventario[i];
+                        if (String(item.id || '').trim() !== idStr) continue;
+                        tot += getEffectivePositions(item);
+                        usd += parseInt(item.paletas) || 0;
+                    }
+                }
+                if (tot === 0) {
                     var n = countEntries(obj.userData);
                     return { total: n, used: isEmptyRack(obj.userData) ? 0 : n };
                 }
@@ -1190,6 +1198,18 @@
         }
 
         function calculateCapacityUsageForAisle(aisle) {
+            if (aisle === 'T') {
+                var tot = 0, usd = 0;
+                for (var i = 0; i < datosInventario.length; i++) {
+                    var item = datosInventario[i];
+                    var idStr = String(item.id || '').trim();
+                    if (!/^T\d{2}$/.test(idStr)) continue;
+                    tot += getEffectivePositions(item);
+                    usd += parseInt(item.paletas) || 0;
+                }
+                var e = tot - usd;
+                return { total: tot, used: usd, empty: e, percent: tot === 0 ? 0 : Math.round((usd / tot) * 100) };
+            }
             const countedIds = new Set();
             let total = 0;
             let used = 0;
@@ -1355,7 +1375,18 @@
             if (aisleOverride === undefined && groupPrimary && groupCava && groupT) {
                 const principalMetrics = calculateCapacityUsageForAisleGroup(['1', '2', '3', '4']);
                 const cavaMetrics = calculateCapacityUsageForAisleGroup(['5', '6', '7', '8', '9']);
-                const tMetrics = calculateCapacityUsageForAisleGroup(['T']);
+                var tMetrics = (function() {
+                    var tot = 0, usd = 0;
+                    for (var i = 0; i < datosInventario.length; i++) {
+                        var item = datosInventario[i];
+                        var idStr = String(item.id || '').trim();
+                        if (!/^T\d{2}$/.test(idStr)) continue;
+                        tot += getEffectivePositions(item);
+                        usd += parseInt(item.paletas) || 0;
+                    }
+                    var e = tot - usd;
+                    return { total: tot, used: usd, empty: e, percent: tot === 0 ? 0 : Math.round((usd / tot) * 100) };
+                })();
                 primaryEl.innerText = `${principalMetrics.used} / ${principalMetrics.total} (${principalMetrics.percent}%)`;
                 cavaEl.innerText = `${cavaMetrics.used} / ${cavaMetrics.total} (${cavaMetrics.percent}%)`;
                 document.getElementById('usage-t').innerText = `${tMetrics.used} / ${tMetrics.total} (${tMetrics.percent}%)`;
