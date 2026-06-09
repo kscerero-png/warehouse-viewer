@@ -1172,19 +1172,17 @@
 
         function getCapacityForObj(obj) {
             const idStr = String(obj.userData.id).trim();
-            if (/^T\d{2}$/.test(idStr)) {
+            if (isTransitId(idStr)) {
                 var entries = obj.userData.entries || [obj.userData];
                 var tot = 0, usd = 0;
                 for (var i = 0; i < entries.length; i++) {
-                    tot += getEffectivePositions(entries[i]);
-                    usd += parseInt(entries[i].paletas) || 0;
-                }
-                if (tot === 0) {
-                    for (var i = 0; i < datosInventario.length; i++) {
-                        var item = datosInventario[i];
-                        if (String(item.id || '').trim() !== idStr) continue;
-                        tot += getEffectivePositions(item);
-                        usd += parseInt(item.paletas) || 0;
+                    var p = entries[i].paletas !== undefined ? parseInt(entries[i].paletas) || 0 : 0;
+                    if (p > 0) {
+                        tot += getEffectivePositions(entries[i]);
+                        usd += p;
+                    } else if (entries[i].cantidad && entries[i].cantidad > 0) {
+                        tot += 1;
+                        usd += 1;
                     }
                 }
                 if (tot === 0) {
@@ -1203,9 +1201,15 @@
                 for (var i = 0; i < datosInventario.length; i++) {
                     var item = datosInventario[i];
                     var idStr = String(item.id || '').trim();
-                    if (!/^T\d{2}$/.test(idStr)) continue;
-                    tot += getEffectivePositions(item);
-                    usd += parseInt(item.paletas) || 0;
+                    if (!isTransitId(idStr)) continue;
+                    var p = item.paletas !== undefined ? parseInt(item.paletas) || 0 : 0;
+                    if (p > 0) {
+                        tot += getEffectivePositions(item);
+                        usd += p;
+                    } else if (item.cantidad && item.cantidad > 0) {
+                        tot += 1;
+                        usd += 1;
+                    }
                 }
                 var e = tot - usd;
                 return { total: tot, used: usd, empty: e, percent: tot === 0 ? 0 : Math.round((usd / tot) * 100) };
@@ -1220,11 +1224,27 @@
                 if (!idStr || countedIds.has(idStr)) return;
                 const pasillo = idStr.charAt(0);
                 if (aisle !== 'todos' && pasillo !== aisle) return;
+                if (aisle === 'todos' && pasillo === 'T') return;
                 countedIds.add(idStr);
                 var cap = getCapacityForObj(obj);
                 total += cap.total;
                 used += cap.used;
             });
+            if (aisle === 'todos') {
+                for (var i = 0; i < datosInventario.length; i++) {
+                    var item = datosInventario[i];
+                    var idStr = String(item.id || '').trim();
+                    if (!isTransitId(idStr)) continue;
+                    var p = item.paletas !== undefined ? parseInt(item.paletas) || 0 : 0;
+                    if (p > 0) {
+                        total += getEffectivePositions(item);
+                        used += p;
+                    } else if (item.cantidad && item.cantidad > 0) {
+                        total += 1;
+                        used += 1;
+                    }
+                }
+            }
             const empty = total - used;
             const percent = total === 0 ? 0 : Math.round((used / total) * 100);
             return { total, used, empty, percent };
@@ -1257,12 +1277,10 @@
                 for (var i = 0; i < datosInventario.length; i++) {
                     var item = datosInventario[i];
                     var idStr = String(item.id || '').trim();
-                    if (aisle === 'T' && !/^T\d{2}$/.test(idStr)) continue;
-                    if (aisle === 'todos' && /^T\d{2}$/.test(idStr)) {
-                        var prodName = item.producto || 'Sin producto';
-                        if (prodName && item.cantidad && item.cantidad > 0) {
-                            productCount[prodName] = (productCount[prodName] || 0) + 1;
-                        }
+                    if (!isTransitId(idStr)) continue;
+                    var prodName = item.producto || 'Sin producto';
+                    if (prodName && item.cantidad && item.cantidad > 0) {
+                        productCount[prodName] = (productCount[prodName] || 0) + 1;
                     }
                 }
             }
@@ -1293,8 +1311,8 @@
                 for (var i = 0; i < datosInventario.length; i++) {
                     var item = datosInventario[i];
                     var idStr = String(item.id || '').trim();
-                    if (aisle === 'T' && !/^T\d{2}$/.test(idStr)) continue;
-                    if (aisle === 'todos' && !/^T\d{2}$/.test(idStr)) continue;
+                    if (aisle === 'T' && !isTransitId(idStr)) continue;
+                    if (aisle === 'todos' && !isTransitId(idStr)) continue;
                     if (!item.cantidad || item.cantidad === 0) continue;
                     var estado = (item.estado || 'liberado').toLowerCase();
                     if (counted[estado] !== undefined) counted[estado]++;
@@ -1404,9 +1422,15 @@
                     for (var i = 0; i < datosInventario.length; i++) {
                         var item = datosInventario[i];
                         var idStr = String(item.id || '').trim();
-                        if (!/^T\d{2}$/.test(idStr)) continue;
-                        tot += getEffectivePositions(item);
-                        usd += parseInt(item.paletas) || 0;
+                        if (!isTransitId(idStr)) continue;
+                        var p = item.paletas !== undefined ? parseInt(item.paletas) || 0 : 0;
+                        if (p > 0) {
+                            tot += getEffectivePositions(item);
+                            usd += p;
+                        } else if (item.cantidad && item.cantidad > 0) {
+                            tot += 1;
+                            usd += 1;
+                        }
                     }
                     var e = tot - usd;
                     return { total: tot, used: usd, empty: e, percent: tot === 0 ? 0 : Math.round((usd / tot) * 100) };
@@ -1696,6 +1720,10 @@
                 if (e === 'retenido') estado = 'retenido';
             }
             return estado;
+        }
+
+        function isTransitId(id) {
+            return /^T\d{2}$/.test(id) || /^transito$/i.test(id);
         }
 
         function getEffectivePositions(entry) {
