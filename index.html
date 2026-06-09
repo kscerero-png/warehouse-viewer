@@ -1627,17 +1627,19 @@
         function getEffectivePositions(entry) {
             var p = parseInt(entry.paletas) || 0;
             var n = parseInt(entry.nivel) || 0;
-            if (n <= 1) return p;
+            if (n >= 4 || n <= 0) return p;
             if (p <= 0) return 0;
             var groups = Math.floor(p / n);
             var rem = p % n;
-            return groups * (n + 1) + rem;
+            return groups * 4 + rem;
         }
 
         function isSlotVisible(idx, nivel) {
             var n = parseInt(nivel) || 0;
-            if (n <= 1) return true;
-            return idx % (n + 1) !== 0;
+            if (n >= 4 || n <= 0) return true;
+            var mod = idx % 4;
+            if (mod === 0) mod = 4;
+            return mod <= n;
         }
 
         function isEmptyRack(rackData) {
