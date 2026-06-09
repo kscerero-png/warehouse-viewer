@@ -1405,35 +1405,63 @@
         const INVENTARIO_URL = 'https://script.google.com/macros/s/AKfycbzQ_GHnG4R5VOl7FsMwU3NfqSFLat0xUbRcaEVz9Vh7DLAw-2qrRHX69O8VSliFUE8/exec';
         const REFRESH_INTERVAL = 60000;
 
-        function cargarInventario(url, fallback) {
-            fetch(url + '?_=' + Date.now())
-                .then(r => r.json())
-                .then(data => {
+        function cargarInventarioJsonp(url, fallback) {
+            var cb = 'jsonp_' + Date.now();
+            window[cb] = function(data) {
+                delete window[cb];
+                datosInventario = data;
+                cargarModelo3D();
+                actualizarEstadoSync();
+            };
+            var script = document.createElement('script');
+            script.src = url + (url.indexOf('?') > -1 ? '&' : '?') + 'callback=' + cb + '&_=' + Date.now();
+            script.onerror = function() {
+                delete window[cb];
+                if (fallback) {
+                    console.warn('Google Sheets no disponible, usando inventario.json');
+                    cargarInventarioFetch('inventario.json?' + Date.now());
+                }
+            };
+            var timeout = setTimeout(function() {
+                if (window[cb]) {
+                    delete window[cb];
+                    if (fallback) {
+                        console.warn('Google Sheets no disponible (timeout), usando inventario.json');
+                        cargarInventarioFetch('inventario.json?' + Date.now());
+                    }
+                }
+            }, 10000);
+            document.body.appendChild(script);
+        }
+
+        function cargarInventarioFetch(url) {
+            fetch(url)
+                .then(function(r) { return r.json(); })
+                .then(function(data) {
                     datosInventario = data;
                     cargarModelo3D();
                     actualizarEstadoSync();
                 })
-                .catch(() => {
-                    if (fallback) {
-                        console.warn('Google Sheets no disponible, usando inventario.json');
-                        cargarInventario('inventario.json?' + Date.now(), null);
-                    } else {
-                        console.error('Error cargando inventario');
-                    }
+                .catch(function() {
+                    console.error('Error cargando inventario.json');
                 });
         }
 
         function recargarInventarioPeriodico() {
-            fetch(INVENTARIO_URL + '?_=' + Date.now())
-                .then(r => r.json())
-                .then(data => {
-                    datosInventario = data;
-                    updateSceneFromInventario();
-                    gestionarSubPaletas();
-                    updateUsageOverlay();
-                    actualizarEstadoSync();
-                })
-                .catch(() => {});
+            var cb = 'jsonp_' + Date.now();
+            window[cb] = function(data) {
+                delete window[cb];
+                datosInventario = data;
+                updateSceneFromInventario();
+                gestionarSubPaletas();
+                updateUsageOverlay();
+                actualizarEstadoSync();
+            };
+            var script = document.createElement('script');
+            script.src = INVENTARIO_URL + '?callback=' + cb + '&_=' + Date.now();
+            script.onerror = function() { delete window[cb]; };
+            setTimeout(function() { if (window[cb]) delete window[cb]; }, 10000);
+            document.body.appendChild(script);
         }
 
         function actualizarEstadoSync() {
@@ -1441,7 +1469,7 @@
             if (el) el.innerText = 'Sync: ' + new Date().toLocaleTimeString();
         }
 
-        cargarInventario(INVENTARIO_URL, true);
+        cargarInventarioJsonp(INVENTARIO_URL, true);
         setInterval(recargarInventarioPeriodico, REFRESH_INTERVAL);
 
         function cargarModelo3D() {
