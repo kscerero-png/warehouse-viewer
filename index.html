@@ -2013,6 +2013,7 @@
         }
 
         function applyPaletaSpread(meshByName) {
+            // Para racks regulares: nombre = base3 + col1-2 + nivel1-4 (5 dígitos)
             for (var name in meshByName) {
                 if (!/^\d{5}$/.test(name)) continue;
                 var child = meshByName[name];
@@ -2022,19 +2023,55 @@
                 if (p <= 1) continue;
                 if (child.userData._paletaSpreadDone) continue;
                 child.userData._paletaSpreadDone = true;
-                var base = name.substring(0, 4);
-                var level = parseInt(name.substring(4), 10);
-                for (var l = level + 1; l < level + p; l++) {
-                    var adjName = base + l;
-                    var adj = meshByName[adjName];
-                    if (!adj || !adj.isMesh) continue;
-                    var hasOwnData = adj.userData && adj.userData.entries && adj.userData.entries.length > 0 &&
-                        adj.userData.entries.some(function(e) { return e.cantidad && e.cantidad > 0; });
-                    if (hasOwnData) continue;
-                    adj.userData = Object.assign({}, firstEntry, { id: adjName, name: adjName, entries: [firstEntry], _paletaSpreadDone: true });
+                var codigo = firstEntry && (String(firstEntry.codigo || '').trim());
+                var alwaysVertical = (codigo === '110411040');
+                var base = name.substring(0, 3);
+                var col = name.substring(3, 4);
+                var level = name.substring(4, 5);
+                var occupied = [name];
+                for (var n = 1; n < p; n++) {
+                    var found = null;
+                    // 1. Intentar horizontal (toggle columna) si no es alwaysVertical
+                    if (!alwaysVertical) {
+                        var hCol = (col === '1' ? '2' : '1');
+                        var hName = base + hCol + level;
+                        if (meshByName[hName] && !isOccupied(meshByName[hName])) {
+                            found = hName;
+                        }
+                    }
+                    // 2. Si no hay horizontal, intentar vertical (nivel+1, luego nivel-1)
+                    if (!found) {
+                        var vLevel = parseInt(level, 10);
+                        var candidates = [];
+                        if (vLevel < 4) candidates.push(base + col + (vLevel + 1));
+                        if (vLevel > 1) candidates.push(base + col + (vLevel - 1));
+                        for (var ci = 0; ci < candidates.length; ci++) {
+                            if (meshByName[candidates[ci]] && !isOccupied(meshByName[candidates[ci]])) {
+                                found = candidates[ci];
+                                break;
+                            }
+                        }
+                    }
+                    if (!found) break;
+                    var adj = meshByName[found];
+                    adj.userData = Object.assign({}, firstEntry, { id: found, name: found, entries: [firstEntry], _paletaSpreadDone: true });
                     adj.material = getRackMaterial(adj.userData);
+                    occupied.push(found);
+                    // Para la siguiente iteración, continuar expandiendo desde esta nueva posición
+                    // La siguiente paleta se coloca relativa a la posición actual (no la original)
+                    col = found.substring(3, 4);
+                    level = found.substring(4, 5);
                 }
             }
+        }
+
+        function isOccupied(mesh) {
+            if (!mesh || !mesh.userData) return true;
+            if (mesh.userData._paletaSpreadDone) return true;
+            if (mesh.userData.entries && mesh.userData.entries.length > 0) {
+                return mesh.userData.entries.some(function(e) { return e.cantidad && e.cantidad > 0; });
+            }
+            return false;
         }
 
         function updateSceneFromInventario() {
