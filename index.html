@@ -1872,13 +1872,19 @@
                         const parentId = child.name.replace(/-\d+$/, '');
                         const parentRacks = getEntriesForId(parentId);
                         child.userData.id = parentId;
-                        if (parentRacks.length > 0 && parentRacks[0].paletas) {
+                        var totalPaletas = parentRacks.reduce(function(s, e) { return s + (parseInt(e.paletas) || 0); }, 0);
+                        if (totalPaletas > 0) {
                             const idx = parseInt(child.name.split('-').pop(), 10);
-                            const shouldShow = idx <= parentRacks[0].paletas;
+                            const shouldShow = idx <= totalPaletas;
                             child.visible = shouldShow;
                             child.userData.hiddenByPaletas = !shouldShow;
                             if (shouldShow) {
-                                var entry = parentRacks.length > 1 ? parentRacks[(idx - 1) % parentRacks.length] : parentRacks[0];
+                                var cumulative = 0;
+                                var entry = parentRacks[0];
+                                for (var k = 0; k < parentRacks.length; k++) {
+                                    cumulative += parseInt(parentRacks[k].paletas) || 0;
+                                    if (idx <= cumulative) { entry = parentRacks[k]; break; }
+                                }
                                 child.material = getRackMaterial(entry);
                                 child.userData = Object.assign({}, entry, { subPaleta: true, id: parentId, hiddenByPaletas: false });
                             }
@@ -1911,15 +1917,26 @@
                 const parentId = child.name.replace(/-\d+$/, '');
                 const parentRacks = getEntriesForId(parentId);
                 child.userData.id = parentId;
-                if (parentRacks.length > 0 && parentRacks[0].paletas) {
-                    const idx = parseInt(child.name.split('-').pop(), 10);
-                    const shouldShow = idx <= parentRacks[0].paletas;
-                    child.visible = shouldShow;
-                    child.userData.hiddenByPaletas = !shouldShow;
-                    if (shouldShow) {
-                        var entry = parentRacks.length > 1 ? parentRacks[(idx - 1) % parentRacks.length] : parentRacks[0];
-                        child.material = getRackMaterial(entry);
-                        child.userData = Object.assign({}, entry, { subPaleta: true, id: parentId, hiddenByPaletas: false });
+                if (parentRacks.length > 0) {
+                    var totalPaletas = parentRacks.reduce(function(s, e) { return s + (parseInt(e.paletas) || 0); }, 0);
+                    if (totalPaletas > 0) {
+                        const idx = parseInt(child.name.split('-').pop(), 10);
+                        const shouldShow = idx <= totalPaletas;
+                        child.visible = shouldShow;
+                        child.userData.hiddenByPaletas = !shouldShow;
+                        if (shouldShow) {
+                            var cumulative = 0;
+                            var entry = parentRacks[0];
+                            for (var k = 0; k < parentRacks.length; k++) {
+                                cumulative += parseInt(parentRacks[k].paletas) || 0;
+                                if (idx <= cumulative) { entry = parentRacks[k]; break; }
+                            }
+                            child.material = getRackMaterial(entry);
+                            child.userData = Object.assign({}, entry, { subPaleta: true, id: parentId, hiddenByPaletas: false });
+                        }
+                    } else {
+                        child.visible = false;
+                        child.userData.hiddenByPaletas = true;
                     }
                 } else {
                     child.visible = false;
@@ -2054,7 +2071,7 @@
                 var totalCant = entriesList.reduce(function(s, e) { return s + (parseFloat(e.cantidad) || 0); }, 0);
                 document.getElementById('rack-cant').innerText = totalCant;
                 document.getElementById('rack-um').innerText = entriesList[0].um || '';
-                document.getElementById('rack-paletas').innerText = entriesList.reduce(function(s, e) { return s + (parseInt(e.paletas) || 0); }, 0) || '-';
+                document.getElementById('rack-paletas').innerText = entriesList.reduce(function(s, e) { return s + (parseInt(e.paletas) || 0); }, 0);
             } else {
                 var entry = entriesList ? entriesList[0] : infoRack;
                 document.getElementById('rack-prod').innerText = entry.producto || '-';
@@ -2062,7 +2079,7 @@
                 document.getElementById('rack-lote').innerText = entry.lote || '-';
                 document.getElementById('rack-cant').innerText = (entry.cantidad !== undefined) ? entry.cantidad : (entry.ocupacion !== undefined ? entry.ocupacion : '-');
                 document.getElementById('rack-um').innerText = entry.um || '';
-                document.getElementById('rack-paletas').innerText = entry.paletas !== undefined ? entry.paletas : '-';
+                document.getElementById('rack-paletas').innerText = (entry.paletas !== undefined) ? entry.paletas : (entriesList ? entriesList.reduce(function(s, e) { return s + (parseInt(e.paletas) || 0); }, 0) : '-');
             }
             const estadoEl = document.getElementById('rack-estado');
             const estado = (infoRack.estado || 'liberado').toLowerCase();
