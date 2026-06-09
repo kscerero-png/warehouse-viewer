@@ -1624,12 +1624,11 @@
             return estado;
         }
 
-        function applyNivelScale(mesh, nivel) {
-            var n = parseInt(nivel) || 0;
-            if (mesh.userData.originalScaleY === undefined) {
-                mesh.userData.originalScaleY = mesh.scale.y;
-            }
-            mesh.scale.y = mesh.userData.originalScaleY * (n > 0 ? n : 1);
+        function getEffectivePositions(entry) {
+            var p = parseInt(entry.paletas) || 0;
+            var n = parseInt(entry.nivel) || 0;
+            if (n <= 1) return p;
+            return p > 0 ? Math.max(1, Math.ceil(p / n)) : 0;
         }
 
         function isEmptyRack(rackData) {
@@ -1910,22 +1909,21 @@
                         const parentId = child.name.replace(/-\d+$/, '');
                         const parentRacks = getEntriesForId(parentId);
                         child.userData.id = parentId;
-                        var totalPaletas = parentRacks.reduce(function(s, e) { return s + (parseInt(e.paletas) || 0); }, 0);
-                        if (totalPaletas > 0) {
+                        var totalPos = parentRacks.reduce(function(s, e) { return s + getEffectivePositions(e); }, 0);
+                        if (totalPos > 0) {
                             const idx = parseInt(child.name.split('-').pop(), 10);
-                            const shouldShow = idx <= totalPaletas;
+                            const shouldShow = idx <= totalPos;
                             child.visible = shouldShow;
                             child.userData.hiddenByPaletas = !shouldShow;
                             if (shouldShow) {
                                 var cumulative = 0;
                                 var entry = parentRacks[0];
                                 for (var k = 0; k < parentRacks.length; k++) {
-                                    cumulative += parseInt(parentRacks[k].paletas) || 0;
+                                    cumulative += getEffectivePositions(parentRacks[k]);
                                     if (idx <= cumulative) { entry = parentRacks[k]; break; }
                                 }
                                 child.material = getRackMaterial(entry);
                                 child.userData = Object.assign({}, entry, { subPaleta: true, id: parentId, hiddenByPaletas: false });
-                                applyNivelScale(child, entry.nivel);
                             }
                         } else {
                             child.visible = false;
@@ -1957,22 +1955,21 @@
                 const parentRacks = getEntriesForId(parentId);
                 child.userData.id = parentId;
                 if (parentRacks.length > 0) {
-                    var totalPaletas = parentRacks.reduce(function(s, e) { return s + (parseInt(e.paletas) || 0); }, 0);
-                    if (totalPaletas > 0) {
+                    var totalPos = parentRacks.reduce(function(s, e) { return s + getEffectivePositions(e); }, 0);
+                    if (totalPos > 0) {
                         const idx = parseInt(child.name.split('-').pop(), 10);
-                        const shouldShow = idx <= totalPaletas;
+                        const shouldShow = idx <= totalPos;
                         child.visible = shouldShow;
                         child.userData.hiddenByPaletas = !shouldShow;
                         if (shouldShow) {
                             var cumulative = 0;
                             var entry = parentRacks[0];
                             for (var k = 0; k < parentRacks.length; k++) {
-                                cumulative += parseInt(parentRacks[k].paletas) || 0;
+                                cumulative += getEffectivePositions(parentRacks[k]);
                                 if (idx <= cumulative) { entry = parentRacks[k]; break; }
                             }
                             child.material = getRackMaterial(entry);
                             child.userData = Object.assign({}, entry, { subPaleta: true, id: parentId, hiddenByPaletas: false });
-                            applyNivelScale(child, entry.nivel);
                         }
                     } else {
                         child.visible = false;
