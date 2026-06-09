@@ -1253,6 +1253,19 @@
 
         function computeTopProducts(aisle, limit) {
             const productCount = {};
+            if (aisle === 'T' || aisle === 'todos') {
+                for (var i = 0; i < datosInventario.length; i++) {
+                    var item = datosInventario[i];
+                    var idStr = String(item.id || '').trim();
+                    if (aisle === 'T' && !/^T\d{2}$/.test(idStr)) continue;
+                    if (aisle === 'todos' && /^T\d{2}$/.test(idStr)) {
+                        var prodName = item.producto || 'Sin producto';
+                        if (prodName && item.cantidad && item.cantidad > 0) {
+                            productCount[prodName] = (productCount[prodName] || 0) + 1;
+                        }
+                    }
+                }
+            }
             scene.traverse((obj) => {
                 if (!obj.isMesh || !obj.userData || !obj.userData.id) return;
                 if (obj.userData.subPaleta) return;
@@ -1276,6 +1289,17 @@
 
         function calculateStatusBreakdown(aisle) {
             const counted = { retenido: 0, rechazado: 0, liberado: 0 };
+            if (aisle === 'T' || aisle === 'todos') {
+                for (var i = 0; i < datosInventario.length; i++) {
+                    var item = datosInventario[i];
+                    var idStr = String(item.id || '').trim();
+                    if (aisle === 'T' && !/^T\d{2}$/.test(idStr)) continue;
+                    if (aisle === 'todos' && !/^T\d{2}$/.test(idStr)) continue;
+                    if (!item.cantidad || item.cantidad === 0) continue;
+                    var estado = (item.estado || 'liberado').toLowerCase();
+                    if (counted[estado] !== undefined) counted[estado]++;
+                }
+            }
             scene.traverse((obj) => {
                 if (!obj.isMesh || !obj.userData || !obj.userData.id) return;
                 if (obj.userData.subPaleta) return;
