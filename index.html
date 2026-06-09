@@ -1311,11 +1311,15 @@
                 for (var i = 0; i < datosInventario.length; i++) {
                     var item = datosInventario[i];
                     var idStr = String(item.id || '').trim();
-                    if (aisle === 'T' && !isTransitId(idStr)) continue;
-                    if (aisle === 'todos' && !isTransitId(idStr)) continue;
-                    if (!item.cantidad || item.cantidad === 0) continue;
+                    if (!isTransitId(idStr)) continue;
                     var estado = (item.estado || 'liberado').toLowerCase();
-                    if (counted[estado] !== undefined) counted[estado]++;
+                    if (counted[estado] === undefined) continue;
+                    var p = item.paletas !== undefined ? parseInt(item.paletas) || 0 : 0;
+                    if (p > 0) {
+                        counted[estado] += p;
+                    } else if (item.cantidad && item.cantidad > 0) {
+                        counted[estado]++;
+                    }
                 }
             }
             scene.traverse((obj) => {
