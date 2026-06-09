@@ -18641,5 +18641,39 @@
     "um": "UN",
     "estado": "liberado",
     "paletas": 3
+  },
+  {
+    "Codigo": "",
+    "Producto": "",
+    "Ubicacion": "T01",
+    "Lote": "",
+    "Edo Lote": "",
+    "Cantidad": "0",
+    "UM": "UN",
+    "id": "T01",
+    "producto": "",
+    "codigo": "",
+    "lote": "",
+    "cantidad": 0,
+    "um": "UN",
+    "estado": "liberado",
+    "paletas": 3
+  },
+  {
+    "Codigo": "",
+    "Producto": "",
+    "Ubicacion": "T02",
+    "Lote": "",
+    "Edo Lote": "",
+    "Cantidad": "0",
+    "UM": "UN",
+    "id": "T02",
+    "producto": "",
+    "codigo": "",
+    "lote": "",
+    "cantidad": 0,
+    "um": "UN",
+    "estado": "liberado",
+    "paletas": 3
   }
 ]
