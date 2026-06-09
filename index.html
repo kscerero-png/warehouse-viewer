@@ -1782,7 +1782,7 @@
                 tBox.getSize(tSize);
                 var tMaxDim = Math.max(tSize.x, tSize.y, tSize.z);
                 // Dirección basada en coordenadas de referencia (-29.30, 12.64, 21.72)
-                var tDir = new THREE.Vector3(-0.55, 0.40, 0.73).normalize();
+                var tDir = new THREE.Vector3(-0.48, 0.40, 0.78).normalize();
                 var tDist = tMaxDim * 2.2;
                 const targetPos = tCenter.clone().add(tDir.clone().multiplyScalar(tDist));
                 const targetCenter = new THREE.Vector3(tCenter.x, Math.min(tCenter.y, 0), tCenter.z);
@@ -2294,7 +2294,7 @@
             var sSize = new THREE.Vector3();
             sBox.getSize(sSize);
             var sMaxDim = Math.max(sSize.x, sSize.y, sSize.z);
-            var sDir = new THREE.Vector3(-0.55, 0.40, 0.73).normalize();
+            var sDir = new THREE.Vector3(-0.48, 0.40, 0.78).normalize();
             var sDist = sMaxDim * 1.8;
             const targetPos = sCenter.clone().add(sDir.clone().multiplyScalar(sDist));
             const startPos = camera.position.clone();
