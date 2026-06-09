@@ -1070,6 +1070,7 @@
                     <button type="button" class="btn-pasillo" data-pasillo="8">08</button>
                     <button type="button" class="btn-pasillo" data-pasillo="9">09</button>
                     <button type="button" class="btn-pasillo" data-pasillo="T">Transito</button>
+                    <button type="button" class="btn-pasillo" data-pasillo="A">Formulación</button>
                 </div>
             </div>
             <div id="sync-status" class="sync-status">Sync: -</div>
@@ -1101,6 +1102,7 @@
                 <div class="usage-group-item" id="usage-group-primary"><span class="usage-group-name">Almacén Principal</span><span id="usage-primary">-</span></div>
                 <div class="usage-group-item" id="usage-group-cava"><span class="usage-group-name">CAVA</span><span id="usage-cava">-</span></div>
                 <div class="usage-group-item" id="usage-group-t"><span class="usage-group-name">Transito</span><span id="usage-t">-</span></div>
+                <div class="usage-group-item" id="usage-group-a"><span class="usage-group-name">Formulación</span><span id="usage-a">-</span></div>
             </div>
             <div class="usage-top-products" id="usage-top-products" style="display:none;">
                 <div class="usage-section-title">Top Productos</div>
@@ -1163,7 +1165,8 @@
 
         function getAisleGroupLabel(aisle) {
             if (aisle === 'todos') return 'Todas las zonas';
-                if (aisle === 'T') return 'Transito';
+            if (aisle === 'T') return 'Transito';
+            if (aisle === 'A') return 'Formulación';
             const index = Number(aisle);
             if (index >= 1 && index <= 4) return 'Almacén Principal';
             if (index >= 5 && index <= 9) return 'CAVA';
@@ -1172,7 +1175,7 @@
 
         function getCapacityForObj(obj) {
             const idStr = String(obj.userData.id).trim();
-            if (isTransitId(idStr)) {
+            if (isTransitId(idStr) || isFormulacionId(idStr)) {
                 var entries = obj.userData.entries || [obj.userData];
                 var tot = 0, usd = 0;
                 for (var i = 0; i < entries.length; i++) {
@@ -1196,12 +1199,12 @@
         }
 
         function calculateCapacityUsageForAisle(aisle) {
-            if (aisle === 'T') {
+            function computeFromInventario(filterFn) {
                 var tot = 0, usd = 0;
                 for (var i = 0; i < datosInventario.length; i++) {
                     var item = datosInventario[i];
                     var idStr = String(item.id || '').trim();
-                    if (!isTransitId(idStr)) continue;
+                    if (!filterFn(idStr)) continue;
                     var p = item.paletas !== undefined ? parseInt(item.paletas) || 0 : 0;
                     if (p > 0) {
                         tot += getEffectivePositions(item);
@@ -1214,6 +1217,8 @@
                 var e = tot - usd;
                 return { total: tot, used: usd, empty: e, percent: tot === 0 ? 0 : Math.round((usd / tot) * 100) };
             }
+            if (aisle === 'T') return computeFromInventario(isTransitId);
+            if (aisle === 'A') return computeFromInventario(isFormulacionId);
             const countedIds = new Set();
             let total = 0;
             let used = 0;
@@ -1224,26 +1229,17 @@
                 if (!idStr || countedIds.has(idStr)) return;
                 const pasillo = idStr.charAt(0);
                 if (aisle !== 'todos' && pasillo !== aisle) return;
-                if (aisle === 'todos' && pasillo === 'T') return;
+                if (aisle === 'todos' && (pasillo === 'T' || pasillo === 'A')) return;
                 countedIds.add(idStr);
                 var cap = getCapacityForObj(obj);
                 total += cap.total;
                 used += cap.used;
             });
             if (aisle === 'todos') {
-                for (var i = 0; i < datosInventario.length; i++) {
-                    var item = datosInventario[i];
-                    var idStr = String(item.id || '').trim();
-                    if (!isTransitId(idStr)) continue;
-                    var p = item.paletas !== undefined ? parseInt(item.paletas) || 0 : 0;
-                    if (p > 0) {
-                        total += getEffectivePositions(item);
-                        used += p;
-                    } else if (item.cantidad && item.cantidad > 0) {
-                        total += 1;
-                        used += 1;
-                    }
-                }
+                total += computeFromInventario(isTransitId).total;
+                used += computeFromInventario(isTransitId).used;
+                total += computeFromInventario(isFormulacionId).total;
+                used += computeFromInventario(isFormulacionId).used;
             }
             const empty = total - used;
             const percent = total === 0 ? 0 : Math.round((used / total) * 100);
@@ -1273,17 +1269,19 @@
 
         function computeTopProducts(aisle, limit) {
             const productCount = {};
-            if (aisle === 'T' || aisle === 'todos') {
+            function countFromInventario(filterFn) {
                 for (var i = 0; i < datosInventario.length; i++) {
                     var item = datosInventario[i];
                     var idStr = String(item.id || '').trim();
-                    if (!isTransitId(idStr)) continue;
+                    if (!filterFn(idStr)) continue;
                     var prodName = item.producto || 'Sin producto';
                     if (prodName && item.cantidad && item.cantidad > 0) {
                         productCount[prodName] = (productCount[prodName] || 0) + 1;
                     }
                 }
             }
+            if (aisle === 'T' || aisle === 'todos') countFromInventario(isTransitId);
+            if (aisle === 'A' || aisle === 'todos') countFromInventario(isFormulacionId);
             scene.traverse((obj) => {
                 if (!obj.isMesh || !obj.userData || !obj.userData.id) return;
                 if (obj.userData.subPaleta) return;
@@ -1307,11 +1305,11 @@
 
         function calculateStatusBreakdown(aisle) {
             const counted = { retenido: 0, rechazado: 0, liberado: 0 };
-            if (aisle === 'T' || aisle === 'todos') {
+            function countFromInventario(filterFn) {
                 for (var i = 0; i < datosInventario.length; i++) {
                     var item = datosInventario[i];
                     var idStr = String(item.id || '').trim();
-                    if (!isTransitId(idStr)) continue;
+                    if (!filterFn(idStr)) continue;
                     var estado = (item.estado || 'liberado').toLowerCase();
                     if (counted[estado] === undefined) continue;
                     var p = item.paletas !== undefined ? parseInt(item.paletas) || 0 : 0;
@@ -1322,6 +1320,8 @@
                     }
                 }
             }
+            if (aisle === 'T' || aisle === 'todos') countFromInventario(isTransitId);
+            if (aisle === 'A' || aisle === 'todos') countFromInventario(isFormulacionId);
             scene.traverse((obj) => {
                 if (!obj.isMesh || !obj.userData || !obj.userData.id) return;
                 if (obj.userData.subPaleta) return;
@@ -1418,7 +1418,8 @@
             const groupPrimary = document.getElementById('usage-group-primary');
             const groupCava = document.getElementById('usage-group-cava');
             const groupT = document.getElementById('usage-group-t');
-            if (aisleOverride === undefined && groupPrimary && groupCava && groupT) {
+            const groupA = document.getElementById('usage-group-a');
+            if (aisleOverride === undefined && groupPrimary && groupCava && groupT && groupA) {
                 const principalMetrics = calculateCapacityUsageForAisleGroup(['1', '2', '3', '4']);
                 const cavaMetrics = calculateCapacityUsageForAisleGroup(['5', '6', '7', '8', '9']);
                 var tMetrics = (function() {
@@ -1439,27 +1440,55 @@
                     var e = tot - usd;
                     return { total: tot, used: usd, empty: e, percent: tot === 0 ? 0 : Math.round((usd / tot) * 100) };
                 })();
+                var aMetrics = (function() {
+                    var tot = 0, usd = 0;
+                    for (var i = 0; i < datosInventario.length; i++) {
+                        var item = datosInventario[i];
+                        var idStr = String(item.id || '').trim();
+                        if (!isFormulacionId(idStr)) continue;
+                        var p = item.paletas !== undefined ? parseInt(item.paletas) || 0 : 0;
+                        if (p > 0) {
+                            tot += getEffectivePositions(item);
+                            usd += p;
+                        } else if (item.cantidad && item.cantidad > 0) {
+                            tot += 1;
+                            usd += 1;
+                        }
+                    }
+                    var e = tot - usd;
+                    return { total: tot, used: usd, empty: e, percent: tot === 0 ? 0 : Math.round((usd / tot) * 100) };
+                })();
                 primaryEl.innerText = `${principalMetrics.used} / ${principalMetrics.total} (${principalMetrics.percent}%)`;
                 cavaEl.innerText = `${cavaMetrics.used} / ${cavaMetrics.total} (${cavaMetrics.percent}%)`;
                 document.getElementById('usage-t').innerText = `${tMetrics.used} / ${tMetrics.total} (${tMetrics.percent}%)`;
+                document.getElementById('usage-a').innerText = `${aMetrics.used} / ${aMetrics.total} (${aMetrics.percent}%)`;
                 if (effectiveAisle === 'todos') {
                     groupPrimary.style.display = '';
                     groupCava.style.display = '';
                     groupT.style.display = '';
+                    groupA.style.display = '';
                 } else {
                     const aisleNum = Number(effectiveAisle);
                     if (aisleNum >= 1 && aisleNum <= 4) {
                         groupPrimary.style.display = '';
                         groupCava.style.display = 'none';
                         groupT.style.display = 'none';
+                        groupA.style.display = 'none';
                     } else if (aisleNum >= 5 && aisleNum <= 9) {
                         groupPrimary.style.display = 'none';
                         groupCava.style.display = '';
                         groupT.style.display = 'none';
-                    } else {
+                        groupA.style.display = 'none';
+                    } else if (effectiveAisle === 'T') {
                         groupPrimary.style.display = 'none';
                         groupCava.style.display = 'none';
                         groupT.style.display = '';
+                        groupA.style.display = 'none';
+                    } else {
+                        groupPrimary.style.display = 'none';
+                        groupCava.style.display = 'none';
+                        groupT.style.display = 'none';
+                        groupA.style.display = '';
                     }
                 }
                 groupOverview.style.display = 'block';
@@ -1616,8 +1645,8 @@
             loader.load('almacen.glb', function (gltf) {
                 const modelo = gltf.scene;
                 
-                const esLane = (name) => /^[1-9]/.test(name) || /^T\d{2}$/.test(name);
-                const esSubPaleta = (name) => /^T\d{2}-\d+$/.test(name);
+                const esLane = (name) => /^[1-9]/.test(name) || /^T\d{2}$/.test(name) || /^A\d{3}$/.test(name);
+                const esSubPaleta = (name) => /^(T\d{2}|A\d{3})-\d+$/.test(name);
 
                 modelo.traverse((child) => {
                     if (child.isMesh) {
@@ -1733,6 +1762,10 @@
 
         function isTransitId(id) {
             return /^T\d{2}$/.test(id);
+        }
+
+        function isFormulacionId(id) {
+            return /^A\d{3}$/.test(id);
         }
 
         function getEffectivePositions(entry) {
@@ -1902,8 +1935,8 @@
             const matches = getSearchMatches();
             if (matches.length === 0) return;
 
-            // Pasillo Transito: cámara dinámica basada en el bounding box
-            if (pasilloSeleccionado === 'T') {
+            // Pasillo Transito y Formulación: cámara dinámica basada en el bounding box
+            if (pasilloSeleccionado === 'T' || pasilloSeleccionado === 'A') {
                 var tBox = new THREE.Box3();
                 for (var m of matches) tBox.expandByObject(m);
                 var tCenter = new THREE.Vector3();
@@ -2075,7 +2108,7 @@
         }
 
         function updateSceneFromInventario() {
-            const esLane = (name) => /^[1-9]/.test(name) || /^T\d{2}$/.test(name);
+            const esLane = (name) => /^[1-9]/.test(name) || /^T\d{2}$/.test(name) || /^A\d{3}$/.test(name);
             var meshByName = {};
             scene.traverse((child) => {
                 if (child.isMesh && child.name) meshByName[child.name] = child;
@@ -2447,7 +2480,7 @@
 
         function focusObject(object) {
             const id = object.userData && object.userData.id;
-            if (id && /^T\d{2}/.test(id)) {
+            if (id && (/^T\d{2}/.test(id) || /^A\d{3}$/.test(id))) {
                 focusTransitObject(object);
             } else if (isFrontFacingLocation(id)) {
                 focusObjectFront(object);
