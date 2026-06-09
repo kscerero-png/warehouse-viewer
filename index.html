@@ -1068,7 +1068,7 @@
                     <button type="button" class="btn-pasillo" data-pasillo="7">07</button>
                     <button type="button" class="btn-pasillo" data-pasillo="8">08</button>
                     <button type="button" class="btn-pasillo" data-pasillo="9">09</button>
-                    <button type="button" class="btn-pasillo" data-pasillo="T">T</button>
+                    <button type="button" class="btn-pasillo" data-pasillo="T">Transito</button>
                 </div>
             </div>
             <div id="sync-status" class="sync-status">Sync: -</div>
@@ -1099,7 +1099,7 @@
             <div id="usage-group-overview" class="usage-group-overview" style="display:none;">
                 <div class="usage-group-item" id="usage-group-primary"><span class="usage-group-name">Almacén Principal</span><span id="usage-primary">-</span></div>
                 <div class="usage-group-item" id="usage-group-cava"><span class="usage-group-name">CAVA</span><span id="usage-cava">-</span></div>
-                <div class="usage-group-item" id="usage-group-t"><span class="usage-group-name">Zona T</span><span id="usage-t">-</span></div>
+                <div class="usage-group-item" id="usage-group-t"><span class="usage-group-name">Transito</span><span id="usage-t">-</span></div>
             </div>
             <div class="usage-top-products" id="usage-top-products" style="display:none;">
                 <div class="usage-section-title">Top Productos</div>
@@ -1162,7 +1162,7 @@
 
         function getAisleGroupLabel(aisle) {
             if (aisle === 'todos') return 'Todas las zonas';
-            if (aisle === 'T') return 'Zona T';
+                if (aisle === 'T') return 'Transito';
             const index = Number(aisle);
             if (index >= 1 && index <= 4) return 'Almacén Principal';
             if (index >= 5 && index <= 9) return 'CAVA';
@@ -1771,6 +1771,29 @@
         function focusSearchMatches(duration = 1100) {
             const matches = getSearchMatches();
             if (matches.length === 0) return;
+
+            // Pasillo Transito: coordenadas fijas
+            if (pasilloSeleccionado === 'T') {
+                const targetPos = new THREE.Vector3(-29.30, 12.64, 21.72);
+                var center = new THREE.Vector3();
+                var box = new THREE.Box3();
+                for (var m of matches) box.expandByObject(m);
+                box.getCenter(center);
+                const targetCenter = new THREE.Vector3(center.x, -0.51, center.z);
+                const startPos = camera.position.clone();
+                const startTarget = controls.target.clone();
+                const startTime = performance.now();
+                function step(now) {
+                    const t = Math.min(1, (now - startTime) / duration);
+                    const ease = t < 0.5 ? 4*t*t*t : 1 - Math.pow(-2*t + 2, 3) / 2;
+                    camera.position.lerpVectors(startPos, targetPos, ease);
+                    controls.target.lerpVectors(startTarget, targetCenter, ease);
+                    controls.update();
+                    if (t < 1) requestAnimationFrame(step);
+                }
+                requestAnimationFrame(step);
+                return;
+            }
             
             if (matches.length === 1) {
                 const mesh = matches[0];
