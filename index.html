@@ -1179,6 +1179,10 @@
                     tot += getEffectivePositions(entries[i]);
                     usd += parseInt(entries[i].paletas) || 0;
                 }
+                if (tot === 0) {
+                    var n = countEntries(obj.userData);
+                    return { total: n, used: isEmptyRack(obj.userData) ? 0 : n };
+                }
                 return { total: tot, used: usd };
             }
             var n = countEntries(obj.userData);
