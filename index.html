@@ -1175,13 +1175,15 @@
             let used = 0;
             scene.traverse((obj) => {
                 if (!obj.isMesh || !obj.userData || !obj.userData.id) return;
+                if (obj.userData.subPaleta) return;
                 const idStr = String(obj.userData.id).trim();
                 if (!idStr || countedIds.has(idStr)) return;
                 const pasillo = idStr.charAt(0);
                 if (aisle !== 'todos' && pasillo !== aisle) return;
                 countedIds.add(idStr);
-                total += 1;
-                if (!isEmptyRack(obj.userData)) used += 1;
+                var n = countEntries(obj.userData);
+                total += n;
+                if (!isEmptyRack(obj.userData)) used += n;
             });
             const empty = total - used;
             const percent = total === 0 ? 0 : Math.round((used / total) * 100);
@@ -1194,13 +1196,15 @@
             let used = 0;
             scene.traverse((obj) => {
                 if (!obj.isMesh || !obj.userData || !obj.userData.id) return;
+                if (obj.userData.subPaleta) return;
                 const idStr = String(obj.userData.id).trim();
                 if (!idStr || countedIds.has(idStr)) return;
                 const pasillo = idStr.charAt(0);
                 if (!aisleDigits.includes(pasillo)) return;
                 countedIds.add(idStr);
-                total += 1;
-                if (!isEmptyRack(obj.userData)) used += 1;
+                var n = countEntries(obj.userData);
+                total += n;
+                if (!isEmptyRack(obj.userData)) used += n;
             });
             const empty = total - used;
             const percent = total === 0 ? 0 : Math.round((used / total) * 100);
@@ -1209,18 +1213,20 @@
 
         function computeTopProducts(aisle, limit) {
             const productCount = {};
-            const countedIds = new Set();
             scene.traverse((obj) => {
                 if (!obj.isMesh || !obj.userData || !obj.userData.id) return;
+                if (obj.userData.subPaleta) return;
                 const idStr = String(obj.userData.id).trim();
-                if (!idStr || countedIds.has(idStr)) return;
+                if (!idStr) return;
                 const pasillo = idStr.charAt(0);
                 if (aisle !== 'todos' && pasillo !== aisle) return;
-                countedIds.add(idStr);
-                const prodName = obj.userData.producto || 'Sin producto';
-                if (!isEmptyRack(obj.userData)) {
-                    productCount[prodName] = (productCount[prodName] || 0) + 1;
-                }
+                var entriesList = obj.userData.entries || [obj.userData];
+                entriesList.forEach(function(entry) {
+                    var prodName = entry.producto || 'Sin producto';
+                    if (prodName && entry.cantidad && entry.cantidad > 0) {
+                        productCount[prodName] = (productCount[prodName] || 0) + 1;
+                    }
+                });
             });
             return Object.entries(productCount)
                 .sort((a, b) => b[1] - a[1])
@@ -1230,17 +1236,19 @@
 
         function calculateStatusBreakdown(aisle) {
             const counted = { retenido: 0, rechazado: 0, liberado: 0 };
-            const countedIds = new Set();
             scene.traverse((obj) => {
                 if (!obj.isMesh || !obj.userData || !obj.userData.id) return;
+                if (obj.userData.subPaleta) return;
                 const idStr = String(obj.userData.id).trim();
-                if (!idStr || countedIds.has(idStr)) return;
+                if (!idStr) return;
                 const pasillo = idStr.charAt(0);
                 if (aisle !== 'todos' && pasillo !== aisle) return;
-                countedIds.add(idStr);
-                if (isEmptyRack(obj.userData)) return;
-                const estado = (obj.userData.estado || 'liberado').toLowerCase();
-                if (counted[estado] !== undefined) counted[estado]++;
+                var entriesList = obj.userData.entries || [obj.userData];
+                entriesList.forEach(function(entry) {
+                    if (!entry.cantidad || entry.cantidad === 0) return;
+                    var estado = (entry.estado || 'liberado').toLowerCase();
+                    if (counted[estado] !== undefined) counted[estado]++;
+                });
             });
             const totalConEstado = counted.retenido + counted.rechazado + counted.liberado;
             const pct = (v) => totalConEstado === 0 ? 0 : Math.round((v / totalConEstado) * 100);
@@ -1385,6 +1393,23 @@
                 });
             }
             const estado = (rackInfo.estado || '').toLowerCase();
+            var entries = rackInfo.entries;
+            if (entries && entries.length > 1) {
+                var colors = entries.map(function(e) {
+                    var st = (e.estado || '').toLowerCase();
+                    if (st === 'rechazado') return 0xdc2626;
+                    if (st === 'retenido') return 0xf59e0b;
+                    return 0x0065F8;
+                });
+                var tex = getMultiColorTexture(colors);
+                return new THREE.MeshStandardMaterial({
+                    map: tex,
+                    roughness: 0.35,
+                    metalness: 0.1,
+                    transparent: false,
+                    opacity: 0.90
+                });
+            }
             let color;
             if (estado === 'rechazado') {
                 color = 0xdc2626; // rojo
@@ -1494,9 +1519,10 @@
                 modelo.traverse((child) => {
                     if (child.isMesh) {
                         if (esLane(child.name)) {
-                            const infoRack = datosInventario.find(item => item.id === child.name);
-                            if (infoRack) {
-                                child.userData = infoRack;
+                            const infoRacks = getEntriesForId(child.name);
+                            if (infoRacks.length > 0) {
+                                child.userData = Object.assign({}, infoRacks[0], { entries: infoRacks });
+                                child.userData.estado = mergeEntryState(infoRacks);
                             } else {
                                 child.userData = {
                                     id: child.name, producto: '', codigo: '', lote: '', cantidad: 0, um: '', estado: 'liberado'
@@ -1562,11 +1588,56 @@
 
         let currentSearchTerm = '';
 
+        function getEntriesForId(id) {
+            return datosInventario.filter(function(item) { return item.id === id; });
+        }
+
+        function getMultiColorTexture(colors, width, height) {
+            var canvas = document.createElement('canvas');
+            canvas.width = width || 64;
+            canvas.height = height || 64;
+            var ctx = canvas.getContext('2d');
+            var bands = colors.length;
+            var bandH = canvas.height / bands;
+            colors.forEach(function(c, i) {
+                ctx.fillStyle = '#' + new THREE.Color(c).getHexString();
+                ctx.fillRect(0, i * bandH, canvas.width, bandH);
+                if (i < bands - 1) {
+                    ctx.fillStyle = 'rgba(0,0,0,0.3)';
+                    ctx.fillRect(0, (i + 1) * bandH - 1, canvas.width, 1);
+                }
+            });
+            var tex = new THREE.CanvasTexture(canvas);
+            tex.wrapS = tex.wrapT = THREE.RepeatWrapping;
+            tex.repeat.set(1, 1);
+            return tex;
+        }
+
+        function mergeEntryState(entries) {
+            var estado = 'liberado';
+            for (var i = 0; i < entries.length; i++) {
+                var e = entries[i].estado || 'liberado';
+                if (e === 'rechazado') return 'rechazado';
+                if (e === 'retenido') estado = 'retenido';
+            }
+            return estado;
+        }
+
         function isEmptyRack(rackData) {
             if (!rackData) return true;
             if (rackData.ocupacion !== undefined) return rackData.ocupacion === 0;
             if (rackData.cantidad !== undefined) return rackData.cantidad === 0;
+            if (rackData.entries) {
+                return rackData.entries.every(function(e) { return !e.cantidad || e.cantidad === 0; });
+            }
             return true;
+        }
+
+        function countEntries(rackData) {
+            if (!rackData) return 0;
+            if (rackData.entries && rackData.entries.length > 0) return rackData.entries.length;
+            if (rackData.id && !rackData.subPaleta) return 1;
+            return 0;
         }
 
         function renderSearchSuggestions() {
@@ -1755,9 +1826,12 @@
 
                     let cumpleProducto = true;
                     if (term !== "") {
-                        const pName = (obj.userData.producto || "").toLowerCase();
-                        const pRef = (obj.userData.referencia || "").toLowerCase();
-                        cumpleProducto = pName.includes(term) || pRef.includes(term) || idStr.toLowerCase().includes(term);
+                        var entryList = obj.userData.entries || [obj.userData];
+                        cumpleProducto = entryList.some(function(entry) {
+                            var pName = (entry.producto || "").toLowerCase();
+                            var pRef = (entry.codigo || "").toLowerCase();
+                            return pName.includes(term) || pRef.includes(term) || idStr.toLowerCase().includes(term);
+                        });
                     }
 
                     const pasaFiltrosActivos = cumplePasillo && cumpleProducto;
@@ -1784,9 +1858,10 @@
             scene.traverse((child) => {
                 if (child.isMesh) {
                     if (esLane(child.name)) {
-                        const infoRack = datosInventario.find(item => item.id === child.name);
-                        if (infoRack) {
-                            child.userData = infoRack;
+                        const infoRacks = getEntriesForId(child.name);
+                        if (infoRacks.length > 0) {
+                            child.userData = Object.assign({}, infoRacks[0], { entries: infoRacks });
+                            child.userData.estado = mergeEntryState(infoRacks);
                         } else {
                             child.userData = {
                                 id: child.name, producto: '', codigo: '', lote: '', cantidad: 0, um: '', estado: 'liberado'
@@ -1795,21 +1870,17 @@
                         child.material = getRackMaterial(child.userData);
                     } else if (child.userData && child.userData.subPaleta) {
                         const parentId = child.name.replace(/-\d+$/, '');
-                        const parentData = datosInventario.find(item => item.id === parentId);
+                        const parentRacks = getEntriesForId(parentId);
                         child.userData.id = parentId;
-                        if (parentData && parentData.paletas) {
+                        if (parentRacks.length > 0 && parentRacks[0].paletas) {
                             const idx = parseInt(child.name.split('-').pop(), 10);
-                            const shouldShow = idx <= parentData.paletas;
+                            const shouldShow = idx <= parentRacks[0].paletas;
                             child.visible = shouldShow;
                             child.userData.hiddenByPaletas = !shouldShow;
                             if (shouldShow) {
-                                child.material = getRackMaterial(parentData);
-                                child.userData.producto = parentData.producto;
-                                child.userData.codigo = parentData.codigo;
-                                child.userData.lote = parentData.lote;
-                                child.userData.cantidad = parentData.cantidad;
-                                child.userData.um = parentData.um;
-                                child.userData.estado = parentData.estado;
+                                var entry = parentRacks.length > 1 ? parentRacks[(idx - 1) % parentRacks.length] : parentRacks[0];
+                                child.material = getRackMaterial(entry);
+                                child.userData = Object.assign({}, entry, { subPaleta: true, id: parentId, hiddenByPaletas: false });
                             }
                         } else {
                             child.visible = false;
@@ -1838,21 +1909,17 @@
             root.traverse((child) => {
                 if (!child.isMesh || !child.userData || !child.userData.subPaleta) return;
                 const parentId = child.name.replace(/-\d+$/, '');
-                const parentData = datosInventario.find(item => item.id === parentId);
+                const parentRacks = getEntriesForId(parentId);
                 child.userData.id = parentId;
-                if (parentData && parentData.paletas) {
+                if (parentRacks.length > 0 && parentRacks[0].paletas) {
                     const idx = parseInt(child.name.split('-').pop(), 10);
-                    const shouldShow = idx <= parentData.paletas;
+                    const shouldShow = idx <= parentRacks[0].paletas;
                     child.visible = shouldShow;
                     child.userData.hiddenByPaletas = !shouldShow;
                     if (shouldShow) {
-                        child.material = getRackMaterial(parentData);
-                        child.userData.producto = parentData.producto;
-                        child.userData.codigo = parentData.codigo;
-                        child.userData.lote = parentData.lote;
-                        child.userData.cantidad = parentData.cantidad;
-                        child.userData.um = parentData.um;
-                        child.userData.estado = parentData.estado;
+                        var entry = parentRacks.length > 1 ? parentRacks[(idx - 1) % parentRacks.length] : parentRacks[0];
+                        child.material = getRackMaterial(entry);
+                        child.userData = Object.assign({}, entry, { subPaleta: true, id: parentId, hiddenByPaletas: false });
                     }
                 } else {
                     child.visible = false;
@@ -1975,12 +2042,28 @@
         function mostrarInfo(infoRack) {
             if (!infoRack) return;
             document.getElementById('rack-id').innerText = infoRack.id || '-';
-            document.getElementById('rack-prod').innerText = infoRack.producto || '-';
-            document.getElementById('rack-cod').innerText = infoRack.codigo || '-';
-            document.getElementById('rack-lote').innerText = infoRack.lote || '-';
-            document.getElementById('rack-cant').innerText = (infoRack.cantidad !== undefined) ? infoRack.cantidad : (infoRack.ocupacion !== undefined ? infoRack.ocupacion : '-');
-            document.getElementById('rack-um').innerText = infoRack.um || '';
-            document.getElementById('rack-paletas').innerText = infoRack.paletas !== undefined ? infoRack.paletas : '-';
+            var entriesList = infoRack.entries;
+            if (entriesList && entriesList.length > 1) {
+                var prodHtml = entriesList.map(function(e, i) {
+                    return (i + 1) + '. ' + (e.producto || '-') + ' [' + (e.codigo || '-') + ']';
+                }).join('<br>');
+                document.getElementById('rack-prod').innerHTML = prodHtml;
+                document.getElementById('rack-cod').innerText = entriesList.length + ' productos';
+                var lotes = entriesList.map(function(e) { return e.lote || '-'; }).filter(function(l, i, a) { return a.indexOf(l) === i; }).join(', ');
+                document.getElementById('rack-lote').innerText = lotes || '-';
+                var totalCant = entriesList.reduce(function(s, e) { return s + (parseFloat(e.cantidad) || 0); }, 0);
+                document.getElementById('rack-cant').innerText = totalCant;
+                document.getElementById('rack-um').innerText = entriesList[0].um || '';
+                document.getElementById('rack-paletas').innerText = entriesList.reduce(function(s, e) { return s + (parseInt(e.paletas) || 0); }, 0) || '-';
+            } else {
+                var entry = entriesList ? entriesList[0] : infoRack;
+                document.getElementById('rack-prod').innerText = entry.producto || '-';
+                document.getElementById('rack-cod').innerText = entry.codigo || '-';
+                document.getElementById('rack-lote').innerText = entry.lote || '-';
+                document.getElementById('rack-cant').innerText = (entry.cantidad !== undefined) ? entry.cantidad : (entry.ocupacion !== undefined ? entry.ocupacion : '-');
+                document.getElementById('rack-um').innerText = entry.um || '';
+                document.getElementById('rack-paletas').innerText = entry.paletas !== undefined ? entry.paletas : '-';
+            }
             const estadoEl = document.getElementById('rack-estado');
             const estado = (infoRack.estado || 'liberado').toLowerCase();
             estadoEl.classList.remove('estado-retenido', 'estado-rechazado', 'estado-liberado');
@@ -2007,9 +2090,13 @@
             }
 
             // Mostrar panel estadístico y botón de restablecer solo en click sostenido
-            if (infoRack._showStats && infoRack.producto) {
-                showPanel(resetViewBottomButton);
-                setTimeout(() => mostrarStatsPanel(infoRack.producto, infoRack.codigo), 60);
+            if (infoRack._showStats) {
+                var statProduct = entriesList && entriesList.length > 1 ? entriesList[0].producto : (infoRack.producto);
+                var statCodigo = entriesList && entriesList.length > 1 ? entriesList[0].codigo : (infoRack.codigo);
+                if (statProduct) {
+                    showPanel(resetViewBottomButton);
+                    setTimeout(() => mostrarStatsPanel(statProduct, statCodigo), 60);
+                }
             }
         }
 
