@@ -1772,14 +1772,20 @@
             const matches = getSearchMatches();
             if (matches.length === 0) return;
 
-            // Pasillo Transito: coordenadas fijas
+            // Pasillo Transito: cámara dinámica basada en el bounding box
             if (pasilloSeleccionado === 'T') {
-                const targetPos = new THREE.Vector3(-29.30, 12.64, 21.72);
-                var tCenter = new THREE.Vector3();
                 var tBox = new THREE.Box3();
                 for (var m of matches) tBox.expandByObject(m);
+                var tCenter = new THREE.Vector3();
                 tBox.getCenter(tCenter);
-                const targetCenter = new THREE.Vector3(tCenter.x, -0.51, tCenter.z);
+                var tSize = new THREE.Vector3();
+                tBox.getSize(tSize);
+                var tMaxDim = Math.max(tSize.x, tSize.y, tSize.z);
+                // Dirección basada en coordenadas de referencia (-29.30, 12.64, 21.72)
+                var tDir = new THREE.Vector3(-0.18, 0.45, 0.88).normalize();
+                var tDist = tMaxDim * 2.2;
+                const targetPos = tCenter.clone().add(tDir.clone().multiplyScalar(tDist));
+                const targetCenter = new THREE.Vector3(tCenter.x, Math.min(tCenter.y, 0), tCenter.z);
                 const startPos = camera.position.clone();
                 const startTarget = controls.target.clone();
                 const startTime = performance.now();
@@ -2259,11 +2265,50 @@
 
         function focusObject(object) {
             const id = object.userData && object.userData.id;
-            if (isFrontFacingLocation(id)) {
+            if (id && /^T\d{2}/.test(id)) {
+                focusTransitObject(object);
+            } else if (isFrontFacingLocation(id)) {
                 focusObjectFront(object);
             } else {
                 smoothFocus(object);
             }
+        }
+
+        function focusTransitObject(object, duration = 900) {
+            const id = object.userData && object.userData.id;
+            const baseId = (id || '').replace(/-.*$/, '');
+            const streetMeshes = [];
+            scene.traverse((child) => {
+                if (!child.isMesh || child.visible === false) return;
+                var cid = child.userData && child.userData.id;
+                var cname = child.name || '';
+                if (cid === baseId || cname === baseId || (cname.indexOf(baseId + '-') === 0 && child.visible)) {
+                    streetMeshes.push(child);
+                }
+            });
+            if (streetMeshes.length === 0) { smoothFocus(object, duration); return; }
+            var sBox = new THREE.Box3();
+            for (var i = 0; i < streetMeshes.length; i++) sBox.expandByObject(streetMeshes[i]);
+            var sCenter = new THREE.Vector3();
+            sBox.getCenter(sCenter);
+            var sSize = new THREE.Vector3();
+            sBox.getSize(sSize);
+            var sMaxDim = Math.max(sSize.x, sSize.y, sSize.z);
+            var sDir = new THREE.Vector3(-0.18, 0.45, 0.88).normalize();
+            var sDist = sMaxDim * 1.8;
+            const targetPos = sCenter.clone().add(sDir.clone().multiplyScalar(sDist));
+            const startPos = camera.position.clone();
+            const startTarget = controls.target.clone();
+            const startTime = performance.now();
+            function step(now) {
+                var t = Math.min(1, (now - startTime) / duration);
+                var ease = t < 0.5 ? 4*t*t*t : 1 - Math.pow(-2*t + 2, 3) / 2;
+                camera.position.lerpVectors(startPos, targetPos, ease);
+                controls.target.lerpVectors(startTarget, sCenter, ease);
+                controls.update();
+                if (t < 1) requestAnimationFrame(step);
+            }
+            requestAnimationFrame(step);
         }
 
         function focusObjectFront(object, duration = 900) {
