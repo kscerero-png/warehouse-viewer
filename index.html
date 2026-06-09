@@ -976,6 +976,7 @@
         <div class="info-row"><b>Código</b> <span id="rack-cod">-</span></div>
         <div class="info-row"><b>Lote</b> <span id="rack-lote">-</span></div>
         <div class="info-row"><b>Cantidad</b> <span><span id="rack-cant">-</span>&nbsp;<span id="rack-um"></span></span></div>
+        <div class="info-row"><b>Paletas</b> <span id="rack-paletas">-</span></div>
         <div class="info-row"><b>Estado</b> <span id="rack-estado">-</span></div>
         <button id="info-close" class="btn-terminal">Cerrar Detalle</button>
     </div>
@@ -1067,6 +1068,7 @@
                     <button type="button" class="btn-pasillo" data-pasillo="7">07</button>
                     <button type="button" class="btn-pasillo" data-pasillo="8">08</button>
                     <button type="button" class="btn-pasillo" data-pasillo="9">09</button>
+                    <button type="button" class="btn-pasillo" data-pasillo="T">T</button>
                 </div>
             </div>
             <div id="sync-status" class="sync-status">Sync: -</div>
@@ -1097,6 +1099,7 @@
             <div id="usage-group-overview" class="usage-group-overview" style="display:none;">
                 <div class="usage-group-item" id="usage-group-primary"><span class="usage-group-name">Almacén Principal</span><span id="usage-primary">-</span></div>
                 <div class="usage-group-item" id="usage-group-cava"><span class="usage-group-name">CAVA</span><span id="usage-cava">-</span></div>
+                <div class="usage-group-item" id="usage-group-t"><span class="usage-group-name">Zona T</span><span id="usage-t">-</span></div>
             </div>
             <div class="usage-top-products" id="usage-top-products" style="display:none;">
                 <div class="usage-section-title">Top Productos</div>
@@ -1159,6 +1162,7 @@
 
         function getAisleGroupLabel(aisle) {
             if (aisle === 'todos') return 'Todas las zonas';
+            if (aisle === 'T') return 'Zona T';
             const index = Number(aisle);
             if (index >= 1 && index <= 4) return 'Almacén Principal';
             if (index >= 5 && index <= 9) return 'CAVA';
@@ -1319,22 +1323,32 @@
             // Desglose por grupo: solo el grupo del pasillo seleccionado (o ambos si es "Todos")
             const groupPrimary = document.getElementById('usage-group-primary');
             const groupCava = document.getElementById('usage-group-cava');
-            if (aisleOverride === undefined && groupPrimary && groupCava) {
+            const groupT = document.getElementById('usage-group-t');
+            if (aisleOverride === undefined && groupPrimary && groupCava && groupT) {
                 const principalMetrics = calculateCapacityUsageForAisleGroup(['1', '2', '3', '4']);
                 const cavaMetrics = calculateCapacityUsageForAisleGroup(['5', '6', '7', '8', '9']);
+                const tMetrics = calculateCapacityUsageForAisleGroup(['T']);
                 primaryEl.innerText = `${principalMetrics.used} / ${principalMetrics.total} (${principalMetrics.percent}%)`;
                 cavaEl.innerText = `${cavaMetrics.used} / ${cavaMetrics.total} (${cavaMetrics.percent}%)`;
+                document.getElementById('usage-t').innerText = `${tMetrics.used} / ${tMetrics.total} (${tMetrics.percent}%)`;
                 if (effectiveAisle === 'todos') {
                     groupPrimary.style.display = '';
                     groupCava.style.display = '';
+                    groupT.style.display = '';
                 } else {
                     const aisleNum = Number(effectiveAisle);
                     if (aisleNum >= 1 && aisleNum <= 4) {
                         groupPrimary.style.display = '';
                         groupCava.style.display = 'none';
-                    } else {
+                        groupT.style.display = 'none';
+                    } else if (aisleNum >= 5 && aisleNum <= 9) {
                         groupPrimary.style.display = 'none';
                         groupCava.style.display = '';
+                        groupT.style.display = 'none';
+                    } else {
+                        groupPrimary.style.display = 'none';
+                        groupCava.style.display = 'none';
+                        groupT.style.display = '';
                     }
                 }
                 groupOverview.style.display = 'block';
@@ -1415,6 +1429,7 @@
                 .then(data => {
                     datosInventario = data;
                     updateSceneFromInventario();
+                    gestionarSubPaletas();
                     updateUsageOverlay();
                     actualizarEstadoSync();
                 })
@@ -1438,11 +1453,12 @@
             loader.load('almacen.glb', function (gltf) {
                 const modelo = gltf.scene;
                 
+                const esLane = (name) => /^[1-9]/.test(name) || /^T\d{2}$/.test(name);
+                const esSubPaleta = (name) => /^T\d{2}-\d+$/.test(name);
+
                 modelo.traverse((child) => {
                     if (child.isMesh) {
-                        const esUbicacion = /^[1-9]/.test(child.name);
-                        
-                        if (esUbicacion) {
+                        if (esLane(child.name)) {
                             const infoRack = datosInventario.find(item => item.id === child.name);
                             if (infoRack) {
                                 child.userData = infoRack;
@@ -1452,10 +1468,13 @@
                                 };
                             }
                             child.material = getRackMaterial(child.userData);
+                        } else if (esSubPaleta(child.name)) {
+                            child.userData = { subPaleta: true, id: child.name };
                         }
                     }
                 });
 
+                gestionarSubPaletas(modelo);
                 scene.add(modelo);
             }, undefined, function(error){
                 console.error('Error cargando almacen.glb:', error);
@@ -1693,9 +1712,10 @@
 
             scene.traverse((obj) => {
                 if (obj.isMesh && obj.userData && obj.userData.id) {
+                    if (obj.userData.hiddenByPaletas) return;
+
                     const idStr = String(obj.userData.id).trim();
                     const primerDigito = idStr.charAt(0);
-                    const empty = isEmptyRack(obj.userData);
                     const cumplePasillo = (pasilloSeleccionado === 'todos' || primerDigito === pasilloSeleccionado);
 
                     let cumpleProducto = true;
@@ -1725,10 +1745,10 @@
         }
 
         function updateSceneFromInventario() {
+            const esLane = (name) => /^[1-9]/.test(name) || /^T\d{2}$/.test(name);
             scene.traverse((child) => {
                 if (child.isMesh) {
-                    const esUbicacion = /^[1-9]/.test(child.name);
-                    if (esUbicacion) {
+                    if (esLane(child.name)) {
                         const infoRack = datosInventario.find(item => item.id === child.name);
                         if (infoRack) {
                             child.userData = infoRack;
@@ -1738,6 +1758,28 @@
                             };
                         }
                         child.material = getRackMaterial(child.userData);
+                    } else if (child.userData && child.userData.subPaleta) {
+                        const parentId = child.name.replace(/-\d+$/, '');
+                        const parentData = datosInventario.find(item => item.id === parentId);
+                        child.userData.id = parentId;
+                        if (parentData && parentData.paletas) {
+                            const idx = parseInt(child.name.split('-').pop(), 10);
+                            const shouldShow = idx <= parentData.paletas;
+                            child.visible = shouldShow;
+                            child.userData.hiddenByPaletas = !shouldShow;
+                            if (shouldShow) {
+                                child.material = getRackMaterial(parentData);
+                                child.userData.producto = parentData.producto;
+                                child.userData.codigo = parentData.codigo;
+                                child.userData.lote = parentData.lote;
+                                child.userData.cantidad = parentData.cantidad;
+                                child.userData.um = parentData.um;
+                                child.userData.estado = parentData.estado;
+                            }
+                        } else {
+                            child.visible = false;
+                            child.userData.hiddenByPaletas = true;
+                        }
                     }
                 }
             });
@@ -1754,6 +1796,34 @@
             a.click();
             a.remove();
             URL.revokeObjectURL(url);
+        }
+
+        function gestionarSubPaletas(modelo) {
+            const root = modelo || scene;
+            root.traverse((child) => {
+                if (!child.isMesh || !child.userData || !child.userData.subPaleta) return;
+                const parentId = child.name.replace(/-\d+$/, '');
+                const parentData = datosInventario.find(item => item.id === parentId);
+                child.userData.id = parentId;
+                if (parentData && parentData.paletas) {
+                    const idx = parseInt(child.name.split('-').pop(), 10);
+                    const shouldShow = idx <= parentData.paletas;
+                    child.visible = shouldShow;
+                    child.userData.hiddenByPaletas = !shouldShow;
+                    if (shouldShow) {
+                        child.material = getRackMaterial(parentData);
+                        child.userData.producto = parentData.producto;
+                        child.userData.codigo = parentData.codigo;
+                        child.userData.lote = parentData.lote;
+                        child.userData.cantidad = parentData.cantidad;
+                        child.userData.um = parentData.um;
+                        child.userData.estado = parentData.estado;
+                    }
+                } else {
+                    child.visible = false;
+                    child.userData.hiddenByPaletas = true;
+                }
+            });
         }
 
         let parsedCsvRows = [];
@@ -1875,6 +1945,7 @@
             document.getElementById('rack-lote').innerText = infoRack.lote || '-';
             document.getElementById('rack-cant').innerText = (infoRack.cantidad !== undefined) ? infoRack.cantidad : (infoRack.ocupacion !== undefined ? infoRack.ocupacion : '-');
             document.getElementById('rack-um').innerText = infoRack.um || '';
+            document.getElementById('rack-paletas').innerText = infoRack.paletas !== undefined ? infoRack.paletas : '-';
             const estadoEl = document.getElementById('rack-estado');
             const estado = (infoRack.estado || 'liberado').toLowerCase();
             estadoEl.classList.remove('estado-retenido', 'estado-rechazado', 'estado-liberado');
