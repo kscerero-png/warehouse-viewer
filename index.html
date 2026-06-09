@@ -1775,11 +1775,11 @@
             // Pasillo Transito: coordenadas fijas
             if (pasilloSeleccionado === 'T') {
                 const targetPos = new THREE.Vector3(-29.30, 12.64, 21.72);
-                var center = new THREE.Vector3();
-                var box = new THREE.Box3();
-                for (var m of matches) box.expandByObject(m);
-                box.getCenter(center);
-                const targetCenter = new THREE.Vector3(center.x, -0.51, center.z);
+                var tCenter = new THREE.Vector3();
+                var tBox = new THREE.Box3();
+                for (var m of matches) tBox.expandByObject(m);
+                tBox.getCenter(tCenter);
+                const targetCenter = new THREE.Vector3(tCenter.x, -0.51, tCenter.z);
                 const startPos = camera.position.clone();
                 const startTarget = controls.target.clone();
                 const startTime = performance.now();
