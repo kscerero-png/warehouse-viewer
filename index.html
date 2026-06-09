@@ -1409,9 +1409,14 @@
             var cb = 'jsonp_' + Date.now();
             window[cb] = function(data) {
                 delete window[cb];
-                datosInventario = data;
-                cargarModelo3D();
-                actualizarEstadoSync();
+                if (Array.isArray(data)) {
+                    datosInventario = data;
+                    cargarModelo3D();
+                    actualizarEstadoSync();
+                } else if (fallback) {
+                    console.warn('Google Sheets: datos inválidos, usando inventario.json');
+                    cargarInventarioFetch('inventario.json?' + Date.now());
+                }
             };
             var script = document.createElement('script');
             script.src = url + (url.indexOf('?') > -1 ? '&' : '?') + 'callback=' + cb + '&_=' + Date.now();
@@ -1451,11 +1456,13 @@
             var cb = 'jsonp_' + Date.now();
             window[cb] = function(data) {
                 delete window[cb];
-                datosInventario = data;
-                updateSceneFromInventario();
-                gestionarSubPaletas();
-                updateUsageOverlay();
-                actualizarEstadoSync();
+                if (Array.isArray(data)) {
+                    datosInventario = data;
+                    updateSceneFromInventario();
+                    gestionarSubPaletas();
+                    updateUsageOverlay();
+                    actualizarEstadoSync();
+                }
             };
             var script = document.createElement('script');
             script.src = INVENTARIO_URL + '?callback=' + cb + '&_=' + Date.now();

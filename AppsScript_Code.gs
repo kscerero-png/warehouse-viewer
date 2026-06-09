@@ -1,11 +1,21 @@
 function doGet(e) {
   try {
     const ss = SpreadsheetApp.getActiveSpreadsheet();
-    const inventarioSheet = ss.getSheetByName('Inventario');
-    const productosSheet = ss.getSheetByName('Productos');
+    const allSheets = ss.getSheets().map(function(s) { return s.getName(); });
+
+    var inventarioSheet = ss.getSheetByName('Inventario');
+    var productosSheet = ss.getSheetByName('Productos');
 
     if (!inventarioSheet || !productosSheet) {
-      throw new Error('No se encontraron las hojas requeridas');
+      for (var i = 0; i < allSheets.length; i++) {
+        var name = allSheets[i];
+        if (/inventario/i.test(name)) inventarioSheet = ss.getSheetByName(name);
+        if (/productos/i.test(name)) productosSheet = ss.getSheetByName(name);
+      }
+    }
+
+    if (!inventarioSheet || !productosSheet) {
+      throw new Error('Hojas requeridas no encontradas. Hojas disponibles: ' + allSheets.join(', '));
     }
 
     SpreadsheetApp.flush();
