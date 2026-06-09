@@ -977,6 +977,7 @@
         <div class="info-row"><b>Lote</b> <span id="rack-lote">-</span></div>
         <div class="info-row"><b>Cantidad</b> <span><span id="rack-cant">-</span>&nbsp;<span id="rack-um"></span></span></div>
         <div class="info-row"><b>Paletas</b> <span id="rack-paletas">-</span></div>
+        <div class="info-row"><b>Nivel Apilado</b> <span id="rack-nivel">-</span></div>
         <div class="info-row"><b>Estado</b> <span id="rack-estado">-</span></div>
         <button id="info-close" class="btn-terminal">Cerrar Detalle</button>
     </div>
@@ -1623,6 +1624,14 @@
             return estado;
         }
 
+        function applyNivelScale(mesh, nivel) {
+            var n = parseInt(nivel) || 0;
+            if (mesh.userData.originalScaleY === undefined) {
+                mesh.userData.originalScaleY = mesh.scale.y;
+            }
+            mesh.scale.y = mesh.userData.originalScaleY * (n > 0 ? n : 1);
+        }
+
         function isEmptyRack(rackData) {
             if (!rackData) return true;
             if (rackData.ocupacion !== undefined) return rackData.ocupacion === 0;
@@ -1916,6 +1925,7 @@
                                 }
                                 child.material = getRackMaterial(entry);
                                 child.userData = Object.assign({}, entry, { subPaleta: true, id: parentId, hiddenByPaletas: false });
+                                applyNivelScale(child, entry.nivel);
                             }
                         } else {
                             child.visible = false;
@@ -1962,6 +1972,7 @@
                             }
                             child.material = getRackMaterial(entry);
                             child.userData = Object.assign({}, entry, { subPaleta: true, id: parentId, hiddenByPaletas: false });
+                            applyNivelScale(child, entry.nivel);
                         }
                     } else {
                         child.visible = false;
@@ -2101,6 +2112,7 @@
                 document.getElementById('rack-cant').innerText = totalCant;
                 document.getElementById('rack-um').innerText = entriesList[0].um || '';
                 document.getElementById('rack-paletas').innerText = entriesList.reduce(function(s, e) { return s + (parseInt(e.paletas) || 0); }, 0);
+                document.getElementById('rack-nivel').innerText = entriesList[0].nivel ? entriesList[0].nivel + ' niveles' : '1 nivel';
             } else {
                 var entry = entriesList ? entriesList[0] : infoRack;
                 document.getElementById('rack-prod').innerText = entry.producto || '-';
@@ -2109,6 +2121,7 @@
                 document.getElementById('rack-cant').innerText = (entry.cantidad !== undefined) ? entry.cantidad : (entry.ocupacion !== undefined ? entry.ocupacion : '-');
                 document.getElementById('rack-um').innerText = entry.um || '';
                 document.getElementById('rack-paletas').innerText = (entry.paletas !== undefined) ? entry.paletas : (entriesList ? entriesList.reduce(function(s, e) { return s + (parseInt(e.paletas) || 0); }, 0) : '-');
+                document.getElementById('rack-nivel').innerText = entry.nivel ? entry.nivel + ' niveles' : '1 nivel';
             }
             const estadoEl = document.getElementById('rack-estado');
             const estado = (infoRack.estado || 'liberado').toLowerCase();

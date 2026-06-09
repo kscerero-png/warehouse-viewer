@@ -30,8 +30,9 @@ function doGet(e) {
       const row = productosData[i];
       const codigo = String(row[0] || '').trim();
       const peso = parseFloat(row[1]) || 0;
+      const nivel = parseInt(row[3]) || 0;
       if (codigo) {
-        productosMap[codigo] = peso;
+        productosMap[codigo] = { peso: peso, nivel: nivel };
       }
     }
 
@@ -69,8 +70,9 @@ function doGet(e) {
       };
 
       if (productosMap[codigo]) {
-        item.pesoPaleta = productosMap[codigo];
-        item.pesoTotal = cantidad * productosMap[codigo];
+        item.pesoPaleta = productosMap[codigo].peso;
+        item.pesoTotal = cantidad * productosMap[codigo].peso;
+        item.nivel = productosMap[codigo].nivel;
       }
 
       return item;
