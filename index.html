@@ -3167,6 +3167,7 @@
                 pasilloSeleccionado = targetButton.getAttribute('data-pasillo');
 
                 applySearchFilter();
+                if (currentStatusFilter) aplicarFiltroEstado();
                 focusSearchMatches(); 
             });
 
@@ -3239,13 +3240,8 @@
             if (!currentStatusFilter) {
                 clearBtn.style.display = 'none';
                 summaryPanel.classList.remove('visible');
-                scene.traverse((obj) => {
-                    if (obj.isMesh && obj.material) {
-                        obj.visible = true;
-                        obj.material.transparent = false;
-                        obj.material.opacity = 1.0;
-                    }
-                });
+                // Re-aplicar el filtro de pasillo al limpiar el filtro de estado
+                applySearchFilter();
                 return;
             }
 
