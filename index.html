@@ -3336,7 +3336,12 @@
                         if ((e.estado || '').toLowerCase() === currentStatusFilter) {
                             var pName = e.producto || 'Sin nombre';
                             if (!productCounts[pName]) productCounts[pName] = 0;
-                            productCounts[pName] += parseInt(e.paletas || e.cantidad || 1) || 1;
+                            var p = e.paletas !== undefined ? parseInt(e.paletas) || 0 : 0;
+                            if (p > 0) {
+                                productCounts[pName] += p;
+                            } else if (e.cantidad && parseInt(e.cantidad) > 0) {
+                                productCounts[pName] += 1;
+                            }
                         }
                     });
                 }
