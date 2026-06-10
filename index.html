@@ -2137,12 +2137,15 @@
                             cumulative += getEffectivePositions(parentRacks[k]);
                             if (idx <= cumulative) { entry = parentRacks[k]; break; }
                         }
-                        var show = idx <= cumulative && isSlotVisible(idx, entry.nivel);
-                        child.visible = show;
+                        var show = idx <= cumulative && isSlotVisible(idx, entry ? entry.nivel : 0);
+                        child.visible = show || isFormulacionId(parentId);
                         child.userData.hiddenByPaletas = !show;
                         if (show) {
                             child.material = getRackMaterial(entry);
                             child.userData = Object.assign({}, entry, { subPaleta: true, id: parentId, hiddenByPaletas: false });
+                        } else if (isFormulacionId(parentId)) {
+                            child.material = getRackMaterial({ id: parentId, cantidad: 0 });
+                            child.userData = { id: parentId, producto: '', codigo: '', lote: '', cantidad: 0, um: '', estado: 'liberado', subPaleta: true, hiddenByPaletas: false };
                         }
                     }
                 }
@@ -2177,12 +2180,15 @@
                     cumulative += getEffectivePositions(parentRacks[k]);
                     if (idx <= cumulative) { entry = parentRacks[k]; break; }
                 }
-                var show = idx <= cumulative && isSlotVisible(idx, entry.nivel);
-                child.visible = show;
+                var show = idx <= cumulative && isSlotVisible(idx, entry ? entry.nivel : 0);
+                child.visible = show || isFormulacionId(parentId);
                 child.userData.hiddenByPaletas = !show;
                 if (show) {
                     child.material = getRackMaterial(entry);
                     child.userData = Object.assign({}, entry, { subPaleta: true, id: parentId, hiddenByPaletas: false });
+                } else if (isFormulacionId(parentId)) {
+                    child.material = getRackMaterial({ id: parentId, cantidad: 0 });
+                    child.userData = { id: parentId, producto: '', codigo: '', lote: '', cantidad: 0, um: '', estado: 'liberado', subPaleta: true, hiddenByPaletas: false };
                 }
             });
         }
