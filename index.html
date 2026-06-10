@@ -475,13 +475,17 @@
             overflow: hidden;
             transition: max-height 250ms cubic-bezier(0.4, 0, 0.2, 1), opacity 250ms ease;
         }
-        #search-panel.collapsed .panel-collapsible-content {
+        #search-panel.collapsed .panel-collapsible-content,
+        #controls-legend.collapsed .panel-collapsible-content,
+        #coords-overlay.collapsed .panel-collapsible-content {
             max-height: 0px;
             opacity: 0;
             pointer-events: none;
             margin-top: 0;
         }
-        #search-panel.collapsed { 
+        #search-panel.collapsed,
+        #controls-legend.collapsed,
+        #coords-overlay.collapsed { 
             gap: 0px;
             padding-bottom: 10px;
         }
@@ -808,6 +812,68 @@
             margin-top: 8px;
             display: flex;
         }
+        .usage-status-breakdown .status-dot {
+            cursor: pointer;
+            padding: 2px 4px;
+            border-radius: 3px;
+            transition: all 150ms ease;
+        }
+        .usage-status-breakdown .status-dot:hover {
+            opacity: 0.8;
+            background: rgba(255,255,255,0.06);
+        }
+        .usage-status-breakdown .status-dot.active-filter {
+            box-shadow: 0 0 8px currentColor;
+            outline: 1px solid currentColor;
+        }
+        #usage-status-summary {
+            margin-top: 8px;
+            padding-top: 6px;
+            border-top: 1px solid var(--border-muted);
+            display: none;
+            max-height: 120px;
+            overflow-y: auto;
+            font-size: 10px;
+        }
+        #usage-status-summary .summary-title {
+            font-weight: 600;
+            color: var(--text-secondary);
+            margin-bottom: 4px;
+            font-size: 10px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        #usage-status-summary .summary-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 2px 0;
+            border-bottom: 1px solid var(--border-muted);
+        }
+        #usage-status-summary .summary-item:last-child {
+            border-bottom: none;
+        }
+        #usage-status-summary .summary-item-name {
+            color: var(--text-primary);
+            flex: 1;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+        #usage-status-summary .summary-item-qty {
+            color: var(--text-muted);
+            margin-left: 8px;
+            flex-shrink: 0;
+        }
+        #usage-status-summary .summary-clear {
+            cursor: pointer;
+            color: var(--accent);
+            font-size: 10px;
+            margin-top: 4px;
+            display: inline-block;
+        }
+        #usage-status-summary .summary-clear:hover {
+            text-decoration: underline;
+        }
         #usage-overlay .usage-bar-liberado {
             height: 100%;
             width: 0%;
@@ -939,6 +1005,22 @@
             }
 
 
+        #controls-legend.collapsed {
+            padding-bottom: 6px;
+        }
+        #controls-legend.collapsed .panel-header-toggle {
+            border-bottom: none;
+            margin-bottom: 0;
+            padding-bottom: 0;
+        }
+        #coords-overlay.collapsed {
+            padding-bottom: 6px;
+        }
+        #coords-overlay.collapsed .panel-header-toggle {
+            border-bottom: none;
+            margin-bottom: 0;
+            padding-bottom: 0;
+        }
         #controls-legend div {
             display: flex;
             align-items: center;
@@ -1189,10 +1271,12 @@
                 <div id="usage-bar-empty" class="usage-bar-empty"></div>
             </div>
             <div class="usage-status-breakdown" id="usage-status-breakdown">
-                <span class="status-dot" style="background:var(--accent)"></span> Liberado
-                <span class="status-dot" style="background:var(--warning);margin-left:8px"></span> Retenido <span id="usage-retenido">-</span>
-                <span class="status-dot" style="background:var(--danger);margin-left:8px"></span> Rechazado <span id="usage-rechazado">-</span>
+                <span class="status-dot" data-status="liberado" style="background:var(--accent);color:var(--accent)">●</span> Liberado
+                <span class="status-dot" data-status="retenido" style="background:var(--warning);color:var(--warning);margin-left:8px">●</span> Retenido <span id="usage-retenido">-</span>
+                <span class="status-dot" data-status="rechazado" style="background:var(--danger);color:var(--danger);margin-left:8px">●</span> Rechazado <span id="usage-rechazado">-</span>
+                <span class="summary-clear" id="usage-status-clear" style="margin-left:8px;display:none">✕</span>
             </div>
+            <div id="usage-status-summary"></div>
             <div id="usage-group-overview" class="usage-group-overview" style="display:none;">
                 <div class="usage-group-item" id="usage-group-primary"><span class="usage-group-name">Almacén Principal</span><span id="usage-primary">-</span></div>
                 <div class="usage-group-item" id="usage-group-cava"><span class="usage-group-name">CAVA</span><span id="usage-cava">-</span></div>
@@ -1205,18 +1289,30 @@
             </div>
             <div id="usage-status" class="usage-status">-</div>
         </div>
-        <div id="controls-legend" class="legend-style" aria-label="Controles de cámara">
-            <div><span class="key">Click Izq + Arrastrar</span> Rotar Óptica</div>
-            <div><span class="key">Click Der + Arrastrar</span> Desplazar Cámara</div>
-            <div><span class="key">Rueda del Ratón</span> Zoom +/-</div>
-            <div><span class="key">Click en Rack</span> Seleccionar Ubicación</div>
-            <div><span class="key">Click Sostenido</span> Enfocar Detalle</div>
+        <div id="controls-legend" class="legend-style collapsed" aria-label="Controles de cámara">
+            <div class="panel-header-toggle">
+                <span class="panel-header-title">Controles de Cámara</span>
+                <button class="btn-toggle-collapse btn-toggle-camera">[+]</button>
+            </div>
+            <div class="panel-collapsible-content">
+                <div><span class="key">Click Izq + Arrastrar</span> Rotar Óptica</div>
+                <div><span class="key">Click Der + Arrastrar</span> Desplazar Cámara</div>
+                <div><span class="key">Rueda del Ratón</span> Zoom +/-</div>
+                <div><span class="key">Click en Rack</span> Seleccionar Ubicación</div>
+                <div><span class="key">Click Sostenido</span> Enfocar Detalle</div>
+            </div>
         </div>
 
-        <div id="coords-overlay" class="enterprise-panel legend-style" aria-live="polite">
-            <div><b>CAM_POS:</b> <span id="coords-camera">-</span></div>
-            <div><b>CAM_TGT:</b> <span id="coords-target">-</span></div>
-            <div><b>RACK_CTR:</b> <span id="coords-pallet">-</span></div>
+        <div id="coords-overlay" class="enterprise-panel legend-style collapsed" aria-live="polite">
+            <div class="panel-header-toggle">
+                <span class="panel-header-title">Coordenadas</span>
+                <button class="btn-toggle-collapse btn-toggle-coords">[+]</button>
+            </div>
+            <div class="panel-collapsible-content">
+                <div><b>CAM_POS:</b> <span id="coords-camera">-</span></div>
+                <div><b>CAM_TGT:</b> <span id="coords-target">-</span></div>
+                <div><b>RACK_CTR:</b> <span id="coords-pallet">-</span></div>
+            </div>
         </div>
     </div>
 
@@ -1496,6 +1592,11 @@
             if (retenidoEl && rechazadoEl) {
                 retenidoEl.innerText = breakdown.retenido > 0 ? `${breakdown.retenido} (${breakdown.pctRetenido}%)` : '0';
                 rechazadoEl.innerText = breakdown.rechazado > 0 ? `${breakdown.rechazado} (${breakdown.pctRechazado}%)` : '0';
+            }
+
+            // Re-aplicar filtro de estado si hay uno activo
+            if (typeof aplicarFiltroEstado === 'function') {
+                aplicarFiltroEstado();
             }
 
             // Top 3 productos más ocupados
@@ -3050,6 +3151,121 @@
                 posicionarStatsPanel();
             }
         });
+
+        // Toggle colapsable para controles de cámara y coordenadas
+        const controlsLegend = document.getElementById('controls-legend');
+        const coordsOverlay = document.getElementById('coords-overlay');
+        const btnCamera = document.querySelector('.btn-toggle-camera');
+        const btnCoords = document.querySelector('.btn-toggle-coords');
+
+        function togglePanel(panel, btn) {
+            const isCollapsed = panel.classList.toggle('collapsed');
+            btn.innerText = isCollapsed ? '[+]' : '[─]';
+        }
+
+        btnCamera.addEventListener('click', () => togglePanel(controlsLegend, btnCamera));
+        btnCoords.addEventListener('click', () => togglePanel(coordsOverlay, btnCoords));
+
+        // ─── FILTRO POR ESTADO (Liberado / Retenido / Rechazado) ──────────────────
+        let currentStatusFilter = null; // 'liberado' | 'retenido' | 'rechazado' | null
+
+        document.querySelectorAll('.usage-status-breakdown .status-dot').forEach(dot => {
+            dot.addEventListener('click', function() {
+                const status = this.dataset.status;
+                if (currentStatusFilter === status) {
+                    currentStatusFilter = null;
+                } else {
+                    currentStatusFilter = status;
+                }
+                aplicarFiltroEstado();
+            });
+        });
+
+        document.getElementById('usage-status-clear').addEventListener('click', () => {
+            currentStatusFilter = null;
+            aplicarFiltroEstado();
+        });
+
+        function aplicarFiltroEstado() {
+            const dots = document.querySelectorAll('.usage-status-breakdown .status-dot');
+            dots.forEach(d => d.classList.remove('active-filter'));
+            const clearBtn = document.getElementById('usage-status-clear');
+            const summaryEl = document.getElementById('usage-status-summary');
+
+            if (!currentStatusFilter) {
+                clearBtn.style.display = 'none';
+                summaryEl.style.display = 'none';
+                // Restaurar todas las mallas
+                for (var name in meshByName) {
+                    var obj = meshByName[name];
+                    obj.visible = true;
+                    if (obj.material) {
+                        obj.material.transparent = false;
+                        obj.material.opacity = 1.0;
+                    }
+                }
+                return;
+            }
+
+            // Marcar el dot activo
+            const activeDot = document.querySelector(`.usage-status-breakdown .status-dot[data-status="${currentStatusFilter}"]`);
+            if (activeDot) activeDot.classList.add('active-filter');
+            clearBtn.style.display = 'inline';
+
+            // Filtrar mallas por estado
+            for (var name in meshByName) {
+                var obj = meshByName[name];
+                var entries = obj.userData && obj.userData.entries;
+                var match = false;
+                if (entries && entries.length > 0) {
+                    match = entries.some(function(e) {
+                        return (e.estado || '').toLowerCase() === currentStatusFilter;
+                    });
+                }
+                if (match) {
+                    obj.visible = true;
+                    if (obj.material) {
+                        obj.material.transparent = false;
+                        obj.material.opacity = 1.0;
+                    }
+                } else {
+                    obj.visible = true;
+                    if (obj.material) {
+                        obj.material.transparent = true;
+                        obj.material.opacity = 0.03;
+                    }
+                }
+            }
+
+            // Mostrar resumen de productos para retenidos/rechazados (no liberado)
+            if (currentStatusFilter === 'liberado') {
+                summaryEl.style.display = 'none';
+                return;
+            }
+
+            // Agrupar productos por nombre
+            var productCounts = {};
+            for (var name in meshByName) {
+                var obj = meshByName[name];
+                var entries = obj.userData && obj.userData.entries;
+                if (!entries) continue;
+                entries.forEach(function(e) {
+                    if ((e.estado || '').toLowerCase() === currentStatusFilter) {
+                        var pName = e.producto || 'Sin nombre';
+                        if (!productCounts[pName]) productCounts[pName] = 0;
+                        productCounts[pName] += parseInt(e.paletas || e.cantidad || 1) || 1;
+                    }
+                });
+            }
+
+            var sorted = Object.keys(productCounts).sort();
+            var html = '<div class="summary-title">' + currentStatusFilter.toUpperCase() + ' — Resumen de Productos</div>';
+            sorted.forEach(function(p) {
+                html += '<div class="summary-item"><span class="summary-item-name">' + p + '</span><span class="summary-item-qty">' + productCounts[p] + '</span></div>';
+            });
+            summaryEl.innerHTML = html;
+            summaryEl.style.display = 'block';
+        }
 
         function animate() {
             requestAnimationFrame(animate);
