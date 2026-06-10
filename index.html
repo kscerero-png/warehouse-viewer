@@ -3255,15 +3255,28 @@
 
             scene.traverse((obj) => {
                 if (!obj.isMesh) return;
-                var entries = obj.userData && obj.userData.entries;
-                if (!entries || entries.length === 0) {
+
+                // No ocultar nunca objetos marcados como hiddenByPaletas
+                if (obj.userData && obj.userData.hiddenByPaletas) return;
+
+                var name = obj.name || '';
+                // Ambiente (suelo, rayados, bordes, etc.) siempre visible
+                var esRack = /^[1-9]/.test(name) || /^T\d{2}$/.test(name) || /^A\d{3}$/.test(name) || (obj.userData && obj.userData.subPaleta);
+                if (!esRack && (!obj.userData || !obj.userData.entries)) {
                     obj.visible = true;
                     if (obj.material) { obj.material.transparent = false; obj.material.opacity = 1.0; }
                     return;
                 }
-                var match = entries.some(function(e) {
-                    return (e.estado || '').toLowerCase() === currentStatusFilter;
-                });
+
+                // Determinar si el rack cumple el estado filtrado
+                var entries = obj.userData && obj.userData.entries;
+                var match = false;
+                if (entries && entries.length > 0) {
+                    match = entries.some(function(e) {
+                        return (e.estado || '').toLowerCase() === currentStatusFilter;
+                    });
+                }
+
                 // Contar productos para retenidos/rechazados (no liberado)
                 if (currentStatusFilter !== 'liberado' && match) {
                     entries.forEach(function(e) {
