@@ -960,35 +960,81 @@
             right: 20px;
             top: 96px;
             z-index: 85;
-            min-width: 260px;
-            max-width: 320px;
-            max-height: 320px;
+            min-width: 280px;
+            max-width: 340px;
+            max-height: 340px;
             display: none;
             flex-direction: column;
-            font-size: 11px;
-            overflow-y: auto;
+            font-size: 12px;
+            overflow: hidden;
+            padding: 0;
         }
         #status-summary-panel.visible {
             display: flex;
         }
-        #status-summary-panel .summary-title {
+        #status-summary-panel .summary-header {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 10px 14px;
+            border-bottom: 1px solid var(--border-muted);
+            flex-shrink: 0;
+        }
+        #status-summary-panel .summary-header .summary-icon {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            flex-shrink: 0;
+        }
+        #status-summary-panel .summary-header .summary-title {
             font-weight: 600;
-            color: var(--text-secondary);
-            font-size: 10px;
+            font-size: 11px;
             text-transform: uppercase;
             letter-spacing: 0.5px;
-            padding-bottom: 6px;
-            border-bottom: 1px solid var(--border-muted);
-            margin-bottom: 6px;
+            flex: 1;
+            color: var(--text-primary);
+            margin: 0;
+            padding: 0;
+            border: none;
+        }
+        #status-summary-panel .summary-header .summary-count {
+            font-size: 10px;
+            color: var(--text-muted);
+            background: rgba(255,255,255,0.05);
+            padding: 2px 7px;
+            border-radius: 10px;
+            font-weight: 500;
+        }
+        #status-summary-panel .summary-body {
+            padding: 6px 14px 10px;
+            overflow-y: auto;
+            flex: 1;
+        }
+        #status-summary-panel .summary-body::-webkit-scrollbar {
+            width: 4px;
+        }
+        #status-summary-panel .summary-body::-webkit-scrollbar-thumb {
+            background: var(--border-muted);
+            border-radius: 2px;
         }
         #status-summary-panel .summary-item {
             display: flex;
-            justify-content: space-between;
-            padding: 3px 0;
-            border-bottom: 1px solid var(--border-muted);
+            align-items: center;
+            gap: 8px;
+            padding: 6px 8px;
+            border-radius: 6px;
+            transition: background 150ms ease;
+            margin: 0 -8px;
         }
-        #status-summary-panel .summary-item:last-child {
-            border-bottom: none;
+        #status-summary-panel .summary-item:hover {
+            background: rgba(255,255,255,0.03);
+        }
+        #status-summary-panel .summary-item-dot {
+            width: 5px;
+            height: 5px;
+            border-radius: 50%;
+            flex-shrink: 0;
+            opacity: 0.4;
         }
         #status-summary-panel .summary-item-name {
             color: var(--text-primary);
@@ -996,11 +1042,18 @@
             overflow: hidden;
             text-overflow: ellipsis;
             white-space: nowrap;
+            font-weight: 500;
         }
         #status-summary-panel .summary-item-qty {
-            color: var(--text-muted);
-            margin-left: 8px;
+            color: var(--text-secondary);
+            font-weight: 600;
+            font-size: 12px;
             flex-shrink: 0;
+            background: rgba(255,255,255,0.04);
+            padding: 1px 8px;
+            border-radius: 8px;
+            min-width: 24px;
+            text-align: center;
         }
 
         /* Nueva Leyenda de Controles */
@@ -3304,10 +3357,22 @@
             }
 
             var sorted = Object.keys(productCounts).sort();
-            var html = '<div class="summary-title">' + currentStatusFilter.toUpperCase() + ' — Resumen de Productos</div>';
+            var total = sorted.reduce(function(sum, p) { return sum + productCounts[p]; }, 0);
+            var color = currentStatusFilter === 'retenido' ? 'var(--warning)' : 'var(--danger)';
+            var html = '<div class="summary-header">';
+            html += '<span class="summary-icon" style="background:' + color + '"></span>';
+            html += '<span class="summary-title">' + currentStatusFilter.toUpperCase() + '</span>';
+            html += '<span class="summary-count">' + total + ' palets</span>';
+            html += '</div>';
+            html += '<div class="summary-body">';
             sorted.forEach(function(p) {
-                html += '<div class="summary-item"><span class="summary-item-name">' + p + '</span><span class="summary-item-qty">' + productCounts[p] + '</span></div>';
+                html += '<div class="summary-item">';
+                html += '<span class="summary-item-dot" style="background:' + color + '"></span>';
+                html += '<span class="summary-item-name">' + p + '</span>';
+                html += '<span class="summary-item-qty">' + productCounts[p] + '</span>';
+                html += '</div>';
             });
+            html += '</div>';
             summaryPanel.innerHTML = html;
             summaryPanel.classList.add('visible');
         }
