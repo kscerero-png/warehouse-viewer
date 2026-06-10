@@ -3195,15 +3195,13 @@
             if (!currentStatusFilter) {
                 clearBtn.style.display = 'none';
                 summaryEl.style.display = 'none';
-                // Restaurar todas las mallas
-                for (var name in meshByName) {
-                    var obj = meshByName[name];
-                    obj.visible = true;
-                    if (obj.material) {
+                scene.traverse((obj) => {
+                    if (obj.isMesh && obj.material) {
+                        obj.visible = true;
                         obj.material.transparent = false;
                         obj.material.opacity = 1.0;
                     }
-                }
+                });
                 return;
             }
 
@@ -3212,50 +3210,43 @@
             if (activeDot) activeDot.classList.add('active-filter');
             clearBtn.style.display = 'inline';
 
-            // Filtrar mallas por estado
-            for (var name in meshByName) {
-                var obj = meshByName[name];
+            // Filtrar mallas por estado y contar productos
+            var productCounts = {};
+
+            scene.traverse((obj) => {
+                if (!obj.isMesh) return;
                 var entries = obj.userData && obj.userData.entries;
-                var match = false;
-                if (entries && entries.length > 0) {
-                    match = entries.some(function(e) {
-                        return (e.estado || '').toLowerCase() === currentStatusFilter;
+                if (!entries || entries.length === 0) {
+                    obj.visible = true;
+                    if (obj.material) { obj.material.transparent = false; obj.material.opacity = 1.0; }
+                    return;
+                }
+                var match = entries.some(function(e) {
+                    return (e.estado || '').toLowerCase() === currentStatusFilter;
+                });
+                // Contar productos para retenidos/rechazados (no liberado)
+                if (currentStatusFilter !== 'liberado' && match) {
+                    entries.forEach(function(e) {
+                        if ((e.estado || '').toLowerCase() === currentStatusFilter) {
+                            var pName = e.producto || 'Sin nombre';
+                            if (!productCounts[pName]) productCounts[pName] = 0;
+                            productCounts[pName] += parseInt(e.paletas || e.cantidad || 1) || 1;
+                        }
                     });
                 }
                 if (match) {
                     obj.visible = true;
-                    if (obj.material) {
-                        obj.material.transparent = false;
-                        obj.material.opacity = 1.0;
-                    }
+                    if (obj.material) { obj.material.transparent = false; obj.material.opacity = 1.0; }
                 } else {
                     obj.visible = true;
-                    if (obj.material) {
-                        obj.material.transparent = true;
-                        obj.material.opacity = 0.03;
-                    }
+                    if (obj.material) { obj.material.transparent = true; obj.material.opacity = 0.03; }
                 }
-            }
+            });
 
-            // Mostrar resumen de productos para retenidos/rechazados (no liberado)
+            // Mostrar resumen de productos para retenidos/rechazados
             if (currentStatusFilter === 'liberado') {
                 summaryEl.style.display = 'none';
                 return;
-            }
-
-            // Agrupar productos por nombre
-            var productCounts = {};
-            for (var name in meshByName) {
-                var obj = meshByName[name];
-                var entries = obj.userData && obj.userData.entries;
-                if (!entries) continue;
-                entries.forEach(function(e) {
-                    if ((e.estado || '').toLowerCase() === currentStatusFilter) {
-                        var pName = e.producto || 'Sin nombre';
-                        if (!productCounts[pName]) productCounts[pName] = 0;
-                        productCounts[pName] += parseInt(e.paletas || e.cantidad || 1) || 1;
-                    }
-                });
             }
 
             var sorted = Object.keys(productCounts).sort();
