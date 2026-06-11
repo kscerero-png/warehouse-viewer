@@ -742,7 +742,14 @@
             display: flex;
             flex-direction: column;
             gap: 10px;
+            max-height: calc(100vh - 100px);
+            overflow-y: auto;
+            scrollbar-width: thin;
+            scrollbar-color: var(--border-muted) transparent;
         }
+        #bottom-left-container::-webkit-scrollbar { width: 4px; }
+        #bottom-left-container::-webkit-scrollbar-track { background: transparent; }
+        #bottom-left-container::-webkit-scrollbar-thumb { background: var(--border-muted); border-radius: 2px; }
 
         /* Terminal de Telemetría 3D */
         #coords-overlay { 
@@ -958,11 +965,12 @@
         #status-summary-panel {
             position: absolute;
             right: 20px;
-            top: 96px;
-            z-index: 85;
+            top: auto;
+            bottom: 370px;
+            z-index: 91;
             min-width: 280px;
             max-width: 340px;
-            max-height: 340px;
+            max-height: 200px;
             display: none;
             flex-direction: column;
             font-size: 12px;
@@ -1148,7 +1156,13 @@
             .btn-pasillo { padding: 6px 1px; font-size: 9px; }
             .pasillos-grid { gap: 4px; }
             #loader { width: 240px; }
-            #status-summary-panel { min-width: 200px; max-width: 260px; }
+            #status-summary-panel {
+                min-width: 200px;
+                max-width: 260px;
+                max-height: 160px;
+                bottom: 300px;
+            }
+            #bottom-left-container { max-height: calc(100vh - 80px); }
         }
 
         /* === RESPONSIVE: Estrecho (<800px) — columnas se funden === */
@@ -1198,7 +1212,12 @@
                 right: 10px;
                 min-width: 180px;
                 max-width: 220px;
-                max-height: 200px;
+                max-height: 150px;
+                bottom: 270px;
+            }
+            #bottom-left-container {
+                max-height: calc(100vh - 70px);
+                gap: 4px;
             }
         }
 
@@ -1206,7 +1225,7 @@
         @media (max-height: 800px) {
             #info { top: 10px; }
             #stats-panel { top: 60px; }
-            #bottom-left-container { bottom: 14px; gap: 6px; }
+            #bottom-left-container { bottom: 14px; gap: 6px; max-height: calc(100vh - 90px); }
             #search-panel { bottom: 14px; }
             #reset-view-bottom { bottom: 14px; }
             #top-right-container { top: 10px; }
@@ -1225,7 +1244,8 @@
             #loader { width: 180px; padding: 10px; }
             #search-panel { gap: 4px; }
             #stats-panel { max-height: calc(100vh - 60px); }
-            #status-summary-panel { top: 76px; max-height: 120px; }
+            #status-summary-panel { bottom: 320px; max-height: 100px; }
+            #bottom-left-container { max-height: calc(100vh - 60px); }
         }
     </style>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
