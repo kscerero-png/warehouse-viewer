@@ -1672,86 +1672,10 @@
                 scene.traverse((child) => {
                     if (child.isMesh && child.name) meshByName[child.name] = child;
                 });
-                generateMissingRacks(meshByName);
                 applyPaletaSpread(meshByName);
             }, undefined, function(error){
                 console.error('Error cargando almacen.glb:', error);
             });
-        }
-
-        function generateMissingRacks(meshByName) {
-            var created = [];
-            var esLaneLocal = (name) => /^[1-9]/.test(name) || /^T\d{2}$/.test(name) || /^A\d{3}$/.test(name) || /^P\d{2}$/.test(name);
-            var rackGeo = new THREE.BoxGeometry(0.9, 0.9, 0.5);
-            var subGeo = new THREE.BoxGeometry(0.8, 0.18, 0.4);
-
-            // Galpón Anexo: P01-P13
-            for (var i = 1; i <= 13; i++) {
-                var id = 'P' + (i < 10 ? '0' : '') + i;
-                if (!meshByName[id]) {
-                    var mesh = new THREE.Mesh(rackGeo.clone(), new THREE.MeshStandardMaterial({ color: 0x272932, roughness: 0.35, metalness: 0.1 }));
-                    mesh.name = id;
-                    mesh.position.set(22, 0.45, -9 + (i - 1) * 1.2);
-                    mesh.userData = { id: id, producto: '', codigo: '', lote: '', cantidad: 0, um: '', estado: 'liberado' };
-                    var info = getEntriesForId(id);
-                    if (info.length > 0) {
-                        mesh.userData = Object.assign({}, info[0], { entries: info });
-                        mesh.userData.estado = mergeEntryState(info);
-                    }
-                    mesh.material = getRackMaterial(mesh.userData);
-                    scene.add(mesh);
-                    created.push(mesh);
-                    meshByName[id] = mesh;
-                    // 4 sub-paletas
-                    for (var s = 1; s <= 4; s++) {
-                        var subId = id + '-' + s;
-                        if (!meshByName[subId]) {
-                            var subMesh = new THREE.Mesh(subGeo.clone(), new THREE.MeshStandardMaterial({ color: 0x272932, roughness: 0.35, metalness: 0.1 }));
-                            subMesh.name = subId;
-                            subMesh.position.set(22, 0.09 + (s - 1) * 0.22, -9 + (i - 1) * 1.2);
-                            subMesh.userData = { subPaleta: true, id: subId };
-                            scene.add(subMesh);
-                            created.push(subMesh);
-                            meshByName[subId] = subMesh;
-                        }
-                    }
-                }
-            }
-
-            // Formulacion expansion: A056-A092
-            for (var j = 56; j <= 92; j++) {
-                var aId = 'A' + (j < 100 ? '0' : '') + (j < 10 ? '0' : '') + j;
-                if (!meshByName[aId]) {
-                    var aMesh = new THREE.Mesh(rackGeo.clone(), new THREE.MeshStandardMaterial({ color: 0x272932, roughness: 0.35, metalness: 0.1 }));
-                    aMesh.name = aId;
-                    aMesh.position.set(22, 0.45, 7 + (j - 56) * 0.8);
-                    aMesh.userData = { id: aId, producto: '', codigo: '', lote: '', cantidad: 0, um: '', estado: 'liberado' };
-                    var aInfo = getEntriesForId(aId);
-                    if (aInfo.length > 0) {
-                        aMesh.userData = Object.assign({}, aInfo[0], { entries: aInfo });
-                        aMesh.userData.estado = mergeEntryState(aInfo);
-                    }
-                    aMesh.material = getRackMaterial(aMesh.userData);
-                    scene.add(aMesh);
-                    created.push(aMesh);
-                    meshByName[aId] = aMesh;
-                    // 4 sub-paletas
-                    for (var s2 = 1; s2 <= 4; s2++) {
-                        var aSubId = aId + '-' + s2;
-                        if (!meshByName[aSubId]) {
-                            var aSubMesh = new THREE.Mesh(subGeo.clone(), new THREE.MeshStandardMaterial({ color: 0x272932, roughness: 0.35, metalness: 0.1 }));
-                            aSubMesh.name = aSubId;
-                            aSubMesh.position.set(22, 0.09 + (s2 - 1) * 0.22, 7 + (j - 56) * 0.8);
-                            aSubMesh.userData = { subPaleta: true, id: aSubId };
-                            scene.add(aSubMesh);
-                            created.push(aSubMesh);
-                            meshByName[aSubId] = aSubMesh;
-                        }
-                    }
-                }
-            }
-
-            gestionarSubPaletas(scene);
         }
 
         const raycaster = new THREE.Raycaster();
