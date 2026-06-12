@@ -1823,6 +1823,9 @@
             const seen = new Set();
             const matches = [];
             for (const item of datosInventario) {
+                var itemId = String(item.id || '').trim();
+                var primerDigito = itemId.charAt(0);
+                if (pasilloSeleccionado !== 'todos' && primerDigito !== pasilloSeleccionado) continue;
                 const prod = item.producto ? String(item.producto).toLowerCase() : '';
                 const code = item.codigo ? String(item.codigo).toLowerCase() : '';
                 const id = item.id ? String(item.id).toLowerCase() : '';
@@ -1945,8 +1948,27 @@
             const matches = getSearchMatches();
             if (matches.length === 0) return;
 
-            // Pasillo Transito, Formulación y Galpón Anexo: cámara dinámica basada en el bounding box
-            if (pasilloSeleccionado === 'T' || pasilloSeleccionado === 'A' || pasilloSeleccionado === 'P') {
+            // Galpón Anexo: cámara fija
+            if (pasilloSeleccionado === 'P') {
+                const targetPos = new THREE.Vector3(-63.84, 26.01, 33.04);
+                const targetCenter = new THREE.Vector3(22, -0.51, -1.8);
+                const startPos = camera.position.clone();
+                const startTarget = controls.target.clone();
+                const startTime = performance.now();
+                function step(now) {
+                    const t = Math.min(1, (now - startTime) / duration);
+                    const ease = t < 0.5 ? 4*t*t*t : 1 - Math.pow(-2*t + 2, 3) / 2;
+                    camera.position.lerpVectors(startPos, targetPos, ease);
+                    controls.target.lerpVectors(startTarget, targetCenter, ease);
+                    controls.update();
+                    if (t < 1) requestAnimationFrame(step);
+                }
+                requestAnimationFrame(step);
+                return;
+            }
+
+            // Pasillo Transito y Formulación: cámara dinámica basada en el bounding box
+            if (pasilloSeleccionado === 'T' || pasilloSeleccionado === 'A') {
                 var tBox = new THREE.Box3();
                 for (var m of matches) tBox.expandByObject(m);
                 var tCenter = new THREE.Vector3();
