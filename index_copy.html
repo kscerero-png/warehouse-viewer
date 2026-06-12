@@ -197,6 +197,10 @@
             border-color: rgba(22,163,74,0.2);
         }
         .nav-btn.zone-a:hover { border-color: var(--md-success); color: var(--md-success); }
+        .nav-btn.zone-p {
+            border-color: rgba(220,38,38,0.2);
+        }
+        .nav-btn.zone-p:hover { border-color: var(--md-danger); color: var(--md-danger); }
 
         .sidebar-footer {
             padding: 10px 14px;
@@ -504,6 +508,7 @@
         #zone-occupancy .zo-item.zo-cava .zo-bar-fill { background: var(--md-secondary); }
         #zone-occupancy .zo-item.zo-t .zo-bar-fill { background: var(--md-success); }
         #zone-occupancy .zo-item.zo-a .zo-bar-fill { background: var(--md-warning); }
+        #zone-occupancy .zo-item.zo-p .zo-bar-fill { background: var(--md-danger); }
 
         /* === FLOATING PANELS (info, stats, etc) === */
         .floating-panel {
@@ -898,6 +903,7 @@
                 <button type="button" class="nav-btn" data-pasillo="9">09 <span class="nav-badge">Cava</span></button>
                 <button type="button" class="nav-btn zone-t" data-pasillo="T">T <span class="nav-badge">Tránsito</span></button>
                 <button type="button" class="nav-btn zone-a" data-pasillo="A">F <span class="nav-badge">Formulación</span></button>
+                <button type="button" class="nav-btn zone-p" data-pasillo="P">P <span class="nav-badge">Galpón Anexo</span></button>
             </div>
 
             <div class="nav-section-title">Acciones</div>
@@ -1032,6 +1038,11 @@
                     <div class="zo-name">Formulación</div>
                     <div class="zo-value" id="zo-a">-</div>
                     <div class="zo-bar"><div class="zo-bar-fill" id="zo-bar-a" style="width:0%"></div></div>
+                </div>
+                <div class="zo-item zo-p">
+                    <div class="zo-name">Galpón Anexo</div>
+                    <div class="zo-value" id="zo-p">-</div>
+                    <div class="zo-bar"><div class="zo-bar-fill" id="zo-bar-p" style="width:0%"></div></div>
                 </div>
             </div>
         </div>
@@ -1173,6 +1184,7 @@
             if (aisle === 'todos') return 'Todas las zonas';
             if (aisle === 'T') return 'Transito';
             if (aisle === 'A') return 'Formulación';
+            if (aisle === 'P') return 'Galpón Anexo';
             const index = Number(aisle);
             if (index >= 1 && index <= 4) return 'Almacén Principal';
             if (index >= 5 && index <= 9) return 'CAVA';
@@ -1181,7 +1193,7 @@
 
         function getCapacityForObj(obj) {
             const idStr = String(obj.userData.id).trim();
-            if (isTransitId(idStr) || isFormulacionId(idStr)) {
+            if (isTransitId(idStr) || isFormulacionId(idStr) || isGalponAnexoId(idStr)) {
                 var entries = obj.userData.entries || [obj.userData];
                 var tot = 0, usd = 0;
                 for (var i = 0; i < entries.length; i++) {
@@ -1225,6 +1237,7 @@
             }
             if (aisle === 'T') return computeFromInventario(isTransitId);
             if (aisle === 'A') return computeFromInventario(isFormulacionId);
+            if (aisle === 'P') return computeFromInventario(isGalponAnexoId);
             const countedIds = new Set();
             let total = 0;
             let used = 0;
@@ -1235,7 +1248,7 @@
                 if (!idStr || countedIds.has(idStr)) return;
                 const pasillo = idStr.charAt(0);
                 if (aisle !== 'todos' && pasillo !== aisle) return;
-                if (aisle === 'todos' && (pasillo === 'T' || pasillo === 'A')) return;
+                if (aisle === 'todos' && (pasillo === 'T' || pasillo === 'A' || pasillo === 'P')) return;
                 countedIds.add(idStr);
                 var cap = getCapacityForObj(obj);
                 total += cap.total;
@@ -1246,6 +1259,8 @@
                 used += computeFromInventario(isTransitId).used;
                 total += computeFromInventario(isFormulacionId).total;
                 used += computeFromInventario(isFormulacionId).used;
+                total += computeFromInventario(isGalponAnexoId).total;
+                used += computeFromInventario(isGalponAnexoId).used;
             }
             const empty = total - used;
             const percent = total === 0 ? 0 : Math.round((used / total) * 100);
@@ -1445,23 +1460,40 @@
                 var e = tot - usd;
                 return { total: tot, used: usd, empty: e, percent: tot === 0 ? 0 : Math.round((usd / tot) * 100) };
             })();
+            var pMetrics = (function() {
+                var tot = 0, usd = 0;
+                for (var i = 0; i < datosInventario.length; i++) {
+                    var item = datosInventario[i];
+                    var idStr = String(item.id || '').trim();
+                    if (!isGalponAnexoId(idStr)) continue;
+                    var pal = item.paletas !== undefined ? parseInt(item.paletas) || 0 : 0;
+                    if (pal > 0) { tot += getEffectivePositions(item); usd += pal; }
+                    else if (item.cantidad && item.cantidad > 0) { tot += 1; usd += 1; }
+                }
+                var e = tot - usd;
+                return { total: tot, used: usd, empty: e, percent: tot === 0 ? 0 : Math.round((usd / tot) * 100) };
+            })();
 
             const zoPrimary = document.getElementById('zo-primary');
             const zoCava = document.getElementById('zo-cava');
             const zoT = document.getElementById('zo-t');
             const zoA = document.getElementById('zo-a');
+            const zoP = document.getElementById('zo-p');
             const zoBarPrimary = document.getElementById('zo-bar-primary');
             const zoBarCava = document.getElementById('zo-bar-cava');
             const zoBarT = document.getElementById('zo-bar-t');
             const zoBarA = document.getElementById('zo-bar-a');
+            const zoBarP = document.getElementById('zo-bar-p');
             if (zoPrimary) zoPrimary.innerText = `${principalMetrics.used} / ${principalMetrics.total} (${principalMetrics.percent}%)`;
             if (zoCava) zoCava.innerText = `${cavaMetrics.used} / ${cavaMetrics.total} (${cavaMetrics.percent}%)`;
             if (zoT) zoT.innerText = `${tMetrics.used} / ${tMetrics.total} (${tMetrics.percent}%)`;
             if (zoA) zoA.innerText = `${aMetrics.used} / ${aMetrics.total} (${aMetrics.percent}%)`;
+            if (zoP) zoP.innerText = `${pMetrics.used} / ${pMetrics.total} (${pMetrics.percent}%)`;
             if (zoBarPrimary) zoBarPrimary.style.width = principalMetrics.percent + '%';
             if (zoBarCava) zoBarCava.style.width = cavaMetrics.percent + '%';
             if (zoBarT) zoBarT.style.width = tMetrics.percent + '%';
             if (zoBarA) zoBarA.style.width = aMetrics.percent + '%';
+            if (zoBarP) zoBarP.style.width = pMetrics.percent + '%';
         }
 
         const controls = new THREE.OrbitControls(camera, renderer.domElement);
@@ -1612,8 +1644,8 @@
             loader.load('almacen.glb', function (gltf) {
                 const modelo = gltf.scene;
                 
-                const esLane = (name) => /^[1-9]/.test(name) || /^T\d{2}$/.test(name) || /^A\d{3}$/.test(name);
-                const esSubPaleta = (name) => /^(T\d{2}|A\d{3})-\d+$/.test(name);
+                const esLane = (name) => /^[1-9]/.test(name) || /^T\d{2}$/.test(name) || /^A\d{3}$/.test(name) || /^P\d{2}$/.test(name);
+                const esSubPaleta = (name) => /^(T\d{2}|A\d{3}|P\d{2})-\d+$/.test(name);
 
                 modelo.traverse((child) => {
                     if (child.isMesh) {
@@ -1640,10 +1672,86 @@
                 scene.traverse((child) => {
                     if (child.isMesh && child.name) meshByName[child.name] = child;
                 });
+                generateMissingRacks(meshByName);
                 applyPaletaSpread(meshByName);
             }, undefined, function(error){
                 console.error('Error cargando almacen.glb:', error);
             });
+        }
+
+        function generateMissingRacks(meshByName) {
+            var created = [];
+            var esLaneLocal = (name) => /^[1-9]/.test(name) || /^T\d{2}$/.test(name) || /^A\d{3}$/.test(name) || /^P\d{2}$/.test(name);
+            var rackGeo = new THREE.BoxGeometry(0.9, 0.9, 0.5);
+            var subGeo = new THREE.BoxGeometry(0.8, 0.18, 0.4);
+
+            // Galpón Anexo: P01-P13
+            for (var i = 1; i <= 13; i++) {
+                var id = 'P' + (i < 10 ? '0' : '') + i;
+                if (!meshByName[id]) {
+                    var mesh = new THREE.Mesh(rackGeo.clone(), new THREE.MeshStandardMaterial({ color: 0x272932, roughness: 0.35, metalness: 0.1 }));
+                    mesh.name = id;
+                    mesh.position.set(22, 0.45, -9 + (i - 1) * 1.2);
+                    mesh.userData = { id: id, producto: '', codigo: '', lote: '', cantidad: 0, um: '', estado: 'liberado' };
+                    var info = getEntriesForId(id);
+                    if (info.length > 0) {
+                        mesh.userData = Object.assign({}, info[0], { entries: info });
+                        mesh.userData.estado = mergeEntryState(info);
+                    }
+                    mesh.material = getRackMaterial(mesh.userData);
+                    scene.add(mesh);
+                    created.push(mesh);
+                    meshByName[id] = mesh;
+                    // 4 sub-paletas
+                    for (var s = 1; s <= 4; s++) {
+                        var subId = id + '-' + s;
+                        if (!meshByName[subId]) {
+                            var subMesh = new THREE.Mesh(subGeo.clone(), new THREE.MeshStandardMaterial({ color: 0x272932, roughness: 0.35, metalness: 0.1 }));
+                            subMesh.name = subId;
+                            subMesh.position.set(22, 0.09 + (s - 1) * 0.22, -9 + (i - 1) * 1.2);
+                            subMesh.userData = { subPaleta: true, id: subId };
+                            scene.add(subMesh);
+                            created.push(subMesh);
+                            meshByName[subId] = subMesh;
+                        }
+                    }
+                }
+            }
+
+            // Formulacion expansion: A056-A092
+            for (var j = 56; j <= 92; j++) {
+                var aId = 'A' + (j < 100 ? '0' : '') + (j < 10 ? '0' : '') + j;
+                if (!meshByName[aId]) {
+                    var aMesh = new THREE.Mesh(rackGeo.clone(), new THREE.MeshStandardMaterial({ color: 0x272932, roughness: 0.35, metalness: 0.1 }));
+                    aMesh.name = aId;
+                    aMesh.position.set(22, 0.45, 7 + (j - 56) * 0.8);
+                    aMesh.userData = { id: aId, producto: '', codigo: '', lote: '', cantidad: 0, um: '', estado: 'liberado' };
+                    var aInfo = getEntriesForId(aId);
+                    if (aInfo.length > 0) {
+                        aMesh.userData = Object.assign({}, aInfo[0], { entries: aInfo });
+                        aMesh.userData.estado = mergeEntryState(aInfo);
+                    }
+                    aMesh.material = getRackMaterial(aMesh.userData);
+                    scene.add(aMesh);
+                    created.push(aMesh);
+                    meshByName[aId] = aMesh;
+                    // 4 sub-paletas
+                    for (var s2 = 1; s2 <= 4; s2++) {
+                        var aSubId = aId + '-' + s2;
+                        if (!meshByName[aSubId]) {
+                            var aSubMesh = new THREE.Mesh(subGeo.clone(), new THREE.MeshStandardMaterial({ color: 0x272932, roughness: 0.35, metalness: 0.1 }));
+                            aSubMesh.name = aSubId;
+                            aSubMesh.position.set(22, 0.09 + (s2 - 1) * 0.22, 7 + (j - 56) * 0.8);
+                            aSubMesh.userData = { subPaleta: true, id: aSubId };
+                            scene.add(aSubMesh);
+                            created.push(aSubMesh);
+                            meshByName[aSubId] = aSubMesh;
+                        }
+                    }
+                }
+            }
+
+            gestionarSubPaletas(scene);
         }
 
         const raycaster = new THREE.Raycaster();
@@ -1733,6 +1841,9 @@
 
         function isFormulacionId(id) {
             return /^A\d{3}$/.test(id);
+        }
+        function isGalponAnexoId(id) {
+            return /^P\d{2}$/.test(id);
         }
 
         function getEffectivePositions(entry) {
@@ -1902,8 +2013,8 @@
             const matches = getSearchMatches();
             if (matches.length === 0) return;
 
-            // Pasillo Transito y Formulación: cámara dinámica basada en el bounding box
-            if (pasilloSeleccionado === 'T' || pasilloSeleccionado === 'A') {
+            // Pasillo Transito, Formulación y Galpón Anexo: cámara dinámica basada en el bounding box
+            if (pasilloSeleccionado === 'T' || pasilloSeleccionado === 'A' || pasilloSeleccionado === 'P') {
                 var tBox = new THREE.Box3();
                 for (var m of matches) tBox.expandByObject(m);
                 var tCenter = new THREE.Vector3();
@@ -2075,7 +2186,7 @@
         }
 
         function updateSceneFromInventario() {
-            const esLane = (name) => /^[1-9]/.test(name) || /^T\d{2}$/.test(name) || /^A\d{3}$/.test(name);
+            const esLane = (name) => /^[1-9]/.test(name) || /^T\d{2}$/.test(name) || /^A\d{3}$/.test(name) || /^P\d{2}$/.test(name);
             var meshByName = {};
             scene.traverse((child) => {
                 if (child.isMesh && child.name) meshByName[child.name] = child;
@@ -2105,12 +2216,12 @@
                             if (idx <= cumulative) { entry = parentRacks[k]; break; }
                         }
                         var show = idx <= cumulative && isSlotVisible(idx, entry ? entry.nivel : 0);
-                        child.visible = show || isFormulacionId(parentId);
+                        child.visible = show || isFormulacionId(parentId) || isGalponAnexoId(parentId);
                         child.userData.hiddenByPaletas = !show;
                         if (show) {
                             child.material = getRackMaterial(entry);
                             child.userData = Object.assign({}, entry, { subPaleta: true, id: parentId, hiddenByPaletas: false });
-                        } else if (isFormulacionId(parentId)) {
+                        } else if (isFormulacionId(parentId) || isGalponAnexoId(parentId)) {
                             child.material = getRackMaterial({ id: parentId, cantidad: 0 });
                             child.userData = { id: parentId, producto: '', codigo: '', lote: '', cantidad: 0, um: '', estado: 'liberado', subPaleta: true, hiddenByPaletas: false };
                         }
@@ -2148,12 +2259,12 @@
                     if (idx <= cumulative) { entry = parentRacks[k]; break; }
                 }
                 var show = idx <= cumulative && isSlotVisible(idx, entry ? entry.nivel : 0);
-                child.visible = show || isFormulacionId(parentId);
+                child.visible = show || isFormulacionId(parentId) || isGalponAnexoId(parentId);
                 child.userData.hiddenByPaletas = !show;
                 if (show) {
                     child.material = getRackMaterial(entry);
                     child.userData = Object.assign({}, entry, { subPaleta: true, id: parentId, hiddenByPaletas: false });
-                } else if (isFormulacionId(parentId)) {
+                } else if (isFormulacionId(parentId) || isGalponAnexoId(parentId)) {
                     child.material = getRackMaterial({ id: parentId, cantidad: 0 });
                     child.userData = { id: parentId, producto: '', codigo: '', lote: '', cantidad: 0, um: '', estado: 'liberado', subPaleta: true, hiddenByPaletas: false };
                 }
@@ -2968,7 +3079,7 @@
 
                 var name = obj.name || '';
                 // Ambiente (suelo, rayados, bordes, etc.) siempre visible
-                var esRack = /^[1-9]/.test(name) || /^T\d{2}$/.test(name) || /^A\d{3}$/.test(name) || (obj.userData && obj.userData.subPaleta);
+                var esRack = /^[1-9]/.test(name) || /^T\d{2}$/.test(name) || /^A\d{3}$/.test(name) || /^P\d{2}$/.test(name) || (obj.userData && obj.userData.subPaleta);
                 if (!esRack && (!obj.userData || !obj.userData.entries)) {
                     obj.visible = true;
                     if (obj.material) { obj.material.transparent = false; obj.material.opacity = 1.0; }
