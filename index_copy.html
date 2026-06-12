@@ -528,8 +528,15 @@
         }
 
         #info-panel {
-            left: calc(var(--sidebar-w) + 16px);
-            top: calc(var(--kpi-h) + 16px);
+            position: static;
+            grid-row: 1;
+            grid-column: 2;
+            align-self: start;
+            justify-self: start;
+            margin-left: 12px;
+            margin-top: 8px;
+            z-index: 100;
+            display: none;
         }
         #stats-floating {
             right: 252px;
@@ -845,6 +852,22 @@
 
 <div id="app">
 
+    <!-- Info panel (floating) -->
+    <div id="info-panel" class="floating-panel">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;border-bottom:1px solid rgba(255,255,255,0.06);padding-bottom:8px;">
+            <span style="font-size:11px;font-weight:600;color:var(--md-primary-light);letter-spacing:0.3px;">• LOC_ID</span>
+            <span style="font-family:var(--md-mono);font-size:13px;font-weight:700;" id="rack-id">-</span>
+        </div>
+        <div style="display:flex;justify-content:space-between;gap:12px;margin-bottom:4px;font-size:12px;"><b style="color:var(--md-text-muted);font-weight:500;">Producto</b> <span id="rack-prod" style="font-family:var(--md-mono);font-weight:500;">-</span></div>
+        <div style="display:flex;justify-content:space-between;gap:12px;margin-bottom:4px;font-size:12px;"><b style="color:var(--md-text-muted);font-weight:500;">Código</b> <span id="rack-cod" style="font-family:var(--md-mono);font-weight:500;">-</span></div>
+        <div style="display:flex;justify-content:space-between;gap:12px;margin-bottom:4px;font-size:12px;"><b style="color:var(--md-text-muted);font-weight:500;">Lote</b> <span id="rack-lote" style="font-family:var(--md-mono);font-weight:500;">-</span></div>
+        <div style="display:flex;justify-content:space-between;gap:12px;margin-bottom:4px;font-size:12px;"><b style="color:var(--md-text-muted);font-weight:500;">Cantidad</b> <span style="font-family:var(--md-mono);font-weight:500;"><span id="rack-cant">-</span>&nbsp;<span id="rack-um"></span></span></div>
+        <div style="display:flex;justify-content:space-between;gap:12px;margin-bottom:4px;font-size:12px;"><b style="color:var(--md-text-muted);font-weight:500;">Paletas</b> <span id="rack-paletas" style="font-family:var(--md-mono);font-weight:500;">-</span></div>
+        <div style="display:flex;justify-content:space-between;gap:12px;margin-bottom:4px;font-size:12px;"><b style="color:var(--md-text-muted);font-weight:500;">Nivel</b> <span id="rack-nivel" style="font-family:var(--md-mono);font-weight:500;">-</span></div>
+        <div style="display:flex;justify-content:space-between;gap:12px;margin-bottom:8px;font-size:12px;"><b style="color:var(--md-text-muted);font-weight:500;">Estado</b> <span id="rack-estado" style="font-family:var(--md-mono);font-weight:700;">-</span></div>
+        <button id="info-close" style="width:100%;padding:8px;border-radius:6px;border:1px solid rgba(255,255,255,0.06);background:transparent;color:var(--md-text-secondary);font-size:12px;font-family:var(--md-font);cursor:pointer;">Cerrar Detalle</button>
+    </div>
+
     <!-- ===== LEFT SIDEBAR NAV ===== -->
     <aside id="sidebar">
         <div class="sidebar-logo">
@@ -1029,55 +1052,43 @@
             <div><span class="key">Sostener</span> Enfocar</div>
         </div>
 
-        <!-- Info panel (floating) -->
-        <div id="info-panel" class="floating-panel">
-            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;border-bottom:1px solid rgba(255,255,255,0.06);padding-bottom:8px;">
-                <span style="font-size:11px;font-weight:600;color:var(--md-primary-light);letter-spacing:0.3px;">• LOC_ID</span>
-                <span style="font-family:var(--md-mono);font-size:13px;font-weight:700;" id="rack-id">-</span>
-            </div>
-            <div style="display:flex;justify-content:space-between;gap:12px;margin-bottom:4px;font-size:12px;"><b style="color:var(--md-text-muted);font-weight:500;">Producto</b> <span id="rack-prod" style="font-family:var(--md-mono);font-weight:500;">-</span></div>
-            <div style="display:flex;justify-content:space-between;gap:12px;margin-bottom:4px;font-size:12px;"><b style="color:var(--md-text-muted);font-weight:500;">Código</b> <span id="rack-cod" style="font-family:var(--md-mono);font-weight:500;">-</span></div>
-            <div style="display:flex;justify-content:space-between;gap:12px;margin-bottom:4px;font-size:12px;"><b style="color:var(--md-text-muted);font-weight:500;">Lote</b> <span id="rack-lote" style="font-family:var(--md-mono);font-weight:500;">-</span></div>
-            <div style="display:flex;justify-content:space-between;gap:12px;margin-bottom:4px;font-size:12px;"><b style="color:var(--md-text-muted);font-weight:500;">Cantidad</b> <span style="font-family:var(--md-mono);font-weight:500;"><span id="rack-cant">-</span>&nbsp;<span id="rack-um"></span></span></div>
-            <div style="display:flex;justify-content:space-between;gap:12px;margin-bottom:4px;font-size:12px;"><b style="color:var(--md-text-muted);font-weight:500;">Paletas</b> <span id="rack-paletas" style="font-family:var(--md-mono);font-weight:500;">-</span></div>
-            <div style="display:flex;justify-content:space-between;gap:12px;margin-bottom:4px;font-size:12px;"><b style="color:var(--md-text-muted);font-weight:500;">Nivel</b> <span id="rack-nivel" style="font-family:var(--md-mono);font-weight:500;">-</span></div>
-            <div style="display:flex;justify-content:space-between;gap:12px;margin-bottom:8px;font-size:12px;"><b style="color:var(--md-text-muted);font-weight:500;">Estado</b> <span id="rack-estado" style="font-family:var(--md-mono);font-weight:700;">-</span></div>
-            <button id="info-close" style="width:100%;padding:8px;border-radius:6px;border:1px solid rgba(255,255,255,0.06);background:transparent;color:var(--md-text-secondary);font-size:12px;font-family:var(--md-font);cursor:pointer;">Cerrar Detalle</button>
-        </div>
 
         <!-- Stats Panel (floating) -->
         <div id="stats-floating" class="floating-panel">
-            <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:8px;margin-bottom:12px;">
-                <div>
-                    <div style="font-size:10px;font-weight:600;color:var(--md-primary-light);letter-spacing:0.3px;">• PRODUCT_STATS</div>
-                    <div style="font-family:var(--md-mono);font-size:13px;font-weight:600;margin-top:2px;" id="stats-product-name">-</div>
-                    <div style="font-family:var(--md-mono);font-size:10px;color:var(--md-text-muted);" id="stats-sku">-</div>
+            <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:8px;margin-bottom:14px;">
+                <div style="flex:1;min-width:0;">
+                    <div style="display:flex;align-items:center;gap:6px;margin-bottom:4px;">
+                        <span style="width:6px;height:6px;border-radius:50%;background:var(--md-primary-light);flex-shrink:0;"></span>
+                        <span style="font-size:9px;font-weight:600;color:var(--md-primary-light);letter-spacing:0.8px;text-transform:uppercase;">Product Stats</span>
+                    </div>
+                    <div style="font-family:var(--md-mono);font-size:14px;font-weight:700;color:var(--md-text);line-height:1.3;word-break:break-word;" id="stats-product-name">-</div>
+                    <div style="font-family:var(--md-mono);font-size:10px;color:var(--md-text-muted);margin-top:2px;" id="stats-sku">-</div>
                 </div>
-                <button id="stats-close" style="background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.06);color:var(--md-text-muted);cursor:pointer;font-size:12px;padding:4px 10px;border-radius:4px;flex-shrink:0;">✕</button>
+                <button id="stats-close" style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.06);color:var(--md-text-muted);cursor:pointer;font-size:11px;padding:4px 8px;border-radius:4px;flex-shrink:0;font-family:var(--md-font);transition:all 120ms;" onmouseover="this.style.borderColor='var(--md-primary-light)';this.style.color='var(--md-primary-light)'" onmouseout="this.style.borderColor='rgba(255,255,255,0.06)';this.style.color='var(--md-text-muted)'">✕</button>
             </div>
-            <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px;">
-                <div style="background:rgba(37,99,235,0.04);border:1px solid rgba(37,99,235,0.1);border-radius:6px;padding:10px 12px;">
-                    <div style="font-family:var(--md-mono);font-size:22px;font-weight:700;color:var(--md-primary-light);line-height:1;" id="stats-total-ubics">-</div>
-                    <div style="font-size:10px;font-weight:600;color:var(--md-text-muted);letter-spacing:0.3px;margin-top:3px;">Ubicaciones</div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px;">
+                <div style="background:linear-gradient(135deg,rgba(37,99,235,0.08),rgba(37,99,235,0.02));border:1px solid rgba(37,99,235,0.12);border-radius:6px;padding:12px;">
+                    <div style="font-family:var(--md-mono);font-size:24px;font-weight:700;color:var(--md-primary-light);line-height:1;letter-spacing:-0.5px;" id="stats-total-ubics">-</div>
+                    <div style="font-size:9px;font-weight:600;color:var(--md-text-muted);text-transform:uppercase;letter-spacing:0.5px;margin-top:4px;">Ubicaciones</div>
                 </div>
-                <div style="background:rgba(37,99,235,0.04);border:1px solid rgba(37,99,235,0.1);border-radius:6px;padding:10px 12px;">
-                    <div style="font-family:var(--md-mono);font-size:22px;font-weight:700;color:var(--md-primary-light);line-height:1;" id="stats-total-qty">-</div>
-                    <div style="font-size:10px;font-weight:600;color:var(--md-text-muted);letter-spacing:0.3px;margin-top:3px;" id="stats-um-label">Unidades</div>
+                <div style="background:linear-gradient(135deg,rgba(37,99,235,0.08),rgba(37,99,235,0.02));border:1px solid rgba(37,99,235,0.12);border-radius:6px;padding:12px;">
+                    <div style="font-family:var(--md-mono);font-size:24px;font-weight:700;color:var(--md-primary-light);line-height:1;letter-spacing:-0.5px;" id="stats-total-qty">-</div>
+                    <div style="font-size:9px;font-weight:600;color:var(--md-text-muted);text-transform:uppercase;letter-spacing:0.5px;margin-top:4px;" id="stats-um-label">Unidades</div>
                 </div>
             </div>
-            <div style="font-size:10px;font-weight:600;color:var(--md-text-muted);letter-spacing:0.3px;margin-bottom:8px;display:flex;align-items:center;gap:6px;">
+            <div style="font-size:9px;font-weight:600;color:var(--md-text-muted);text-transform:uppercase;letter-spacing:0.8px;margin-bottom:8px;display:flex;align-items:center;gap:6px;">
                 Lotes
                 <div style="flex:1;height:1px;background:rgba(255,255,255,0.04);"></div>
             </div>
-            <div id="stats-lotes-list" style="display:flex;flex-direction:column;gap:5px;margin-bottom:12px;">
-                <div style="font-size:12px;color:var(--md-text-muted);text-align:center;padding:12px 0;">Sin datos</div>
+            <div id="stats-lotes-list" style="display:flex;flex-direction:column;gap:4px;margin-bottom:14px;">
+                <div style="font-size:11px;color:var(--md-text-muted);text-align:center;padding:16px 0;">Sin datos</div>
             </div>
-            <div style="font-size:10px;font-weight:600;color:var(--md-text-muted);letter-spacing:0.3px;margin-bottom:8px;display:flex;align-items:center;gap:6px;">
+            <div style="font-size:9px;font-weight:600;color:var(--md-text-muted);text-transform:uppercase;letter-spacing:0.8px;margin-bottom:8px;display:flex;align-items:center;gap:6px;">
                 Ubicaciones
                 <div style="flex:1;height:1px;background:rgba(255,255,255,0.04);"></div>
             </div>
-            <div id="stats-ubics-grid" style="display:flex;flex-wrap:wrap;gap:5px;">
-                <div style="font-size:12px;color:var(--md-text-muted);text-align:center;padding:12px 0;width:100%;">Sin datos</div>
+            <div id="stats-ubics-grid" style="display:flex;flex-wrap:wrap;gap:4px;">
+                <div style="font-size:11px;color:var(--md-text-muted);text-align:center;padding:16px 0;width:100%;">Sin datos</div>
             </div>
         </div>
 
@@ -2746,34 +2757,40 @@
             // Lotes
             const lotesEl = document.getElementById('stats-lotes-list');
             if (stats.lotes.length === 0) {
-                lotesEl.innerHTML = '<div class="stats-no-data">Sin lotes registrados</div>';
+                lotesEl.innerHTML = '<div style="font-size:11px;color:var(--md-text-muted);text-align:center;padding:16px 0;">Sin lotes registrados</div>';
             } else {
-                lotesEl.innerHTML = stats.lotes.map(l => `
-                    <div class="stats-lote-row">
-                        <span class="stats-lote-name" title="${l.name}">${l.name}</span>
-                        <span class="stats-lote-meta">
-                            <span class="stats-lote-ubics">${l.ubics.length} ubic.</span>
-                            <span class="stats-lote-qty">${l.qty >= 1000 ? l.qty.toLocaleString('es') : l.qty}</span>
-                        </span>
-                    </div>`).join('');
+                lotesEl.innerHTML = stats.lotes.map(l => {
+                    var statusDot = l.qty > 0 ? '<span style="width:6px;height:6px;border-radius:50%;background:var(--md-primary-light);flex-shrink:0;"></span>' : '';
+                    return `<div style="display:flex;align-items:center;gap:8px;background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.04);border-radius:6px;padding:8px 10px;">
+                        ${statusDot}
+                        <span style="font-family:var(--md-mono);font-size:11px;color:var(--md-text-secondary);flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="${l.name}">${l.name}</span>
+                        <span style="font-size:10px;color:var(--md-text-muted);white-space:nowrap;">${l.ubics.length} ubic.</span>
+                        <span style="font-family:var(--md-mono);font-size:12px;font-weight:600;color:var(--md-primary-light);white-space:nowrap;margin-left:4px;">${l.qty >= 1000 ? l.qty.toLocaleString('es') : l.qty}</span>
+                    </div>`;
+                }).join('');
             }
 
             // Ubicaciones como tags clicables
             const ubicsEl = document.getElementById('stats-ubics-grid');
             if (stats.ubicaciones.length === 0) {
-                ubicsEl.innerHTML = '<div class="stats-no-data">Sin ubicaciones en almacén</div>';
+                ubicsEl.innerHTML = '<div style="font-size:11px;color:var(--md-text-muted);text-align:center;padding:16px 0;width:100%;">Sin ubicaciones en almacén</div>';
             } else {
                 ubicsEl.innerHTML = stats.ubicaciones.map(id => `
-                    <span class="stats-ubic-tag" data-ubic-id="${id}">${id}</span>`
+                    <span style="font-family:var(--md-mono);font-size:10px;font-weight:600;color:var(--md-text-secondary);background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.05);border-radius:4px;padding:3px 8px;cursor:pointer;transition:all 120ms;" 
+                          data-ubic-id="${id}"
+                          onmouseover="this.style.background='rgba(37,99,235,0.1)';this.style.borderColor='rgba(37,99,235,0.3)';this.style.color='var(--md-primary-light)'"
+                          onmouseout="this.style.background='rgba(255,255,255,0.03)';this.style.borderColor='rgba(255,255,255,0.05)';this.style.color='var(--md-text-secondary)'">${id}</span>`
                 ).join('');
 
                 // Click en tag de ubicación: enfocar rack
-                ubicsEl.querySelectorAll('.stats-ubic-tag').forEach(tag => {
+                ubicsEl.querySelectorAll('[data-ubic-id]').forEach(tag => {
                     tag.addEventListener('click', () => {
                         const targetId = tag.getAttribute('data-ubic-id');
                         // Resaltar el tag activo
-                        ubicsEl.querySelectorAll('.stats-ubic-tag').forEach(t => t.classList.remove('active'));
-                        tag.classList.add('active');
+                        ubicsEl.querySelectorAll('[data-ubic-id]').forEach(t => { t.style.background = 'rgba(255,255,255,0.03)'; t.style.borderColor = 'rgba(255,255,255,0.05)'; });
+                        tag.style.background = 'rgba(37,99,235,0.15)';
+                        tag.style.borderColor = 'var(--md-primary-light)';
+                        tag.style.color = 'var(--md-primary-light)';
                         // Buscar el mesh en la escena y enfocar
                         let targetMesh = null;
                         scene.traverse(child => {
