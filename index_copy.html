@@ -2309,7 +2309,8 @@
         function mostrarInfo(infoRack) {
             if (!infoRack) return;
             document.getElementById('rack-id').innerText = infoRack.id || '-';
-            var entriesList = infoRack.entries;
+            var fullEntries = getEntriesForId(infoRack.id);
+            var entriesList = fullEntries.length > 0 ? fullEntries : (infoRack.entries);
             if (entriesList && entriesList.length > 1) {
                 var prodHtml = entriesList.map(function(e, i) {
                     return (i + 1) + '. ' + (e.producto || '-') + ' [' + (e.codigo || '-') + ']';
@@ -2789,12 +2790,14 @@
             // Mostrar la unidad de medida real del producto
             document.getElementById('stats-um-label').innerText = stats.canonUm || 'Unidades';
 
-            // Lotes
+            // Lotes (max 10)
             const lotesEl = document.getElementById('stats-lotes-list');
             if (stats.lotes.length === 0) {
                 lotesEl.innerHTML = '<div style="font-size:11px;color:var(--md-text-muted);text-align:center;padding:16px 0;">Sin lotes registrados</div>';
             } else {
-                lotesEl.innerHTML = stats.lotes.map(l => {
+                var lotesMostrados = stats.lotes.slice(0, 10);
+                var restantes = stats.lotes.length - 10;
+                lotesEl.innerHTML = lotesMostrados.map(l => {
                     var statusDot = l.qty > 0 ? '<span style="width:6px;height:6px;border-radius:50%;background:var(--md-primary-light);flex-shrink:0;"></span>' : '';
                     return `<div style="display:flex;align-items:center;gap:8px;background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.04);border-radius:6px;padding:8px 10px;">
                         ${statusDot}
@@ -2802,7 +2805,7 @@
                         <span style="font-size:10px;color:var(--md-text-muted);white-space:nowrap;">${l.ubics.length} ubic.</span>
                         <span style="font-family:var(--md-mono);font-size:12px;font-weight:600;color:var(--md-primary-light);white-space:nowrap;margin-left:4px;">${l.qty >= 1000 ? l.qty.toLocaleString('es') : l.qty}</span>
                     </div>`;
-                }).join('');
+                }).join('') + (restantes > 0 ? '<div style="font-size:10px;color:var(--md-text-muted);text-align:center;padding:8px 0;border-top:1px solid rgba(255,255,255,0.04);margin-top:4px;">+' + restantes + ' lotes m&aacute;s</div>' : '');
             }
 
             // Ubicaciones como tags clicables
