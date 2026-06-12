@@ -1,0 +1,3038 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Almacén 3D Interactivo - Consola de Operaciones</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap');
+
+        /* === Material Design Theme (Dark) === */
+        :root {
+            --md-primary: #2563eb;
+            --md-primary-light: #3b82f6;
+            --md-primary-dark: #1d4ed8;
+            --md-secondary: #6366f1;
+            --md-warning: #d97706;
+            --md-danger: #dc2626;
+            --md-success: #16a34a;
+            --md-surface: #1e293b;
+            --md-surface-2: #263141;
+            --md-surface-3: #2d384a;
+            --md-bg: #0b1120;
+            --md-text: #f1f5f9;
+            --md-text-secondary: #94a3b8;
+            --md-text-muted: #64748b;
+            --md-elevation-1: 0 1px 3px rgba(0,0,0,0.4), 0 1px 2px rgba(0,0,0,0.3);
+            --md-elevation-2: 0 3px 6px rgba(0,0,0,0.5), 0 3px 6px rgba(0,0,0,0.4);
+            --md-elevation-4: 0 6px 12px rgba(0,0,0,0.6), 0 3px 8px rgba(0,0,0,0.5);
+            --md-elevation-8: 0 12px 24px rgba(0,0,0,0.7), 0 6px 12px rgba(0,0,0,0.6);
+            --md-radius: 8px;
+            --md-radius-sm: 4px;
+            --md-font: 'Inter', 'Roboto', sans-serif;
+            --md-mono: 'JetBrains Mono', monospace;
+            --sidebar-w: 260px;
+            --kpi-h: 72px;
+        }
+
+        html, body {
+            height: 100%;
+            margin: 0;
+            overflow: hidden;
+            font-family: var(--md-font);
+            background: var(--md-bg);
+            color: var(--md-text);
+        }
+
+        /* === App Shell === */
+        #app {
+            display: grid;
+            grid-template-columns: var(--sidebar-w) 1fr;
+            grid-template-rows: var(--kpi-h) 1fr;
+            height: 100vh;
+            width: 100vw;
+            position: relative;
+        }
+
+        /* === LEFT SIDEBAR - Navigation === */
+        #sidebar {
+            grid-row: 1 / -1;
+            background: var(--md-surface);
+            border-right: 1px solid rgba(255,255,255,0.06);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            z-index: 10;
+        }
+        .sidebar-logo {
+            height: var(--kpi-h);
+            display: flex;
+            align-items: center;
+            padding: 0 20px;
+            gap: 12px;
+            border-bottom: 1px solid rgba(255,255,255,0.06);
+            flex-shrink: 0;
+        }
+        .sidebar-logo .logo-icon {
+            width: 32px;
+            height: 32px;
+            border-radius: 6px;
+            background: var(--md-primary);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 14px;
+            color: #fff;
+        }
+        .sidebar-logo .logo-text {
+            font-size: 16px;
+            font-weight: 700;
+            color: var(--md-text);
+            letter-spacing: 0.5px;
+        }
+        .sidebar-logo .logo-sub {
+            font-size: 10px;
+            color: var(--md-text-muted);
+            font-weight: 400;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+        }
+
+        .sidebar-search {
+            padding: 12px 14px;
+            flex-shrink: 0;
+            position: relative;
+        }
+        .sidebar-search input {
+            width: 100%;
+            box-sizing: border-box;
+            padding: 9px 12px;
+            border-radius: var(--md-radius);
+            border: 1px solid rgba(255,255,255,0.08);
+            background: rgba(255,255,255,0.04);
+            color: var(--md-text);
+            font-size: 13px;
+            font-family: var(--md-font);
+            outline: none;
+            transition: border-color 150ms ease, box-shadow 150ms ease;
+        }
+        .sidebar-search input:focus {
+            border-color: var(--md-primary);
+            box-shadow: 0 0 0 3px rgba(37,99,235,0.15);
+        }
+        .sidebar-search input::placeholder { color: var(--md-text-muted); }
+        #search-suggestions button {
+            width: 100%; text-align: left; border: none; background: transparent;
+            color: var(--md-text-secondary); padding: 10px 12px; cursor: pointer;
+            font-size: 12px; font-family: var(--md-font);
+            border-bottom: 1px solid rgba(255,255,255,0.03);
+        }
+        #search-suggestions button:hover { background: rgba(37,99,235,0.08); color: var(--md-primary-light); }
+        #search-suggestions .no-result {
+            padding: 10px 12px; color: var(--md-text-muted); font-size: 12px;
+        }
+
+        .sidebar-nav {
+            flex: 1;
+            overflow-y: auto;
+            padding: 4px 10px;
+            scrollbar-width: thin;
+            scrollbar-color: rgba(255,255,255,0.06) transparent;
+        }
+        .sidebar-nav::-webkit-scrollbar { width: 4px; }
+        .sidebar-nav::-webkit-scrollbar-track { background: transparent; }
+        .sidebar-nav::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.06); border-radius: 2px; }
+
+        .nav-section-title {
+            font-size: 10px;
+            font-weight: 600;
+            color: var(--md-text-muted);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            padding: 12px 10px 6px;
+        }
+
+        .nav-aisle-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 4px;
+            padding: 0 4px;
+        }
+        .nav-btn {
+            background: rgba(255,255,255,0.03);
+            border: 1px solid rgba(255,255,255,0.06);
+            color: var(--md-text-secondary);
+            padding: 8px 4px;
+            font-size: 11px;
+            font-family: var(--md-font);
+            font-weight: 500;
+            text-align: center;
+            border-radius: var(--md-radius-sm);
+            cursor: pointer;
+            transition: all 120ms ease;
+        }
+        .nav-btn:hover {
+            background: rgba(37,99,235,0.08);
+            border-color: rgba(37,99,235,0.3);
+            color: var(--md-primary-light);
+        }
+        .nav-btn.active {
+            background: rgba(37,99,235,0.12);
+            border-color: var(--md-primary);
+            color: var(--md-primary-light);
+            font-weight: 600;
+        }
+        .nav-btn .nav-badge {
+            display: block;
+            font-size: 8px;
+            color: var(--md-text-muted);
+            margin-top: 2px;
+            font-weight: 400;
+        }
+        .nav-btn.zone-t {
+            border-color: rgba(99,102,241,0.2);
+        }
+        .nav-btn.zone-t:hover { border-color: var(--md-secondary); color: var(--md-secondary); }
+        .nav-btn.zone-a {
+            border-color: rgba(22,163,74,0.2);
+        }
+        .nav-btn.zone-a:hover { border-color: var(--md-success); color: var(--md-success); }
+
+        .sidebar-footer {
+            padding: 10px 14px;
+            border-top: 1px solid rgba(255,255,255,0.06);
+            flex-shrink: 0;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+        .sidebar-footer .sync-info {
+            font-size: 10px;
+            color: var(--md-text-muted);
+            display: flex;
+            justify-content: space-between;
+        }
+        .sidebar-actions {
+            display: flex;
+            gap: 6px;
+        }
+        .sidebar-actions button {
+            flex: 1;
+            background: rgba(255,255,255,0.03);
+            border: 1px solid rgba(255,255,255,0.06);
+            color: var(--md-text-secondary);
+            padding: 7px 8px;
+            font-size: 11px;
+            font-family: var(--md-font);
+            border-radius: var(--md-radius-sm);
+            cursor: pointer;
+            transition: all 120ms ease;
+            text-align: center;
+        }
+        .sidebar-actions button:hover {
+            background: rgba(37,99,235,0.08);
+            border-color: var(--md-primary);
+            color: var(--md-primary-light);
+        }
+
+        /* === TOP KPI BAR === */
+        #kpi-bar {
+            grid-column: 2;
+            grid-row: 1;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            padding: 0 16px;
+            background: var(--md-surface);
+            border-bottom: 1px solid rgba(255,255,255,0.06);
+            z-index: 5;
+            overflow-x: auto;
+        }
+        .kpi-card {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px 14px;
+            border-radius: var(--md-radius);
+            background: rgba(255,255,255,0.02);
+            border: 1px solid rgba(255,255,255,0.04);
+            min-width: 120px;
+            flex-shrink: 0;
+        }
+        .kpi-card .kpi-icon {
+            width: 36px;
+            height: 36px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 16px;
+            flex-shrink: 0;
+        }
+        .kpi-card .kpi-info {
+            display: flex;
+            flex-direction: column;
+        }
+        .kpi-card .kpi-value {
+            font-family: var(--md-mono);
+            font-size: 20px;
+            font-weight: 700;
+            line-height: 1.2;
+        }
+        .kpi-card .kpi-label {
+            font-size: 10px;
+            color: var(--md-text-muted);
+            font-weight: 500;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .kpi-card.kpi-blue .kpi-icon { background: rgba(37,99,235,0.12); color: var(--md-primary-light); }
+        .kpi-card.kpi-blue .kpi-value { color: var(--md-primary-light); }
+        .kpi-card.kpi-amber .kpi-icon { background: rgba(217,119,6,0.12); color: var(--md-warning); }
+        .kpi-card.kpi-amber .kpi-value { color: var(--md-warning); }
+        .kpi-card.kpi-red .kpi-icon { background: rgba(220,38,38,0.12); color: var(--md-danger); }
+        .kpi-card.kpi-red .kpi-value { color: var(--md-danger); }
+        .kpi-card.kpi-green .kpi-icon { background: rgba(22,163,74,0.12); color: var(--md-success); }
+        .kpi-card.kpi-green .kpi-value { color: var(--md-success); }
+
+        .kpi-actions {
+            display: flex;
+            gap: 6px;
+            margin-left: auto;
+            flex-shrink: 0;
+        }
+        .kpi-actions button {
+            background: rgba(255,255,255,0.03);
+            border: 1px solid rgba(255,255,255,0.06);
+            color: var(--md-text-secondary);
+            padding: 8px 14px;
+            font-size: 12px;
+            font-family: var(--md-font);
+            border-radius: var(--md-radius);
+            cursor: pointer;
+            transition: all 120ms ease;
+        }
+        .kpi-actions button:hover {
+            background: rgba(37,99,235,0.08);
+            border-color: var(--md-primary);
+            color: var(--md-primary-light);
+        }
+
+        /* === MAIN AREA (3D Scene + Right Panel + Bottom-right) === */
+        #main-area {
+            grid-column: 2;
+            grid-row: 2;
+            position: relative;
+            overflow: hidden;
+        }
+
+        #scene-container {
+            position: absolute;
+            inset: 0;
+        }
+        #scene-container canvas {
+            display: block;
+        }
+
+        /* === RIGHT PANEL (Donut charts placeholder) === */
+        #right-panel {
+            position: absolute;
+            right: 16px;
+            top: 16px;
+            z-index: 20;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            width: 220px;
+        }
+        .md-card {
+            background: var(--md-surface);
+            border: 1px solid rgba(255,255,255,0.06);
+            border-radius: var(--md-radius);
+            box-shadow: var(--md-elevation-2);
+            padding: 14px;
+            transition: box-shadow 200ms ease;
+        }
+        .md-card:hover { box-shadow: var(--md-elevation-4); }
+
+        .md-card .card-title {
+            font-size: 11px;
+            font-weight: 600;
+            color: var(--md-text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .md-card .card-title::after {
+            content: '';
+            flex: 1;
+            height: 1px;
+            background: rgba(255,255,255,0.04);
+        }
+
+        /* Donut chart placeholder */
+        .donut-placeholder {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 16px;
+        }
+        .donut-ring {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            border: 6px solid rgba(255,255,255,0.06);
+            border-top-color: var(--md-primary-light);
+            border-right-color: var(--md-warning);
+            border-bottom-color: var(--md-danger);
+            transform: rotate(-45deg);
+            flex-shrink: 0;
+        }
+        .donut-legend {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            font-size: 11px;
+        }
+        .donut-legend-item {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            color: var(--md-text-secondary);
+        }
+        .donut-legend-item .dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            flex-shrink: 0;
+        }
+        .donut-legend-item .val {
+            font-family: var(--md-mono);
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--md-text);
+            margin-left: auto;
+        }
+
+        #donut-status .status-list {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+        #donut-status .status-row {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        #donut-status .status-row .bar-bg {
+            flex: 1;
+            height: 6px;
+            background: rgba(255,255,255,0.06);
+            border-radius: 3px;
+            overflow: hidden;
+        }
+        #donut-status .status-row .bar-fill {
+            height: 100%;
+            border-radius: 3px;
+            transition: width 300ms ease;
+        }
+        #donut-status .status-row .status-label {
+            font-size: 11px;
+            color: var(--md-text-secondary);
+            min-width: 60px;
+        }
+        #donut-status .status-row .status-qty {
+            font-family: var(--md-mono);
+            font-size: 11px;
+            color: var(--md-text);
+            min-width: 30px;
+            text-align: right;
+        }
+
+        /* === ZONE OCCUPANCY (bottom-right) === */
+        #zone-occupancy {
+            position: absolute;
+            right: 16px;
+            bottom: 16px;
+            z-index: 20;
+            width: 340px;
+            max-height: 240px;
+        }
+        #zone-occupancy .zo-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 6px;
+            margin-top: 8px;
+        }
+        #zone-occupancy .zo-item {
+            background: rgba(255,255,255,0.02);
+            border: 1px solid rgba(255,255,255,0.04);
+            border-radius: var(--md-radius-sm);
+            padding: 8px 10px;
+        }
+        #zone-occupancy .zo-item .zo-name {
+            font-size: 10px;
+            font-weight: 600;
+            color: var(--md-text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.3px;
+        }
+        #zone-occupancy .zo-item .zo-value {
+            font-family: var(--md-mono);
+            font-size: 14px;
+            font-weight: 700;
+            color: var(--md-text);
+            margin-top: 2px;
+        }
+        #zone-occupancy .zo-item .zo-bar {
+            height: 3px;
+            background: rgba(255,255,255,0.06);
+            border-radius: 2px;
+            margin-top: 4px;
+            overflow: hidden;
+        }
+        #zone-occupancy .zo-item .zo-bar-fill {
+            height: 100%;
+            border-radius: 2px;
+            transition: width 300ms ease;
+        }
+        #zone-occupancy .zo-item.zo-primary .zo-bar-fill { background: var(--md-primary-light); }
+        #zone-occupancy .zo-item.zo-cava .zo-bar-fill { background: var(--md-secondary); }
+        #zone-occupancy .zo-item.zo-t .zo-bar-fill { background: var(--md-success); }
+        #zone-occupancy .zo-item.zo-a .zo-bar-fill { background: var(--md-warning); }
+
+        /* === FLOATING PANELS (info, stats, etc) === */
+        .floating-panel {
+            position: absolute;
+            z-index: 50;
+            background: var(--md-surface-2);
+            border: 1px solid rgba(255,255,255,0.08);
+            border-radius: var(--md-radius);
+            box-shadow: var(--md-elevation-8);
+            padding: 16px;
+            display: none;
+            opacity: 0;
+            transform: translateY(-8px);
+            transition: opacity 200ms ease, transform 200ms ease;
+            min-width: 280px;
+            max-width: 360px;
+        }
+        .floating-panel.visible {
+            display: block;
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        #info-panel {
+            left: calc(var(--sidebar-w) + 16px);
+            top: calc(var(--kpi-h) + 16px);
+        }
+        #stats-floating {
+            right: 252px;
+            top: calc(var(--kpi-h) + 16px);
+            max-height: calc(100vh - var(--kpi-h) - 100px);
+            overflow-y: auto;
+        }
+
+        /* === LOADER === */
+        #loader {
+            position: absolute;
+            left: 50%;
+            bottom: 100px;
+            transform: translateX(-50%);
+            z-index: 100;
+            display: none;
+            background: var(--md-surface-2);
+            border: 1px solid rgba(255,255,255,0.08);
+            border-radius: var(--md-radius);
+            box-shadow: var(--md-elevation-8);
+            padding: 14px 20px;
+            min-width: 200px;
+        }
+        #loader.visible { display: block; }
+        #loader .label {
+            font-size: 11px;
+            color: var(--md-primary-light);
+            margin-bottom: 8px;
+        }
+        #loader .bar {
+            height: 3px;
+            background: rgba(255,255,255,0.06);
+            border-radius: 2px;
+            overflow: hidden;
+        }
+        #loader .bar i {
+            display: block;
+            height: 100%;
+            width: 0%;
+            background: var(--md-primary-light);
+            transition: width 120ms linear;
+        }
+
+        /* === COORDS OVERLAY (bottom-left inside 3D area) === */
+        #coords-overlay {
+            position: absolute;
+            left: 16px;
+            bottom: 16px;
+            z-index: 20;
+            background: var(--md-surface);
+            border: 1px solid rgba(255,255,255,0.06);
+            border-radius: var(--md-radius);
+            box-shadow: var(--md-elevation-2);
+            padding: 10px 14px;
+            font-size: 11px;
+            color: var(--md-text-secondary);
+            font-family: var(--md-mono);
+            line-height: 1.7;
+        }
+        #coords-overlay b {
+            color: var(--md-text-muted);
+            display: inline-block;
+            width: 64px;
+        }
+        #coords-overlay span { color: var(--md-primary-light); }
+
+        /* === CONTROLS LEGEND === */
+        #controls-legend {
+            position: absolute;
+            left: 16px;
+            bottom: 110px;
+            z-index: 20;
+            background: var(--md-surface);
+            border: 1px solid rgba(255,255,255,0.06);
+            border-radius: var(--md-radius);
+            box-shadow: var(--md-elevation-2);
+            padding: 10px 14px;
+            font-size: 11px;
+            color: var(--md-text-secondary);
+            line-height: 1.7;
+            transition: opacity 200ms ease;
+        }
+        #controls-legend .key {
+            color: var(--md-text);
+            background: rgba(255,255,255,0.06);
+            padding: 1px 5px;
+            border-radius: 3px;
+            font-size: 9px;
+            font-weight: 600;
+        }
+        #controls-legend div {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        /* === STATUS SUMMARY (overlay for rejected/retained) === */
+        #status-summary-panel {
+            position: absolute;
+            left: calc(var(--sidebar-w) + 16px);
+            bottom: 16px;
+            z-index: 30;
+            min-width: 260px;
+            max-width: 320px;
+            max-height: 200px;
+            display: none;
+            flex-direction: column;
+            font-size: 12px;
+            overflow: hidden;
+            padding: 0;
+            background: var(--md-surface-2);
+            border: 1px solid rgba(255,255,255,0.08);
+            border-radius: var(--md-radius);
+            box-shadow: var(--md-elevation-8);
+        }
+        #status-summary-panel.visible { display: flex; }
+        #status-summary-panel .summary-header {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 10px 14px;
+            border-bottom: 1px solid rgba(255,255,255,0.06);
+            flex-shrink: 0;
+        }
+        #status-summary-panel .summary-header .summary-icon {
+            width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0;
+        }
+        #status-summary-panel .summary-header .summary-title {
+            font-weight: 600; font-size: 11px; text-transform: uppercase;
+            letter-spacing: 0.5px; flex: 1; color: var(--md-text); margin: 0;
+        }
+        #status-summary-panel .summary-header .summary-count {
+            font-size: 10px; color: var(--md-text-muted);
+            background: rgba(255,255,255,0.05); padding: 2px 7px; border-radius: 10px;
+        }
+        #status-summary-panel .summary-body {
+            padding: 6px 14px 10px; overflow-y: auto; flex: 1;
+        }
+        #status-summary-panel .summary-item {
+            display: flex; align-items: center; gap: 8px;
+            padding: 5px 8px; border-radius: 6px; margin: 0 -8px;
+        }
+        #status-summary-panel .summary-item:hover { background: rgba(255,255,255,0.03); }
+        #status-summary-panel .summary-item-dot {
+            width: 5px; height: 5px; border-radius: 50%; flex-shrink: 0; opacity: 0.4;
+        }
+        #status-summary-panel .summary-item-name {
+            color: var(--md-text); flex: 1; overflow: hidden;
+            text-overflow: ellipsis; white-space: nowrap; font-weight: 500;
+        }
+        #status-summary-panel .summary-item-qty {
+            color: var(--md-text-secondary); font-weight: 600; font-size: 12px;
+            flex-shrink: 0; background: rgba(255,255,255,0.04);
+            padding: 1px 8px; border-radius: 8px; min-width: 24px; text-align: center;
+        }
+
+        /* === RESET VIEW BUTTON (floating bottom center) === */
+        #reset-view-bottom {
+            position: absolute;
+            left: 50%;
+            bottom: 24px;
+            transform: translateX(-50%) translateY(8px);
+            z-index: 30;
+            padding: 10px 20px;
+            border-radius: var(--md-radius);
+            border: 1px solid var(--md-primary);
+            background: rgba(37,99,235,0.08);
+            color: var(--md-primary-light);
+            font-size: 12px;
+            font-weight: 500;
+            cursor: pointer;
+            opacity: 0;
+            pointer-events: none;
+            font-family: var(--md-font);
+            transition: all 220ms cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        #reset-view-bottom.visible {
+            opacity: 1;
+            pointer-events: auto;
+            transform: translateX(-50%) translateY(0);
+        }
+        #reset-view-bottom:hover {
+            background: rgba(37,99,235,0.15);
+            color: var(--md-primary-light);
+        }
+
+        /* Estado colors for info panel */
+        #rack-estado.estado-retenido { color: var(--md-warning); }
+        #rack-estado.estado-rechazado { color: var(--md-danger); }
+        #rack-estado.estado-liberado { color: var(--md-primary-light); }
+
+        /* === CSV MAP PANEL === */
+        #csv-map {
+            position: absolute;
+            right: 16px;
+            top: calc(var(--kpi-h) + 16px);
+            z-index: 60;
+            width: 320px;
+            display: none;
+            opacity: 0;
+            transform: translateY(-8px);
+            background: var(--md-surface-2);
+            border: 1px solid rgba(255,255,255,0.08);
+            border-radius: var(--md-radius);
+            box-shadow: var(--md-elevation-8);
+            padding: 16px;
+        }
+        #csv-map.visible { display: block; opacity: 1; transform: translateY(0); }
+
+        /* Override select style for csv-map */
+        #csv-map select {
+            width: 100%;
+            background: rgba(11,17,32,0.9);
+            color: var(--md-text);
+            border: 1px solid rgba(255,255,255,0.08);
+            padding: 8px 10px;
+            border-radius: var(--md-radius-sm);
+            font-family: var(--md-font);
+            font-size: 12px;
+            outline: none;
+            cursor: pointer;
+            -webkit-appearance: none;
+            -moz-appearance: none;
+            appearance: none;
+            background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'><path fill='%2394a3b8' d='M0 0l5 5 5-5z'/></svg>");
+            background-repeat: no-repeat;
+            background-position: right 12px center;
+        }
+        #csv-map .btn-csv {
+            flex: 1;
+            padding: 8px 12px;
+            border-radius: var(--md-radius-sm);
+            border: 1px solid rgba(255,255,255,0.06);
+            background: transparent;
+            color: var(--md-text);
+            font-size: 12px;
+            font-family: var(--md-font);
+            cursor: pointer;
+            transition: all 120ms ease;
+        }
+        #csv-map .btn-csv.apply { background: var(--md-primary); color: #fff; border-color: var(--md-primary); }
+        #csv-map .btn-csv.cancel:hover { background: rgba(220,38,38,0.15); border-color: var(--md-danger); color: var(--md-danger); }
+
+        /* === FILTER BUTTONS (reuse in right panel) === */
+        .filter-badge-row {
+            display: flex;
+            gap: 4px;
+            flex-wrap: wrap;
+            margin-top: 8px;
+        }
+        .filter-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            padding: 3px 8px;
+            border-radius: 12px;
+            border: 1px solid transparent;
+            font-size: 10px;
+            font-family: var(--md-font);
+            cursor: pointer;
+            transition: all 120ms ease;
+            color: var(--md-text-muted);
+            background: transparent;
+            user-select: none;
+        }
+        .filter-badge:hover {
+            background: rgba(255,255,255,0.04);
+            color: var(--md-text);
+        }
+        .filter-badge .dot {
+            width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0;
+        }
+        .filter-badge.active {
+            border-color: currentColor;
+            color: var(--md-text);
+            font-weight: 600;
+        }
+        .filter-badge.active.liberado { background: rgba(37,99,235,0.08); }
+        .filter-badge.active.retenido { background: rgba(217,119,6,0.08); }
+        .filter-badge.active.rechazado { background: rgba(220,38,38,0.08); }
+
+        /* === RESPONSIVE === */
+        @media (max-width: 1100px) {
+            :root { --sidebar-w: 220px; --kpi-h: 64px; }
+            #right-panel { width: 180px; }
+            #zone-occupancy { width: 280px; }
+            .kpi-card { min-width: 100px; padding: 8px 10px; }
+            .kpi-card .kpi-value { font-size: 16px; }
+            .kpi-card .kpi-icon { width: 28px; height: 28px; font-size: 13px; }
+        }
+        @media (max-width: 800px) {
+            :root { --sidebar-w: 180px; --kpi-h: 56px; }
+            #right-panel { width: 160px; right: 8px; top: 8px; gap: 6px; }
+            #zone-occupancy { width: 240px; right: 8px; bottom: 8px; }
+            .kpi-card { min-width: 80px; padding: 6px 8px; }
+            .kpi-card .kpi-value { font-size: 14px; }
+            .kpi-card .kpi-icon { width: 24px; height: 24px; font-size: 11px; }
+            .md-card { padding: 10px; }
+        }
+        @media (max-height: 700px) {
+            :root { --kpi-h: 48px; }
+            .kpi-card { padding: 4px 8px; }
+            .kpi-card .kpi-value { font-size: 14px; }
+            .kpi-card .kpi-icon { width: 22px; height: 22px; font-size: 10px; }
+            #controls-legend { display: none; }
+        }
+    </style>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/GLTFLoader.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+</head>
+<body>
+
+<div id="app">
+
+    <!-- ===== LEFT SIDEBAR NAV ===== -->
+    <aside id="sidebar">
+        <div class="sidebar-logo">
+            <div class="logo-icon">3D</div>
+            <div>
+                <div class="logo-text">Bodega 3D</div>
+                <div class="logo-sub">Control de Operaciones</div>
+            </div>
+        </div>
+
+        <div class="sidebar-search">
+            <input id="search-input" type="text" placeholder="Buscar producto, SKU o ubicación..." autocomplete="off" />
+            <div id="search-suggestions" style="position:absolute;left:14px;right:14px;top:52px;z-index:100;background:var(--md-surface-3);border:1px solid rgba(255,255,255,0.08);border-radius:var(--md-radius-sm);box-shadow:var(--md-elevation-8);display:none;max-height:190px;overflow-y:auto;"></div>
+        </div>
+
+        <div class="sidebar-nav">
+            <div class="nav-section-title">Pasillos</div>
+            <div class="nav-aisle-grid" id="pasillo-buttons-container">
+                <button type="button" class="nav-btn active" data-pasillo="todos">Todos <span class="nav-badge">General</span></button>
+                <button type="button" class="nav-btn" data-pasillo="1">01 <span class="nav-badge">Ppal</span></button>
+                <button type="button" class="nav-btn" data-pasillo="2">02 <span class="nav-badge">Ppal</span></button>
+                <button type="button" class="nav-btn" data-pasillo="3">03 <span class="nav-badge">Ppal</span></button>
+                <button type="button" class="nav-btn" data-pasillo="4">04 <span class="nav-badge">Ppal</span></button>
+                <button type="button" class="nav-btn" data-pasillo="5">05 <span class="nav-badge">Cava</span></button>
+                <button type="button" class="nav-btn" data-pasillo="6">06 <span class="nav-badge">Cava</span></button>
+                <button type="button" class="nav-btn" data-pasillo="7">07 <span class="nav-badge">Cava</span></button>
+                <button type="button" class="nav-btn" data-pasillo="8">08 <span class="nav-badge">Cava</span></button>
+                <button type="button" class="nav-btn" data-pasillo="9">09 <span class="nav-badge">Cava</span></button>
+                <button type="button" class="nav-btn zone-t" data-pasillo="T">T <span class="nav-badge">Tránsito</span></button>
+                <button type="button" class="nav-btn zone-a" data-pasillo="A">F <span class="nav-badge">Formulación</span></button>
+            </div>
+
+            <div class="nav-section-title">Acciones</div>
+            <div style="padding: 0 4px; display: flex; gap: 4px;">
+                <button id="search-button" class="nav-btn" style="flex:1;">Filtrar</button>
+                <button id="clear-search" class="nav-btn" style="flex:1;">Limpiar</button>
+            </div>
+        </div>
+
+        <div class="sidebar-footer">
+            <div class="sync-info">
+                <span>Sync</span>
+                <span id="sync-status">-</span>
+            </div>
+            <div class="sidebar-actions">
+                <button id="reset-view">Vista Global</button>
+                <div style="flex:1; position:relative;">
+                    <input id="csv-input" type="file" accept=".csv" style="position:absolute;inset:0;opacity:0;cursor:pointer;z-index:2;" />
+                    <label id="csv-label" for="csv-input" style="display:flex;align-items:center;justify-content:center;height:100%;cursor:pointer;">Importar</label>
+                </div>
+            </div>
+        </div>
+    </aside>
+
+    <!-- ===== TOP KPI BAR ===== -->
+    <header id="kpi-bar">
+        <div class="kpi-card kpi-blue">
+            <div class="kpi-icon">📦</div>
+            <div class="kpi-info">
+                <span class="kpi-value" id="kpi-total-ubics">-</span>
+                <span class="kpi-label">Ubicaciones</span>
+            </div>
+        </div>
+        <div class="kpi-card kpi-green">
+            <div class="kpi-icon">📊</div>
+            <div class="kpi-info">
+                <span class="kpi-value" id="kpi-ocupacion">-</span>
+                <span class="kpi-label">Ocupación</span>
+            </div>
+        </div>
+        <div class="kpi-card kpi-amber">
+            <div class="kpi-icon">⚠️</div>
+            <div class="kpi-info">
+                <span class="kpi-value" id="kpi-retenidos">-</span>
+                <span class="kpi-label">Retenidos</span>
+            </div>
+        </div>
+        <div class="kpi-card kpi-red">
+            <div class="kpi-icon">🚫</div>
+            <div class="kpi-info">
+                <span class="kpi-value" id="kpi-rechazados">-</span>
+                <span class="kpi-label">Rechazados</span>
+            </div>
+        </div>
+        <div class="kpi-actions"></div>
+    </header>
+
+    <!-- ===== MAIN AREA ===== -->
+    <div id="main-area">
+
+        <!-- 3D Scene Container -->
+        <div id="scene-container"></div>
+
+        <!-- Right Panel: Donut Charts -->
+        <div id="right-panel">
+            <div class="md-card" id="donut-status">
+                <div class="card-title">Estado de Inventario</div>
+                <div class="status-list" id="donut-status-list">
+                    <div class="status-row">
+                        <span class="status-label">Liberado</span>
+                        <div class="bar-bg"><div class="bar-fill" id="bar-liberado" style="width:0%;background:var(--md-primary-light)"></div></div>
+                        <span class="status-qty" id="donut-liberado">0</span>
+                    </div>
+                    <div class="status-row">
+                        <span class="status-label">Retenido</span>
+                        <div class="bar-bg"><div class="bar-fill" id="bar-retenido" style="width:0%;background:var(--md-warning)"></div></div>
+                        <span class="status-qty" id="donut-retenido">0</span>
+                    </div>
+                    <div class="status-row">
+                        <span class="status-label">Rechazado</span>
+                        <div class="bar-bg"><div class="bar-fill" id="bar-rechazado" style="width:0%;background:var(--md-danger)"></div></div>
+                        <span class="status-qty" id="donut-rechazado">0</span>
+                    </div>
+                    <div class="status-row">
+                        <span class="status-label">Vacío</span>
+                        <div class="bar-bg"><div class="bar-fill" id="bar-vacio" style="width:0%;background:rgba(255,255,255,0.12)"></div></div>
+                        <span class="status-qty" id="donut-vacio">0</span>
+                    </div>
+                </div>
+                <div class="filter-badge-row" id="usage-status-breakdown">
+                    <button class="filter-badge" data-status="liberado">
+                        <span class="dot" style="background:var(--md-primary-light)"></span> Liberado
+                    </button>
+                    <button class="filter-badge" data-status="retenido">
+                        <span class="dot" style="background:var(--md-warning)"></span> Retenido <span id="usage-retenido">-</span>
+                    </button>
+                    <button class="filter-badge" data-status="rechazado">
+                        <span class="dot" style="background:var(--md-danger)"></span> Rechazado <span id="usage-rechazado">-</span>
+                    </button>
+                    <span id="usage-status-clear" style="display:none;cursor:pointer;color:var(--md-text-muted);font-size:12px;padding:0 4px;">✕</span>
+                </div>
+            </div>
+
+            <div class="md-card">
+                <div class="card-title">Top Productos</div>
+                <div id="top-products-list" style="font-size:11px;color:var(--md-text-secondary);">
+                    <div style="text-align:center;padding:8px 0;color:var(--md-text-muted);">Sin datos</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Zone Occupancy (bottom-right) -->
+        <div id="zone-occupancy" class="md-card">
+            <div class="card-title">Ocupación por Zona</div>
+            <div class="zo-grid">
+                <div class="zo-item zo-primary">
+                    <div class="zo-name">Almacén Principal</div>
+                    <div class="zo-value" id="zo-primary">-</div>
+                    <div class="zo-bar"><div class="zo-bar-fill" id="zo-bar-primary" style="width:0%"></div></div>
+                </div>
+                <div class="zo-item zo-cava">
+                    <div class="zo-name">CAVA</div>
+                    <div class="zo-value" id="zo-cava">-</div>
+                    <div class="zo-bar"><div class="zo-bar-fill" id="zo-bar-cava" style="width:0%"></div></div>
+                </div>
+                <div class="zo-item zo-t">
+                    <div class="zo-name">Tránsito</div>
+                    <div class="zo-value" id="zo-t">-</div>
+                    <div class="zo-bar"><div class="zo-bar-fill" id="zo-bar-t" style="width:0%"></div></div>
+                </div>
+                <div class="zo-item zo-a">
+                    <div class="zo-name">Formulación</div>
+                    <div class="zo-value" id="zo-a">-</div>
+                    <div class="zo-bar"><div class="zo-bar-fill" id="zo-bar-a" style="width:0%"></div></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Coords overlay (bottom-left) -->
+        <div id="coords-overlay">
+            <div><b>CAM:</b> <span id="coords-camera">-</span></div>
+            <div><b>TGT:</b> <span id="coords-target">-</span></div>
+            <div><b>OBJ:</b> <span id="coords-pallet">-</span></div>
+        </div>
+
+        <!-- Controls Legend -->
+        <div id="controls-legend">
+            <div><span class="key">Click + Arrastrar</span> Rotar</div>
+            <div><span class="key">Der + Arrastrar</span> Desplazar</div>
+            <div><span class="key">Rueda</span> Zoom</div>
+            <div><span class="key">Click</span> Seleccionar</div>
+            <div><span class="key">Sostener</span> Enfocar</div>
+        </div>
+
+        <!-- Info panel (floating) -->
+        <div id="info-panel" class="floating-panel">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;border-bottom:1px solid rgba(255,255,255,0.06);padding-bottom:8px;">
+                <span style="font-size:11px;font-weight:600;color:var(--md-primary-light);letter-spacing:0.3px;">• LOC_ID</span>
+                <span style="font-family:var(--md-mono);font-size:13px;font-weight:700;" id="rack-id">-</span>
+            </div>
+            <div style="display:flex;justify-content:space-between;gap:12px;margin-bottom:4px;font-size:12px;"><b style="color:var(--md-text-muted);font-weight:500;">Producto</b> <span id="rack-prod" style="font-family:var(--md-mono);font-weight:500;">-</span></div>
+            <div style="display:flex;justify-content:space-between;gap:12px;margin-bottom:4px;font-size:12px;"><b style="color:var(--md-text-muted);font-weight:500;">Código</b> <span id="rack-cod" style="font-family:var(--md-mono);font-weight:500;">-</span></div>
+            <div style="display:flex;justify-content:space-between;gap:12px;margin-bottom:4px;font-size:12px;"><b style="color:var(--md-text-muted);font-weight:500;">Lote</b> <span id="rack-lote" style="font-family:var(--md-mono);font-weight:500;">-</span></div>
+            <div style="display:flex;justify-content:space-between;gap:12px;margin-bottom:4px;font-size:12px;"><b style="color:var(--md-text-muted);font-weight:500;">Cantidad</b> <span style="font-family:var(--md-mono);font-weight:500;"><span id="rack-cant">-</span>&nbsp;<span id="rack-um"></span></span></div>
+            <div style="display:flex;justify-content:space-between;gap:12px;margin-bottom:4px;font-size:12px;"><b style="color:var(--md-text-muted);font-weight:500;">Paletas</b> <span id="rack-paletas" style="font-family:var(--md-mono);font-weight:500;">-</span></div>
+            <div style="display:flex;justify-content:space-between;gap:12px;margin-bottom:4px;font-size:12px;"><b style="color:var(--md-text-muted);font-weight:500;">Nivel</b> <span id="rack-nivel" style="font-family:var(--md-mono);font-weight:500;">-</span></div>
+            <div style="display:flex;justify-content:space-between;gap:12px;margin-bottom:8px;font-size:12px;"><b style="color:var(--md-text-muted);font-weight:500;">Estado</b> <span id="rack-estado" style="font-family:var(--md-mono);font-weight:700;">-</span></div>
+            <button id="info-close" style="width:100%;padding:8px;border-radius:6px;border:1px solid rgba(255,255,255,0.06);background:transparent;color:var(--md-text-secondary);font-size:12px;font-family:var(--md-font);cursor:pointer;">Cerrar Detalle</button>
+        </div>
+
+        <!-- Stats Panel (floating) -->
+        <div id="stats-floating" class="floating-panel">
+            <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:8px;margin-bottom:12px;">
+                <div>
+                    <div style="font-size:10px;font-weight:600;color:var(--md-primary-light);letter-spacing:0.3px;">• PRODUCT_STATS</div>
+                    <div style="font-family:var(--md-mono);font-size:13px;font-weight:600;margin-top:2px;" id="stats-product-name">-</div>
+                    <div style="font-family:var(--md-mono);font-size:10px;color:var(--md-text-muted);" id="stats-sku">-</div>
+                </div>
+                <button id="stats-close" style="background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.06);color:var(--md-text-muted);cursor:pointer;font-size:12px;padding:4px 10px;border-radius:4px;flex-shrink:0;">✕</button>
+            </div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px;">
+                <div style="background:rgba(37,99,235,0.04);border:1px solid rgba(37,99,235,0.1);border-radius:6px;padding:10px 12px;">
+                    <div style="font-family:var(--md-mono);font-size:22px;font-weight:700;color:var(--md-primary-light);line-height:1;" id="stats-total-ubics">-</div>
+                    <div style="font-size:10px;font-weight:600;color:var(--md-text-muted);letter-spacing:0.3px;margin-top:3px;">Ubicaciones</div>
+                </div>
+                <div style="background:rgba(37,99,235,0.04);border:1px solid rgba(37,99,235,0.1);border-radius:6px;padding:10px 12px;">
+                    <div style="font-family:var(--md-mono);font-size:22px;font-weight:700;color:var(--md-primary-light);line-height:1;" id="stats-total-qty">-</div>
+                    <div style="font-size:10px;font-weight:600;color:var(--md-text-muted);letter-spacing:0.3px;margin-top:3px;" id="stats-um-label">Unidades</div>
+                </div>
+            </div>
+            <div style="font-size:10px;font-weight:600;color:var(--md-text-muted);letter-spacing:0.3px;margin-bottom:8px;display:flex;align-items:center;gap:6px;">
+                Lotes
+                <div style="flex:1;height:1px;background:rgba(255,255,255,0.04);"></div>
+            </div>
+            <div id="stats-lotes-list" style="display:flex;flex-direction:column;gap:5px;margin-bottom:12px;">
+                <div style="font-size:12px;color:var(--md-text-muted);text-align:center;padding:12px 0;">Sin datos</div>
+            </div>
+            <div style="font-size:10px;font-weight:600;color:var(--md-text-muted);letter-spacing:0.3px;margin-bottom:8px;display:flex;align-items:center;gap:6px;">
+                Ubicaciones
+                <div style="flex:1;height:1px;background:rgba(255,255,255,0.04);"></div>
+            </div>
+            <div id="stats-ubics-grid" style="display:flex;flex-wrap:wrap;gap:5px;">
+                <div style="font-size:12px;color:var(--md-text-muted);text-align:center;padding:12px 0;width:100%;">Sin datos</div>
+            </div>
+        </div>
+
+        <!-- Status summary panel -->
+        <div id="status-summary-panel"></div>
+
+        <!-- Reset view button -->
+        <button id="reset-view-bottom">Restablecer Sistema Visual</button>
+
+        <!-- Loader -->
+        <div id="loader">
+            <div class="label">Sincronizando Óptica...</div>
+            <div class="bar"><i></i></div>
+        </div>
+
+        <!-- CSV Map Panel -->
+        <div id="csv-map">
+            <div style="font-weight:600;font-size:13px;margin-bottom:12px;color:var(--md-primary-light);">Mapeo de Campos ERP</div>
+            <div style="font-size:12px;margin-bottom:8px;color:var(--md-text-muted);">ID Ubicación <select id="map-id"></select></div>
+            <div style="font-size:12px;margin-bottom:8px;color:var(--md-text-muted);">Producto <select id="map-product"></select></div>
+            <div style="font-size:12px;margin-bottom:8px;color:var(--md-text-muted);">SKU <select id="map-codigo"></select></div>
+            <div style="font-size:12px;margin-bottom:8px;color:var(--md-text-muted);">Lote <select id="map-lote"></select></div>
+            <div style="font-size:12px;margin-bottom:8px;color:var(--md-text-muted);">Cantidad <select id="map-cant"></select></div>
+            <div style="font-size:12px;margin-bottom:8px;color:var(--md-text-muted);">U.M. <select id="map-um"></select></div>
+            <div style="font-size:12px;margin-bottom:14px;color:var(--md-text-muted);">Estado <select id="map-estado"></select></div>
+            <div style="display:flex;gap:8px;">
+                <button id="map-apply" class="btn-csv apply" style="flex:1;">Procesar</button>
+                <button id="map-cancel" class="btn-csv cancel" style="flex:1;">Abortar</button>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+<script>
+        const sceneContainer = document.getElementById('scene-container');
+        const scene = new THREE.Scene();
+        scene.background = new THREE.Color(0x060b11);
+
+        function getContainerSize() {
+            return {
+                w: sceneContainer.clientWidth || window.innerWidth,
+                h: sceneContainer.clientHeight || window.innerHeight
+            };
+        }
+
+        const cs = getContainerSize();
+        const camera = new THREE.PerspectiveCamera(75, cs.w / cs.h, 0.1, 1000);
+        camera.position.set(10, 15, 20);
+
+        const renderer = new THREE.WebGLRenderer({ antialias: true });
+        renderer.setSize(cs.w, cs.h);
+        sceneContainer.appendChild(renderer.domElement);
+
+        let lastSelectedMesh = null;
+        let pasilloSeleccionado = 'todos'; 
+
+        function vecToStr(v) {
+            if (!v) return '-';
+            return `X:${v.x.toFixed(2)} Y:${v.y.toFixed(2)} Z:${v.z.toFixed(2)}`;
+        }
+
+        function updateCoordsOverlay() {
+            const camEl = document.getElementById('coords-camera');
+            const tgtEl = document.getElementById('coords-target');
+            const palEl = document.getElementById('coords-pallet');
+            if (camEl) camEl.innerText = vecToStr(camera.position);
+            if (tgtEl) tgtEl.innerText = vecToStr(controls.target);
+            if (palEl) {
+                if (lastSelectedMesh) {
+                    const box = new THREE.Box3().setFromObject(lastSelectedMesh);
+                    const c = new THREE.Vector3(); box.getCenter(c);
+                    palEl.innerText = vecToStr(c) + ' [' + (lastSelectedMesh.userData && lastSelectedMesh.userData.id ? lastSelectedMesh.userData.id : '-') + ']';
+                } else {
+                    palEl.innerText = '-';
+                }
+            }
+            updateUsageOverlay();
+        }
+
+        function getAisleGroupLabel(aisle) {
+            if (aisle === 'todos') return 'Todas las zonas';
+            if (aisle === 'T') return 'Transito';
+            if (aisle === 'A') return 'Formulación';
+            const index = Number(aisle);
+            if (index >= 1 && index <= 4) return 'Almacén Principal';
+            if (index >= 5 && index <= 9) return 'CAVA';
+            return 'Zona desconocida';
+        }
+
+        function getCapacityForObj(obj) {
+            const idStr = String(obj.userData.id).trim();
+            if (isTransitId(idStr) || isFormulacionId(idStr)) {
+                var entries = obj.userData.entries || [obj.userData];
+                var tot = 0, usd = 0;
+                for (var i = 0; i < entries.length; i++) {
+                    var p = entries[i].paletas !== undefined ? parseInt(entries[i].paletas) || 0 : 0;
+                    if (p > 0) {
+                        tot += getEffectivePositions(entries[i]);
+                        usd += p;
+                    } else if (entries[i].cantidad && entries[i].cantidad > 0) {
+                        tot += 1;
+                        usd += 1;
+                    }
+                }
+                if (tot === 0) {
+                    var n = countEntries(obj.userData);
+                    return { total: n, used: isEmptyRack(obj.userData) ? 0 : n };
+                }
+                return { total: tot, used: usd };
+            }
+            var n = countEntries(obj.userData);
+            return { total: n, used: isEmptyRack(obj.userData) ? 0 : n };
+        }
+
+        function calculateCapacityUsageForAisle(aisle) {
+            function computeFromInventario(filterFn) {
+                var tot = 0, usd = 0;
+                for (var i = 0; i < datosInventario.length; i++) {
+                    var item = datosInventario[i];
+                    var idStr = String(item.id || '').trim();
+                    if (!filterFn(idStr)) continue;
+                    var p = item.paletas !== undefined ? parseInt(item.paletas) || 0 : 0;
+                    if (p > 0) {
+                        tot += getEffectivePositions(item);
+                        usd += p;
+                    } else if (item.cantidad && item.cantidad > 0) {
+                        tot += 1;
+                        usd += 1;
+                    }
+                }
+                var e = tot - usd;
+                return { total: tot, used: usd, empty: e, percent: tot === 0 ? 0 : Math.round((usd / tot) * 100) };
+            }
+            if (aisle === 'T') return computeFromInventario(isTransitId);
+            if (aisle === 'A') return computeFromInventario(isFormulacionId);
+            const countedIds = new Set();
+            let total = 0;
+            let used = 0;
+            scene.traverse((obj) => {
+                if (!obj.isMesh || !obj.userData || !obj.userData.id) return;
+                if (obj.userData.subPaleta) return;
+                const idStr = String(obj.userData.id).trim();
+                if (!idStr || countedIds.has(idStr)) return;
+                const pasillo = idStr.charAt(0);
+                if (aisle !== 'todos' && pasillo !== aisle) return;
+                if (aisle === 'todos' && (pasillo === 'T' || pasillo === 'A')) return;
+                countedIds.add(idStr);
+                var cap = getCapacityForObj(obj);
+                total += cap.total;
+                used += cap.used;
+            });
+            if (aisle === 'todos') {
+                total += computeFromInventario(isTransitId).total;
+                used += computeFromInventario(isTransitId).used;
+                total += computeFromInventario(isFormulacionId).total;
+                used += computeFromInventario(isFormulacionId).used;
+            }
+            const empty = total - used;
+            const percent = total === 0 ? 0 : Math.round((used / total) * 100);
+            return { total, used, empty, percent };
+        }
+
+        function calculateCapacityUsageForAisleGroup(aisleDigits) {
+            const countedIds = new Set();
+            let total = 0;
+            let used = 0;
+            scene.traverse((obj) => {
+                if (!obj.isMesh || !obj.userData || !obj.userData.id) return;
+                if (obj.userData.subPaleta) return;
+                const idStr = String(obj.userData.id).trim();
+                if (!idStr || countedIds.has(idStr)) return;
+                const pasillo = idStr.charAt(0);
+                if (!aisleDigits.includes(pasillo)) return;
+                countedIds.add(idStr);
+                var cap = getCapacityForObj(obj);
+                total += cap.total;
+                used += cap.used;
+            });
+            const empty = total - used;
+            const percent = total === 0 ? 0 : Math.round((used / total) * 100);
+            return { total, used, empty, percent };
+        }
+
+        function computeTopProducts(aisle, limit) {
+            const productCount = {};
+            function countFromInventario(filterFn) {
+                for (var i = 0; i < datosInventario.length; i++) {
+                    var item = datosInventario[i];
+                    var idStr = String(item.id || '').trim();
+                    if (!filterFn(idStr)) continue;
+                    var prodName = item.producto || 'Sin producto';
+                    if (prodName && item.cantidad && item.cantidad > 0) {
+                        productCount[prodName] = (productCount[prodName] || 0) + 1;
+                    }
+                }
+            }
+            if (aisle === 'T' || aisle === 'todos') countFromInventario(isTransitId);
+            if (aisle === 'A' || aisle === 'todos') countFromInventario(isFormulacionId);
+            scene.traverse((obj) => {
+                if (!obj.isMesh || !obj.userData || !obj.userData.id) return;
+                if (obj.userData.subPaleta) return;
+                const idStr = String(obj.userData.id).trim();
+                if (!idStr) return;
+                const pasillo = idStr.charAt(0);
+                if (aisle !== 'todos' && pasillo !== aisle) return;
+                var entriesList = obj.userData.entries || [obj.userData];
+                entriesList.forEach(function(entry) {
+                    var prodName = entry.producto || 'Sin producto';
+                    if (prodName && entry.cantidad && entry.cantidad > 0) {
+                        productCount[prodName] = (productCount[prodName] || 0) + 1;
+                    }
+                });
+            });
+            return Object.entries(productCount)
+                .sort((a, b) => b[1] - a[1])
+                .slice(0, limit)
+                .map(([name, count]) => ({ name, count }));
+        }
+
+        function calculateStatusBreakdown(aisle) {
+            const counted = { retenido: 0, rechazado: 0, liberado: 0 };
+            function countFromInventario(filterFn) {
+                for (var i = 0; i < datosInventario.length; i++) {
+                    var item = datosInventario[i];
+                    var idStr = String(item.id || '').trim();
+                    if (!filterFn(idStr)) continue;
+                    var estado = (item.estado || 'liberado').toLowerCase();
+                    if (counted[estado] === undefined) continue;
+                    var p = item.paletas !== undefined ? parseInt(item.paletas) || 0 : 0;
+                    if (p > 0) {
+                        counted[estado] += p;
+                    } else if (item.cantidad && item.cantidad > 0) {
+                        counted[estado]++;
+                    }
+                }
+            }
+            if (aisle === 'T' || aisle === 'todos') countFromInventario(isTransitId);
+            if (aisle === 'A' || aisle === 'todos') countFromInventario(isFormulacionId);
+            scene.traverse((obj) => {
+                if (!obj.isMesh || !obj.userData || !obj.userData.id) return;
+                if (obj.userData.subPaleta) return;
+                const idStr = String(obj.userData.id).trim();
+                if (!idStr) return;
+                const pasillo = idStr.charAt(0);
+                if (aisle !== 'todos' && pasillo !== aisle) return;
+                var entriesList = obj.userData.entries || [obj.userData];
+                entriesList.forEach(function(entry) {
+                    if (!entry.cantidad || entry.cantidad === 0) return;
+                    var estado = (entry.estado || 'liberado').toLowerCase();
+                    if (counted[estado] !== undefined) counted[estado]++;
+                });
+            });
+            const totalConEstado = counted.retenido + counted.rechazado + counted.liberado;
+            const pct = (v) => totalConEstado === 0 ? 0 : Math.round((v / totalConEstado) * 100);
+            return {
+                retenido: counted.retenido,
+                rechazado: counted.rechazado,
+                liberado: counted.liberado,
+                pctRetenido: pct(counted.retenido),
+                pctRechazado: pct(counted.rechazado)
+            };
+        }
+
+        function updateUsageOverlay(aisleOverride) {
+            const effectiveAisle = aisleOverride !== undefined ? aisleOverride : pasilloSeleccionado;
+            const metrics = calculateCapacityUsageForAisle(effectiveAisle);
+            const breakdown = calculateStatusBreakdown(effectiveAisle);
+            const total = metrics.total;
+
+            // === TOP KPI BAR ===
+            const kpiTotal = document.getElementById('kpi-total-ubics');
+            const kpiOcupacion = document.getElementById('kpi-ocupacion');
+            const kpiRetenidos = document.getElementById('kpi-retenidos');
+            const kpiRechazados = document.getElementById('kpi-rechazados');
+            if (kpiTotal) kpiTotal.innerText = metrics.total;
+            if (kpiOcupacion) kpiOcupacion.innerText = metrics.percent + '%';
+            if (kpiRetenidos) kpiRetenidos.innerText = breakdown.retenido;
+            if (kpiRechazados) kpiRechazados.innerText = breakdown.rechazado;
+
+            // === DONUT / STATUS BARS (right panel) ===
+            const pctBar = (v) => total === 0 ? 0 : (v / total) * 100;
+            const barLib = document.getElementById('bar-liberado');
+            const barRet = document.getElementById('bar-retenido');
+            const barRech = document.getElementById('bar-rechazado');
+            const barVac = document.getElementById('bar-vacio');
+            if (barLib) barLib.style.width = pctBar(breakdown.liberado) + '%';
+            if (barRet) barRet.style.width = pctBar(breakdown.retenido) + '%';
+            if (barRech) barRech.style.width = pctBar(breakdown.rechazado) + '%';
+            if (barVac) barVac.style.width = pctBar(metrics.empty) + '%';
+
+            const dLib = document.getElementById('donut-liberado');
+            const dRet = document.getElementById('donut-retenido');
+            const dRech = document.getElementById('donut-rechazado');
+            const dVac = document.getElementById('donut-vacio');
+            if (dLib) dLib.innerText = breakdown.liberado;
+            if (dRet) dRet.innerText = breakdown.retenido;
+            if (dRech) dRech.innerText = breakdown.rechazado;
+            if (dVac) dVac.innerText = metrics.empty;
+
+            // Filter badge counts
+            const retenidoEl = document.getElementById('usage-retenido');
+            const rechazadoEl = document.getElementById('usage-rechazado');
+            if (retenidoEl) retenidoEl.innerText = breakdown.retenido > 0 ? `${breakdown.retenido} (${breakdown.pctRetenido}%)` : '0';
+            if (rechazadoEl) rechazadoEl.innerText = breakdown.rechazado > 0 ? `${breakdown.rechazado} (${breakdown.pctRechazado}%)` : '0';
+
+            // Re-aplicar filtro de estado si hay uno activo
+            if (typeof aplicarFiltroEstado === 'function') {
+                aplicarFiltroEstado();
+            }
+
+            // === TOP PRODUCTS (right panel) ===
+            const topList = document.getElementById('top-products-list');
+            if (topList) {
+                const topProducts = computeTopProducts(effectiveAisle, 5);
+                if (topProducts.length > 0) {
+                    topList.innerHTML = topProducts.map(p =>
+                        `<div style="display:flex;justify-content:space-between;padding:4px 0;border-bottom:1px solid rgba(255,255,255,0.03);">
+                            <span style="color:var(--md-text-secondary);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1;">${p.name}</span>
+                            <span style="font-family:var(--md-mono);font-size:11px;color:var(--md-primary-light);flex-shrink:0;margin-left:8px;">${p.count} ubic.</span>
+                        </div>`
+                    ).join('');
+                } else {
+                    topList.innerHTML = '<div style="text-align:center;padding:8px 0;color:var(--md-text-muted);font-size:11px;">Sin datos</div>';
+                }
+            }
+
+            // === ZONE OCCUPANCY (bottom-right) ===
+            const principalMetrics = calculateCapacityUsageForAisleGroup(['1', '2', '3', '4']);
+            const cavaMetrics = calculateCapacityUsageForAisleGroup(['5', '6', '7', '8', '9']);
+            var tMetrics = (function() {
+                var tot = 0, usd = 0;
+                for (var i = 0; i < datosInventario.length; i++) {
+                    var item = datosInventario[i];
+                    var idStr = String(item.id || '').trim();
+                    if (!isTransitId(idStr)) continue;
+                    var p = item.paletas !== undefined ? parseInt(item.paletas) || 0 : 0;
+                    if (p > 0) { tot += getEffectivePositions(item); usd += p; }
+                    else if (item.cantidad && item.cantidad > 0) { tot += 1; usd += 1; }
+                }
+                var e = tot - usd;
+                return { total: tot, used: usd, empty: e, percent: tot === 0 ? 0 : Math.round((usd / tot) * 100) };
+            })();
+            var aMetrics = (function() {
+                var tot = 0, usd = 0;
+                for (var i = 0; i < datosInventario.length; i++) {
+                    var item = datosInventario[i];
+                    var idStr = String(item.id || '').trim();
+                    if (!isFormulacionId(idStr)) continue;
+                    var p = item.paletas !== undefined ? parseInt(item.paletas) || 0 : 0;
+                    if (p > 0) { tot += getEffectivePositions(item); usd += p; }
+                    else if (item.cantidad && item.cantidad > 0) { tot += 1; usd += 1; }
+                }
+                var e = tot - usd;
+                return { total: tot, used: usd, empty: e, percent: tot === 0 ? 0 : Math.round((usd / tot) * 100) };
+            })();
+
+            const zoPrimary = document.getElementById('zo-primary');
+            const zoCava = document.getElementById('zo-cava');
+            const zoT = document.getElementById('zo-t');
+            const zoA = document.getElementById('zo-a');
+            const zoBarPrimary = document.getElementById('zo-bar-primary');
+            const zoBarCava = document.getElementById('zo-bar-cava');
+            const zoBarT = document.getElementById('zo-bar-t');
+            const zoBarA = document.getElementById('zo-bar-a');
+            if (zoPrimary) zoPrimary.innerText = `${principalMetrics.used} / ${principalMetrics.total} (${principalMetrics.percent}%)`;
+            if (zoCava) zoCava.innerText = `${cavaMetrics.used} / ${cavaMetrics.total} (${cavaMetrics.percent}%)`;
+            if (zoT) zoT.innerText = `${tMetrics.used} / ${tMetrics.total} (${tMetrics.percent}%)`;
+            if (zoA) zoA.innerText = `${aMetrics.used} / ${aMetrics.total} (${aMetrics.percent}%)`;
+            if (zoBarPrimary) zoBarPrimary.style.width = principalMetrics.percent + '%';
+            if (zoBarCava) zoBarCava.style.width = cavaMetrics.percent + '%';
+            if (zoBarT) zoBarT.style.width = tMetrics.percent + '%';
+            if (zoBarA) zoBarA.style.width = aMetrics.percent + '%';
+        }
+
+        const controls = new THREE.OrbitControls(camera, renderer.domElement);
+        controls.enableDamping = true;
+        controls.dampingFactor = 0.05;
+        const defaultCameraPosition = camera.position.clone();
+        const defaultControlTarget = controls.target.clone();
+        const focusDistanceFactor = 6; 
+        
+        const light = new THREE.AmbientLight(0xffffff, 0.7);
+        scene.add(light);
+        const dirLight = new THREE.DirectionalLight(0xffffff, 0.5);
+        dirLight.position.set(10, 20, 10);
+        scene.add(dirLight);
+
+        let datosInventario = [];
+
+        function getRackMaterial(infoRack) {
+            const rackInfo = infoRack || {};
+            const empty = isEmptyRack(rackInfo);
+            if (empty) {
+                return new THREE.MeshStandardMaterial({
+                    color: 0x272932,
+                    roughness: 0.35,
+                    metalness: 0.1,
+                    transparent: false,
+                    opacity: 0.90
+                });
+            }
+            const estado = (rackInfo.estado || '').toLowerCase();
+            var entries = rackInfo.entries;
+            if (entries && entries.length > 1) {
+                var colors = entries.map(function(e) {
+                    var st = (e.estado || '').toLowerCase();
+                    if (st === 'rechazado') return 0xdc2626;
+                    if (st === 'retenido') return 0xf59e0b;
+                    return 0x0065F8;
+                });
+                var tex = getMultiColorTexture(colors);
+                return new THREE.MeshStandardMaterial({
+                    map: tex,
+                    roughness: 0.35,
+                    metalness: 0.1,
+                    transparent: false,
+                    opacity: 0.90
+                });
+            }
+            let color;
+            if (estado === 'rechazado') {
+                color = 0xdc2626; // rojo
+            } else if (estado === 'retenido') {
+                color = 0xf59e0b; // ámbar
+            } else {
+                color = 0x0065F8; // azul (liberado / por defecto)
+            }
+            return new THREE.MeshStandardMaterial({
+                color: color,
+                roughness: 0.35,
+                metalness: 0.1,
+                transparent: false,
+                opacity: 0.90
+            });
+        }
+
+        const INVENTARIO_URL = 'https://script.google.com/macros/s/AKfycbxJthmAczBij7ilAhDQF8ylNpUEs1WreP-oTBe03xRuV6VCAF3WbM79YD6u_ZjhUuqC/exec';
+        const REFRESH_INTERVAL = 60000;
+
+        function cargarInventarioJsonp(url, fallback) {
+            var cb = 'jsonp_' + Date.now();
+            window[cb] = function(data) {
+                delete window[cb];
+                if (Array.isArray(data)) {
+                    datosInventario = data;
+                    cargarModelo3D();
+                    actualizarEstadoSync();
+                } else if (fallback) {
+                    console.warn('Google Sheets: datos inválidos, usando inventario.json');
+                    cargarInventarioFetch('inventario.json?' + Date.now());
+                }
+            };
+            var script = document.createElement('script');
+            script.src = url + (url.indexOf('?') > -1 ? '&' : '?') + 'callback=' + cb + '&_=' + Date.now();
+            script.onerror = function() {
+                delete window[cb];
+                if (fallback) {
+                    console.warn('Google Sheets no disponible, usando inventario.json');
+                    cargarInventarioFetch('inventario.json?' + Date.now());
+                }
+            };
+            var timeout = setTimeout(function() {
+                if (window[cb]) {
+                    delete window[cb];
+                    if (fallback) {
+                        console.warn('Google Sheets no disponible (timeout), usando inventario.json');
+                        cargarInventarioFetch('inventario.json?' + Date.now());
+                    }
+                }
+            }, 10000);
+            document.body.appendChild(script);
+        }
+
+        function cargarInventarioFetch(url) {
+            fetch(url)
+                .then(function(r) { return r.json(); })
+                .then(function(data) {
+                    datosInventario = data;
+                    cargarModelo3D();
+                    actualizarEstadoSync();
+                })
+                .catch(function() {
+                    console.error('Error cargando inventario.json');
+                });
+        }
+
+        function recargarInventarioPeriodico() {
+            var cb = 'jsonp_' + Date.now();
+            window[cb] = function(data) {
+                delete window[cb];
+                if (Array.isArray(data)) {
+                    datosInventario = data;
+                    updateSceneFromInventario();
+                    gestionarSubPaletas();
+                    updateUsageOverlay();
+                    actualizarEstadoSync();
+                }
+            };
+            var script = document.createElement('script');
+            script.src = INVENTARIO_URL + '?callback=' + cb + '&_=' + Date.now();
+            script.onerror = function() { delete window[cb]; };
+            setTimeout(function() { if (window[cb]) delete window[cb]; }, 10000);
+            document.body.appendChild(script);
+        }
+
+        function actualizarEstadoSync() {
+            const el = document.getElementById('sync-status');
+            if (el) el.innerText = 'Sync: ' + new Date().toLocaleTimeString();
+        }
+
+        cargarInventarioJsonp(INVENTARIO_URL, true);
+        setInterval(recargarInventarioPeriodico, REFRESH_INTERVAL);
+
+        function cargarModelo3D() {
+            if (!THREE.GLTFLoader) {
+                console.error('GLTFLoader no está disponible.');
+                return;
+            }
+            const loader = new THREE.GLTFLoader();
+            loader.load('almacen.glb', function (gltf) {
+                const modelo = gltf.scene;
+                
+                const esLane = (name) => /^[1-9]/.test(name) || /^T\d{2}$/.test(name) || /^A\d{3}$/.test(name);
+                const esSubPaleta = (name) => /^(T\d{2}|A\d{3})-\d+$/.test(name);
+
+                modelo.traverse((child) => {
+                    if (child.isMesh) {
+                        if (esLane(child.name)) {
+                            const infoRacks = getEntriesForId(child.name);
+                            if (infoRacks.length > 0) {
+                                child.userData = Object.assign({}, infoRacks[0], { entries: infoRacks });
+                                child.userData.estado = mergeEntryState(infoRacks);
+                            } else {
+                                child.userData = {
+                                    id: child.name, producto: '', codigo: '', lote: '', cantidad: 0, um: '', estado: 'liberado'
+                                };
+                            }
+                            child.material = getRackMaterial(child.userData);
+                        } else if (esSubPaleta(child.name)) {
+                            child.userData = { subPaleta: true, id: child.name };
+                        }
+                    }
+                });
+
+                gestionarSubPaletas(modelo);
+                scene.add(modelo);
+                var meshByName = {};
+                scene.traverse((child) => {
+                    if (child.isMesh && child.name) meshByName[child.name] = child;
+                });
+                applyPaletaSpread(meshByName);
+            }, undefined, function(error){
+                console.error('Error cargando almacen.glb:', error);
+            });
+        }
+
+        const raycaster = new THREE.Raycaster();
+        const mouse = new THREE.Vector2();
+        const infoPanel = document.getElementById('info-panel');
+        const infoClose = document.getElementById('info-close');
+        const resetViewButton = document.getElementById('reset-view');
+        const resetViewBottomButton = document.getElementById('reset-view-bottom');
+        const searchInput = document.getElementById('search-input');
+        const searchButton = document.getElementById('search-button');
+        const clearSearchButton = document.getElementById('clear-search');
+        const searchSuggestions = document.getElementById('search-suggestions');
+        const canvas = renderer.domElement;
+        canvas.style.touchAction = 'none';
+
+        const csvInput = document.getElementById('csv-input');
+
+        function parseLine(line) {
+            const pattern = /,(?=(?:[^\"]*\"[^\"]*\")*[^\"]*$)/;
+            const parts = line.split(pattern);
+            return parts.map(p => {
+                let s = p.trim();
+                if (s.startsWith('"') && s.endsWith('"')) {
+                    s = s.slice(1, -1).replace(/""/g, '"');
+                }
+                return s;
+            });
+        }
+
+        function csvToObjects(text) {
+            const lines = text.split(/\r\n|\n/).filter(l => l.trim() !== '');
+            if (lines.length === 0) return [];
+            const headers = parseLine(lines[0]).map(h => h.trim());
+            const rows = [];
+            for (let i = 1; i < lines.length; i++) {
+                const values = parseLine(lines[i]);
+                if (values.length === 0) continue;
+                const obj = {};
+                for (let j = 0; j < headers.length; j++) {
+                    obj[headers[j]] = values[j] !== undefined ? values[j] : '';
+                }
+                rows.push(obj);
+            }
+            return rows;
+        }
+
+        let currentSearchTerm = '';
+
+        function getEntriesForId(id) {
+            return datosInventario.filter(function(item) { return item.id === id; });
+        }
+
+        function getMultiColorTexture(colors, width, height) {
+            var canvas = document.createElement('canvas');
+            canvas.width = width || 64;
+            canvas.height = height || 64;
+            var ctx = canvas.getContext('2d');
+            var bands = colors.length;
+            var bandH = canvas.height / bands;
+            colors.forEach(function(c, i) {
+                ctx.fillStyle = '#' + new THREE.Color(c).getHexString();
+                ctx.fillRect(0, i * bandH, canvas.width, bandH);
+                if (i < bands - 1) {
+                    ctx.fillStyle = 'rgba(0,0,0,0.3)';
+                    ctx.fillRect(0, (i + 1) * bandH - 1, canvas.width, 1);
+                }
+            });
+            var tex = new THREE.CanvasTexture(canvas);
+            tex.wrapS = tex.wrapT = THREE.RepeatWrapping;
+            tex.repeat.set(1, 1);
+            return tex;
+        }
+
+        function mergeEntryState(entries) {
+            var estado = 'liberado';
+            for (var i = 0; i < entries.length; i++) {
+                var e = entries[i].estado || 'liberado';
+                if (e === 'rechazado') return 'rechazado';
+                if (e === 'retenido') estado = 'retenido';
+            }
+            return estado;
+        }
+
+        function isTransitId(id) {
+            return /^T\d{2}$/.test(id);
+        }
+
+        function isFormulacionId(id) {
+            return /^A\d{3}$/.test(id);
+        }
+
+        function getEffectivePositions(entry) {
+            var p = parseInt(entry.paletas) || 0;
+            var n = parseInt(entry.nivel) || 0;
+            if (n >= 4 || n <= 0) return p;
+            if (p <= 0) return 0;
+            var groups = Math.floor(p / n);
+            var rem = p % n;
+            return groups * 4 + rem;
+        }
+
+        function isSlotVisible(idx, nivel) {
+            var n = parseInt(nivel) || 0;
+            if (n >= 4 || n <= 0) return true;
+            var mod = idx % 4;
+            if (mod === 0) mod = 4;
+            return mod <= n;
+        }
+
+        function isEmptyRack(rackData) {
+            if (!rackData) return true;
+            if (rackData.ocupacion !== undefined) return rackData.ocupacion === 0;
+            if (rackData.cantidad !== undefined) return rackData.cantidad === 0;
+            if (rackData.entries) {
+                return rackData.entries.every(function(e) { return !e.cantidad || e.cantidad === 0; });
+            }
+            return true;
+        }
+
+        function countEntries(rackData) {
+            if (!rackData) return 0;
+            if (rackData.entries && rackData.entries.length > 0) return rackData.entries.length;
+            if (rackData.id && !rackData.subPaleta) return 1;
+            return 0;
+        }
+
+        function renderSearchSuggestions() {
+            const term = currentSearchTerm.trim().toLowerCase();
+            searchSuggestions.innerHTML = '';
+            if (!term) {
+                searchSuggestions.style.display = 'none';
+                return;
+            }
+            const seen = new Set();
+            const matches = [];
+            for (const item of datosInventario) {
+                const prod = item.producto ? String(item.producto).toLowerCase() : '';
+                const code = item.codigo ? String(item.codigo).toLowerCase() : '';
+                const id = item.id ? String(item.id).toLowerCase() : '';
+                if (prod.includes(term) || code.includes(term) || id.includes(term)) {
+                    const key = prod || code || id;
+                    if (seen.has(key)) continue;
+                    seen.add(key);
+                    matches.push(item);
+                    if (matches.length >= 8) break;
+                }
+            }
+            if (matches.length === 0) {
+                const noResult = document.createElement('div');
+                noResult.style.padding = '10px 12px';
+                noResult.style.color = 'var(--text-muted)';
+                noResult.textContent = 'Sin Coincidencias de Telemetría';
+                searchSuggestions.appendChild(noResult);
+                searchSuggestions.style.display = 'block';
+                return;
+            }
+            for (const item of matches) {
+                const button = document.createElement('button');
+                button.type = 'button';
+                button.innerText = item.producto || item.id || item.codigo || 'Sin nombre';
+                button.addEventListener('click', () => {
+                    searchInput.value = item.producto || item.id || item.codigo || '';
+                    currentSearchTerm = searchInput.value;
+                    searchSuggestions.style.display = 'none';
+                });
+                searchSuggestions.appendChild(button);
+            }
+            searchSuggestions.style.display = 'block';
+        }
+
+        function normalizeLocationId(id) {
+            if (!id) return null;
+            const candidate = String(id).trim();
+            const match = candidate.match(/^\d(\d{2})\d{2}$/);
+            if (match && candidate.length === 5) {
+                const centerValue = parseInt(match[1], 10);
+                if (centerValue >= 0 && centerValue <= 15) {
+                    return candidate;
+                }
+            }
+            return null;
+        }
+
+        function isFrontFacingLocation(id) {
+            const normalized = normalizeLocationId(id);
+            if (!normalized) return false;
+            
+            const pasillo = normalized.charAt(0);
+            const digits = normalized.slice(1, 3);
+            const value = parseInt(digits, 10);
+            if (Number.isNaN(value)) return false;
+            
+            if (pasillo === '5') {
+                // El Pasillo 5 mantiene su corte especial: del 00 al 08 es Frontal
+                return value >= 0 && value <= 8;
+            } else if (pasillo === '6' || pasillo === '7' || pasillo === '8') {
+                // CORRECCIÓN: Pasillos 6, 7 y 8 ahora son Frontales solo del 00 al 06
+                return value >= 0 && value <= 6;
+            }
+            
+            // Pasillos del 1 al 4 (o cualquier otro por defecto)
+            return value >= 0 && value <= 15;
+        }
+
+        function getFrontDirectionFromId(id) {
+            const normalized = normalizeLocationId(id);
+            if (!normalized) return null;
+            
+            const pasillo = normalized.charAt(0);
+            const digits = normalized.slice(1, 3);
+            const value = parseInt(digits, 10);
+            
+            let sideDirection;
+            
+            if (pasillo === '5') {
+                // El Pasillo 5 mantiene su corte especial en el 08
+                sideDirection = value <= 8 ? -1 : 1;
+            } else if (pasillo === '6' || pasillo === '7' || pasillo === '8') {
+                // CORRECCIÓN: Pasillos 6, 7 y 8 ahora hacen el corte en el 07
+                // Del 00 al 06 devuelven -1, y del 08 en adelante devuelven 1
+                sideDirection = value <= 6 ? -1 : 1;
+            } else {
+                // Pasillos 1, 2, 3 y 4 (corte estándar en el 07)
+                sideDirection = value <= 15 ? -1 : 1;
+            }
+            
+            return new THREE.Vector3(0, 0, sideDirection); 
+        }
+
+        function getSearchMatches() {   
+            const term = currentSearchTerm.trim().toLowerCase();
+            
+            const results = [];
+            scene.traverse((child) => {
+                if (!child.isMesh || !child.userData || !child.userData.id) return;
+                
+                const idStr = String(child.userData.id).trim();
+                const primerDigito = idStr.charAt(0);
+                const cumplePasillo = (pasilloSeleccionado === 'todos' || primerDigito === pasilloSeleccionado);
+                
+                let cumpleProducto = true;
+                if (term !== "") {
+                    const productName = child.userData.producto ? String(child.userData.producto).toLowerCase() : '';
+                    const codeName = child.userData.codigo ? String(child.userData.codigo).toLowerCase() : '';
+                    cumpleProducto = productName.includes(term) || codeName.includes(term) || idStr.toLowerCase().includes(term);
+                }
+                
+                if (cumplePasillo && cumpleProducto) {
+                    results.push(child);
+                }
+            });
+            return results;
+        }
+
+        function focusSearchMatches(duration = 1100) {
+            const matches = getSearchMatches();
+            if (matches.length === 0) return;
+
+            // Pasillo Transito y Formulación: cámara dinámica basada en el bounding box
+            if (pasilloSeleccionado === 'T' || pasilloSeleccionado === 'A') {
+                var tBox = new THREE.Box3();
+                for (var m of matches) tBox.expandByObject(m);
+                var tCenter = new THREE.Vector3();
+                tBox.getCenter(tCenter);
+                var tSize = new THREE.Vector3();
+                tBox.getSize(tSize);
+                var tMaxDim = Math.max(tSize.x, tSize.y, tSize.z);
+                // Dirección basada en coordenadas de referencia (-29.30, 12.64, 21.72)
+                var tDir = new THREE.Vector3(-0.48, 0.40, 0.78).normalize();
+                var tDist = tMaxDim * 2.2;
+                const targetPos = tCenter.clone().add(tDir.clone().multiplyScalar(tDist));
+                const targetCenter = new THREE.Vector3(tCenter.x, Math.min(tCenter.y, 0), tCenter.z);
+                const startPos = camera.position.clone();
+                const startTarget = controls.target.clone();
+                const startTime = performance.now();
+                function step(now) {
+                    const t = Math.min(1, (now - startTime) / duration);
+                    const ease = t < 0.5 ? 4*t*t*t : 1 - Math.pow(-2*t + 2, 3) / 2;
+                    camera.position.lerpVectors(startPos, targetPos, ease);
+                    controls.target.lerpVectors(startTarget, targetCenter, ease);
+                    controls.update();
+                    if (t < 1) requestAnimationFrame(step);
+                }
+                requestAnimationFrame(step);
+                return;
+            }
+            
+            if (matches.length === 1) {
+                const mesh = matches[0];
+                if (isFrontFacingLocation(mesh.userData && mesh.userData.id)) {
+                    focusObjectFront(mesh, duration);
+                } else {
+                    smoothFocus(mesh, duration);
+                }
+                return;
+            }
+            
+            const box = new THREE.Box3();
+            for (const mesh of matches) {
+                box.expandByObject(mesh);
+            }
+            const center = new THREE.Vector3();
+            box.getCenter(center);
+            
+            const targetCenter = new THREE.Vector3(center.x, -0.51, center.z);
+            const targetPos = new THREE.Vector3(
+                targetCenter.x - 1.05,  
+                12.28,                  
+                targetCenter.z + 32.0   
+            );
+
+            const startPos = camera.position.clone();
+            const startTarget = controls.target.clone();
+            const startTime = performance.now();
+            
+            function step(now) {
+                const t = Math.min(1, (now - startTime) / duration);
+                const ease = t < 0.5 ? 4*t*t*t : 1 - Math.pow(-2*t + 2, 3) / 2;
+                
+                camera.position.lerpVectors(startPos, targetPos, ease);
+                controls.target.lerpVectors(startTarget, targetCenter, ease);
+                controls.update();
+                
+                if (t < 1) requestAnimationFrame(step);
+            }
+            requestAnimationFrame(step);
+        }
+
+        function applySearchFilter() {
+            const term = currentSearchTerm.toLowerCase().trim();
+
+            scene.traverse((obj) => {
+                if (obj.isMesh && obj.userData && obj.userData.id) {
+                    if (obj.userData.hiddenByPaletas) return;
+
+                    const idStr = String(obj.userData.id).trim();
+                    const primerDigito = idStr.charAt(0);
+                    const cumplePasillo = (pasilloSeleccionado === 'todos' || primerDigito === pasilloSeleccionado);
+
+                    let cumpleProducto = true;
+                    if (term !== "") {
+                        var entryList = obj.userData.entries || [obj.userData];
+                        cumpleProducto = entryList.some(function(entry) {
+                            var pName = (entry.producto || "").toLowerCase();
+                            var pRef = (entry.codigo || "").toLowerCase();
+                            return pName.includes(term) || pRef.includes(term) || idStr.toLowerCase().includes(term);
+                        });
+                    }
+
+                    const pasaFiltrosActivos = cumplePasillo && cumpleProducto;
+
+                    if (!pasaFiltrosActivos) {
+                        obj.visible = true;
+                        if (obj.material) {
+                            obj.material.transparent = true;
+                            obj.material.opacity = 0.03; 
+                        }
+                    } else {
+                        obj.visible = true;
+                        if (obj.material) {
+                            obj.material.transparent = false;
+                            obj.material.opacity = 1.0;
+                        }
+                    }
+                }
+            });
+        }
+
+        function applyPaletaSpread(meshByName) {
+            // Para racks regulares: nombre = base3 + col1-2 + nivel1-4 (5 dígitos)
+            for (var name in meshByName) {
+                if (!/^\d{5}$/.test(name)) continue;
+                var child = meshByName[name];
+                if (!child.userData || !child.userData.entries || child.userData.entries.length === 0) continue;
+                var firstEntry = child.userData.entries[0];
+                var p = firstEntry && (parseInt(firstEntry.paletas) || 0);
+                if (p <= 1) continue;
+                if (child.userData._paletaSpreadDone) continue;
+                child.userData._paletaSpreadDone = true;
+                var codigo = firstEntry && (String(firstEntry.codigo || '').trim());
+                var alwaysVertical = (codigo === '110411040');
+                var base = name.substring(0, 3);
+                var col = name.substring(3, 4);
+                var level = name.substring(4, 5);
+                var occupied = [name];
+                for (var n = 1; n < p; n++) {
+                    var found = null;
+                    // 1. Intentar horizontal (toggle columna) si no es alwaysVertical
+                    if (!alwaysVertical) {
+                        var hCol = (col === '1' ? '2' : '1');
+                        var hName = base + hCol + level;
+                        if (meshByName[hName] && !isOccupied(meshByName[hName])) {
+                            found = hName;
+                        }
+                    }
+                    // 2. Si no hay horizontal, intentar vertical (nivel+1, luego nivel-1)
+                    if (!found) {
+                        var vLevel = parseInt(level, 10);
+                        var candidates = [];
+                        if (vLevel < 4) candidates.push(base + col + (vLevel + 1));
+                        if (vLevel > 1) candidates.push(base + col + (vLevel - 1));
+                        for (var ci = 0; ci < candidates.length; ci++) {
+                            if (meshByName[candidates[ci]] && !isOccupied(meshByName[candidates[ci]])) {
+                                found = candidates[ci];
+                                break;
+                            }
+                        }
+                    }
+                    if (!found) break;
+                    var adj = meshByName[found];
+                    adj.userData = Object.assign({}, firstEntry, { id: found, name: found, entries: [firstEntry], _paletaSpreadDone: true });
+                    adj.material = getRackMaterial(adj.userData);
+                    occupied.push(found);
+                    // Para la siguiente iteración, continuar expandiendo desde esta nueva posición
+                    // La siguiente paleta se coloca relativa a la posición actual (no la original)
+                    col = found.substring(3, 4);
+                    level = found.substring(4, 5);
+                }
+            }
+        }
+
+        function isOccupied(mesh) {
+            if (!mesh || !mesh.userData) return true;
+            if (mesh.userData._paletaSpreadDone) return true;
+            if (mesh.userData.entries && mesh.userData.entries.length > 0) {
+                return mesh.userData.entries.some(function(e) { return e.cantidad && e.cantidad > 0; });
+            }
+            return false;
+        }
+
+        function updateSceneFromInventario() {
+            const esLane = (name) => /^[1-9]/.test(name) || /^T\d{2}$/.test(name) || /^A\d{3}$/.test(name);
+            var meshByName = {};
+            scene.traverse((child) => {
+                if (child.isMesh && child.name) meshByName[child.name] = child;
+            });
+            scene.traverse((child) => {
+                if (child.isMesh) {
+                    if (esLane(child.name)) {
+                        const infoRacks = getEntriesForId(child.name);
+                        if (infoRacks.length > 0) {
+                            child.userData = Object.assign({}, infoRacks[0], { entries: infoRacks });
+                            child.userData.estado = mergeEntryState(infoRacks);
+                        } else {
+                            child.userData = {
+                                id: child.name, producto: '', codigo: '', lote: '', cantidad: 0, um: '', estado: 'liberado'
+                            };
+                        }
+                        child.material = getRackMaterial(child.userData);
+                    } else if (child.userData && child.userData.subPaleta) {
+                        const parentId = child.name.replace(/-\d+$/, '');
+                        const parentRacks = getEntriesForId(parentId);
+                        child.userData.id = parentId;
+                        const idx = parseInt(child.name.split('-').pop(), 10);
+                        var cumulative = 0;
+                        var entry = parentRacks[0];
+                        for (var k = 0; k < parentRacks.length; k++) {
+                            cumulative += getEffectivePositions(parentRacks[k]);
+                            if (idx <= cumulative) { entry = parentRacks[k]; break; }
+                        }
+                        var show = idx <= cumulative && isSlotVisible(idx, entry ? entry.nivel : 0);
+                        child.visible = show || isFormulacionId(parentId);
+                        child.userData.hiddenByPaletas = !show;
+                        if (show) {
+                            child.material = getRackMaterial(entry);
+                            child.userData = Object.assign({}, entry, { subPaleta: true, id: parentId, hiddenByPaletas: false });
+                        } else if (isFormulacionId(parentId)) {
+                            child.material = getRackMaterial({ id: parentId, cantidad: 0 });
+                            child.userData = { id: parentId, producto: '', codigo: '', lote: '', cantidad: 0, um: '', estado: 'liberado', subPaleta: true, hiddenByPaletas: false };
+                        }
+                    }
+                }
+            });
+            applyPaletaSpread(meshByName);
+            applySearchFilter();
+        }
+
+        function downloadInventarioJson(arrayData) {
+            const blob = new Blob([JSON.stringify(arrayData, null, 2)], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'inventario.json';
+            document.body.appendChild(a);
+            a.click();
+            a.remove();
+            URL.revokeObjectURL(url);
+        }
+
+        function gestionarSubPaletas(modelo) {
+            const root = modelo || scene;
+            root.traverse((child) => {
+                if (!child.isMesh || !child.userData || !child.userData.subPaleta) return;
+                const parentId = child.name.replace(/-\d+$/, '');
+                const parentRacks = getEntriesForId(parentId);
+                child.userData.id = parentId;
+                const idx = parseInt(child.name.split('-').pop(), 10);
+                var cumulative = 0;
+                var entry = parentRacks[0];
+                for (var k = 0; k < parentRacks.length; k++) {
+                    cumulative += getEffectivePositions(parentRacks[k]);
+                    if (idx <= cumulative) { entry = parentRacks[k]; break; }
+                }
+                var show = idx <= cumulative && isSlotVisible(idx, entry ? entry.nivel : 0);
+                child.visible = show || isFormulacionId(parentId);
+                child.userData.hiddenByPaletas = !show;
+                if (show) {
+                    child.material = getRackMaterial(entry);
+                    child.userData = Object.assign({}, entry, { subPaleta: true, id: parentId, hiddenByPaletas: false });
+                } else if (isFormulacionId(parentId)) {
+                    child.material = getRackMaterial({ id: parentId, cantidad: 0 });
+                    child.userData = { id: parentId, producto: '', codigo: '', lote: '', cantidad: 0, um: '', estado: 'liberado', subPaleta: true, hiddenByPaletas: false };
+                }
+            });
+        }
+
+        let parsedCsvRows = [];
+        const csvMapPanel = document.getElementById('csv-map');
+        const mapIdSelect = document.getElementById('map-id');
+        const mapProductSelect = document.getElementById('map-product');
+        const mapCodigoSelect = document.getElementById('map-codigo');
+        const mapLoteSelect = document.getElementById('map-lote');
+        const mapCantSelect = document.getElementById('map-cant');
+        const mapUmSelect = document.getElementById('map-um');
+        const mapEstadoSelect = document.getElementById('map-estado');
+        const mapApplyBtn = document.getElementById('map-apply');
+        const mapCancelBtn = document.getElementById('map-cancel');
+
+        const highQuantityThreshold = 100; 
+        const medQuantityThreshold = 40;
+
+        function clearSelect(sel) {
+            while (sel.firstChild) sel.removeChild(sel.firstChild);
+        }
+
+        function populateSelects(headers) {
+            clearSelect(mapIdSelect);
+            clearSelect(mapProductSelect);
+            clearSelect(mapCodigoSelect);
+            clearSelect(mapLoteSelect);
+            clearSelect(mapCantSelect);
+            clearSelect(mapUmSelect);
+            clearSelect(mapEstadoSelect);
+            for (const h of headers) {
+                const o1 = document.createElement('option'); o1.value = h; o1.text = h; mapIdSelect.appendChild(o1);
+                const o2 = document.createElement('option'); o2.value = h; o2.text = h; mapProductSelect.appendChild(o2);
+                const o3 = document.createElement('option'); o3.value = h; o3.text = h; mapCodigoSelect.appendChild(o3);
+                const o4 = document.createElement('option'); o4.value = h; o4.text = h; mapLoteSelect.appendChild(o4);
+                const o5 = document.createElement('option'); o5.value = h; o5.text = h; mapCantSelect.appendChild(o5);
+                const o6 = document.createElement('option'); o6.value = h; o6.text = h; mapUmSelect.appendChild(o6);
+                const o7 = document.createElement('option'); o7.value = h; o7.text = h; mapEstadoSelect.appendChild(o7);
+            }
+            const lower = headers.map(h => h.toLowerCase());
+            function findPref(prefs) {
+                for (const p of prefs) {
+                    const idx = lower.indexOf(p);
+                    if (idx !== -1) return headers[idx];
+                }
+                return headers[0];
+            }
+            mapIdSelect.value = findPref(['id','sku','codigo','code']);
+            mapProductSelect.value = findPref(['producto','product','nombre','name']);
+            mapCodigoSelect.value = findPref(['codigo','code','sku','barcode']);
+            mapLoteSelect.value = findPref(['lote','batch','lot']);
+            mapCantSelect.value = findPref(['cantidad','quantity','qty','amount','stock']);
+            mapUmSelect.value = findPref(['um','unidad','unidad de medida','uom','unit']);
+            mapEstadoSelect.value = findPref(['estado','lote_estado','status','state','condicion']);
+        }
+
+        csvInput.addEventListener('change', (event) => {
+            const file = event.target.files && event.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                try {
+                    const text = e.target.result;
+                    const rows = csvToObjects(text);
+                    if (rows.length === 0) {
+                        alert('CSV sin registros legibles.');
+                        return;
+                    }
+                    parsedCsvRows = rows;
+                    const headers = Object.keys(rows[0]);
+                    populateSelects(headers);
+                    showPanel(csvMapPanel);
+                } catch (err) {
+                    console.error('Error procesando CSV:', err);
+                }
+            };
+            reader.readAsText(file);
+            event.target.value = '';
+        });
+
+        mapApplyBtn.addEventListener('click', () => {
+            if (!parsedCsvRows || parsedCsvRows.length === 0) return;
+            const idKey = mapIdSelect.value;
+            const prodKey = mapProductSelect.value;
+            const codKey = mapCodigoSelect.value;
+            const loteKey = mapLoteSelect.value;
+            const cantKey = mapCantSelect.value;
+            const umKey = mapUmSelect.value;
+            const estadoKey = mapEstadoSelect.value;
+            const mapped = parsedCsvRows.map(r => {
+                const obj = Object.assign({}, r);
+                obj.id = r[idKey];
+                obj.producto = r[prodKey];
+                obj.codigo = r[codKey] !== undefined ? r[codKey] : '';
+                obj.lote = r[loteKey] !== undefined ? r[loteKey] : '';
+                let cant = parseFloat(r[cantKey]);
+                if (Number.isNaN(cant)) cant = 0;
+                obj.cantidad = cant;
+                obj.um = r[umKey] !== undefined ? r[umKey] : '';
+                const rawEstado = r[estadoKey] !== undefined ? String(r[estadoKey]).trim().toUpperCase() : '';
+                obj.estado = rawEstado === 'R' ? 'retenido' : rawEstado === 'X' ? 'rechazado' : 'liberado';
+                return obj;
+            });
+            datosInventario = mapped;
+            updateSceneFromInventario();
+            downloadInventarioJson(datosInventario);
+            hidePanel(csvMapPanel);
+        });
+
+        mapCancelBtn.addEventListener('click', () => {
+            parsedCsvRows = [];
+            hidePanel(csvMapPanel);
+        });
+
+        function mostrarInfo(infoRack) {
+            if (!infoRack) return;
+            document.getElementById('rack-id').innerText = infoRack.id || '-';
+            var entriesList = infoRack.entries;
+            if (entriesList && entriesList.length > 1) {
+                var prodHtml = entriesList.map(function(e, i) {
+                    return (i + 1) + '. ' + (e.producto || '-') + ' [' + (e.codigo || '-') + ']';
+                }).join('<br>');
+                document.getElementById('rack-prod').innerHTML = prodHtml;
+                document.getElementById('rack-cod').innerText = entriesList.length + ' productos';
+                var lotes = entriesList.map(function(e) { return e.lote || '-'; }).filter(function(l, i, a) { return a.indexOf(l) === i; }).join(', ');
+                document.getElementById('rack-lote').innerText = lotes || '-';
+                var totalCant = entriesList.reduce(function(s, e) { return s + (parseFloat(e.cantidad) || 0); }, 0);
+                document.getElementById('rack-cant').innerText = totalCant;
+                document.getElementById('rack-um').innerText = entriesList[0].um || '';
+                document.getElementById('rack-paletas').innerText = entriesList.reduce(function(s, e) { return s + (parseInt(e.paletas) || 0); }, 0);
+                document.getElementById('rack-nivel').innerText = entriesList[0].nivel ? entriesList[0].nivel + ' niveles' : '1 nivel';
+            } else {
+                var entry = entriesList ? entriesList[0] : infoRack;
+                document.getElementById('rack-prod').innerText = entry.producto || '-';
+                document.getElementById('rack-cod').innerText = entry.codigo || '-';
+                document.getElementById('rack-lote').innerText = entry.lote || '-';
+                document.getElementById('rack-cant').innerText = (entry.cantidad !== undefined) ? entry.cantidad : (entry.ocupacion !== undefined ? entry.ocupacion : '-');
+                document.getElementById('rack-um').innerText = entry.um || '';
+                document.getElementById('rack-paletas').innerText = (entry.paletas !== undefined) ? entry.paletas : (entriesList ? entriesList.reduce(function(s, e) { return s + (parseInt(e.paletas) || 0); }, 0) : '-');
+                document.getElementById('rack-nivel').innerText = entry.nivel ? entry.nivel + ' niveles' : '1 nivel';
+            }
+            const estadoEl = document.getElementById('rack-estado');
+            const estado = (infoRack.estado || 'liberado').toLowerCase();
+            estadoEl.classList.remove('estado-retenido', 'estado-rechazado', 'estado-liberado');
+            if (estado === 'retenido') {
+                estadoEl.innerText = 'RETENIDO';
+                estadoEl.classList.add('estado-retenido');
+            } else if (estado === 'rechazado') {
+                estadoEl.innerText = 'RECHAZADO';
+                estadoEl.classList.add('estado-rechazado');
+            } else {
+                estadoEl.innerText = 'LIBERADO';
+                estadoEl.classList.add('estado-liberado');
+            }
+            showPanel(infoPanel);
+            
+            lastSelectedMesh = null;
+            if (infoRack && infoRack.id) {
+                scene.traverse((child) => {
+                    if (!child.isMesh) return;
+                    if (child.userData && child.userData.id === infoRack.id) {
+                        lastSelectedMesh = child;
+                    }
+                });
+            }
+
+            // Mostrar panel estadístico y botón de restablecer solo en click sostenido
+            if (infoRack._showStats) {
+                var statProduct = entriesList && entriesList.length > 1 ? entriesList[0].producto : (infoRack.producto);
+                var statCodigo = entriesList && entriesList.length > 1 ? entriesList[0].codigo : (infoRack.codigo);
+                if (statProduct) {
+                    showPanel(resetViewBottomButton);
+                    setTimeout(() => mostrarStatsPanel(statProduct, statCodigo), 60);
+                }
+            }
+        }
+
+        function ocultarInfo() {
+            hidePanel(infoPanel);
+            hidePanel(resetViewBottomButton);
+        }
+
+        function showPanel(panel) {
+            panel.style.display = 'block';
+            requestAnimationFrame(() => panel.classList.add('visible'));
+        }
+
+        function hidePanel(panel) {
+            panel.classList.remove('visible');
+            setTimeout(() => { panel.style.display = 'none'; }, 300);
+        }
+
+        const loader = document.getElementById('loader');
+        const loaderBar = loader ? loader.querySelector('.bar > i') : null;
+        function showLoader() { if (!loader) return; loader.classList.add('visible'); if (loaderBar) loaderBar.style.width = '0%'; }
+        function updateLoader(pct) { if (!loaderBar) return; const v = Math.max(0, Math.min(100, pct*100)); loaderBar.style.width = v + '%'; }
+        function hideLoader() { if (!loader) return; loader.classList.remove('visible'); if (loaderBar) loaderBar.style.width = '0%'; }
+
+        function smoothFocus(object, duration = 900) {
+            const box = new THREE.Box3().setFromObject(object);
+            const center = new THREE.Vector3();
+            box.getCenter(center);
+            const size = new THREE.Vector3();
+            box.getSize(size);
+            
+            const maxDim = Math.max(size.x, size.y, size.z);
+            const id = object.userData && object.userData.id ? object.userData.id : null;
+            
+            let frontDir = getFrontDirectionFromId(id);
+            let signZ = frontDir ? frontDir.z : Math.sign(camera.position.z - center.z || 1);
+            
+            const inclinacionX = 2.0; 
+            let inclinacionY = 0.55; 
+            let factorProfundidadZ = signZ * -1.0; 
+            
+            if (center.y < 3.2) { 
+                inclinacionY = 1.1;         
+                factorProfundidadZ = signZ * -0.55; 
+            } else if (center.y < 5.5) {
+                inclinacionY = 0.75;
+                factorProfundidadZ = signZ * -0.8;
+            }
+
+            const baseDir = new THREE.Vector3(inclinacionX, inclinacionY, factorProfundidadZ).normalize();
+            const distance = maxDim * (focusDistanceFactor * 0.58);
+            const targetPos = center.clone().add(baseDir.multiplyScalar(distance));
+
+            const startPos = camera.position.clone();
+            const startTarget = controls.target.clone();
+            const startTime = performance.now();
+
+            function step(now) {
+                const t = Math.min(1, (now - startTime) / duration);
+                const ease = t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
+                
+                camera.position.lerpVectors(startPos, targetPos, ease);
+                controls.target.lerpVectors(startTarget, center, ease);
+                controls.update(); 
+                
+                if (t < 1) requestAnimationFrame(step);
+            }
+            requestAnimationFrame(step);
+        }
+
+        function restablecerVista() {
+            lastSelectedMesh = null;
+            ocultarInfo();
+            ocultarStatsPanel();
+
+            let targetPos, targetCenter;
+
+            if (pasilloSeleccionado !== 'todos') {
+                const matches = getSearchMatches();
+                if (matches.length > 0) {
+                    const box = new THREE.Box3();
+                    for (const mesh of matches) {
+                        box.expandByObject(mesh);
+                    }
+                    const center = new THREE.Vector3();
+                    box.getCenter(center);
+
+                    targetCenter = new THREE.Vector3(center.x, -0.51, center.z);
+                    targetPos = new THREE.Vector3(
+                        targetCenter.x - 1.05, 
+                        12.28, 
+                        targetCenter.z + 32.0
+                    );
+                } else {
+                    targetPos = defaultCameraPosition.clone();
+                    targetCenter = defaultControlTarget.clone();
+                }
+            } else {
+                targetPos = defaultCameraPosition.clone();
+                targetCenter = defaultControlTarget.clone();
+            }
+
+            const startPos = camera.position.clone();
+            const startTarget = controls.target.clone();
+            const startTime = performance.now();
+            const duration = 1000;
+
+            function step(now) {
+                const t = Math.min(1, (now - startTime) / duration);
+                const ease = t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
+
+                camera.position.lerpVectors(startPos, targetPos, ease);
+                controls.target.lerpVectors(startTarget, targetCenter, ease);
+                controls.update();
+
+                if (t < 1) requestAnimationFrame(step);
+            }
+            requestAnimationFrame(step);
+        }
+
+        function focusObject(object) {
+            const id = object.userData && object.userData.id;
+            if (id && (/^T\d{2}/.test(id) || /^A\d{3}$/.test(id))) {
+                focusTransitObject(object);
+            } else if (isFrontFacingLocation(id)) {
+                focusObjectFront(object);
+            } else {
+                smoothFocus(object);
+            }
+        }
+
+        function focusTransitObject(object, duration = 900) {
+            const id = object.userData && object.userData.id;
+            const baseId = (id || '').replace(/-.*$/, '');
+            const streetMeshes = [];
+            scene.traverse((child) => {
+                if (!child.isMesh || child.visible === false) return;
+                var cid = child.userData && child.userData.id;
+                var cname = child.name || '';
+                if (cid === baseId || cname === baseId || (cname.indexOf(baseId + '-') === 0 && child.visible)) {
+                    streetMeshes.push(child);
+                }
+            });
+            if (streetMeshes.length === 0) { smoothFocus(object, duration); return; }
+            var sBox = new THREE.Box3();
+            for (var i = 0; i < streetMeshes.length; i++) sBox.expandByObject(streetMeshes[i]);
+            var sCenter = new THREE.Vector3();
+            sBox.getCenter(sCenter);
+            var sSize = new THREE.Vector3();
+            sBox.getSize(sSize);
+            var sMaxDim = Math.max(sSize.x, sSize.y, sSize.z);
+            var sDir = new THREE.Vector3(-0.48, 0.40, 0.78).normalize();
+            var sDist = sMaxDim * 1.8;
+            const targetPos = sCenter.clone().add(sDir.clone().multiplyScalar(sDist));
+            const startPos = camera.position.clone();
+            const startTarget = controls.target.clone();
+            const startTime = performance.now();
+            function step(now) {
+                var t = Math.min(1, (now - startTime) / duration);
+                var ease = t < 0.5 ? 4*t*t*t : 1 - Math.pow(-2*t + 2, 3) / 2;
+                camera.position.lerpVectors(startPos, targetPos, ease);
+                controls.target.lerpVectors(startTarget, sCenter, ease);
+                controls.update();
+                if (t < 1) requestAnimationFrame(step);
+            }
+            requestAnimationFrame(step);
+        }
+
+        function focusObjectFront(object, duration = 900) {
+            const box = new THREE.Box3().setFromObject(object);
+            const center = new THREE.Vector3();
+            box.getCenter(center);
+            const size = new THREE.Vector3();
+            box.getSize(size);
+            
+            const maxDim = Math.max(size.x, size.y, size.z);
+            const id = object.userData && object.userData.id ? object.userData.id : null;
+            
+            let frontDir = getFrontDirectionFromId(id);
+            let signZ = frontDir ? frontDir.z : 1.0;
+
+            const inclinacionX = -2.0; 
+            let inclinacionY = 0.55; 
+            let factorProfundidadZ = signZ; 
+            
+            if (center.y < 3.2) { 
+                inclinacionY = 1.15;         
+                factorProfundidadZ = signZ * 0.75;  
+            } else if (center.y < 5.5) {
+                inclinacionY = 0.80;
+                factorProfundidadZ = signZ * 0.85;
+            } else {
+                factorProfundidadZ = signZ * 1.2;
+            }
+
+            const baseDir = new THREE.Vector3(
+                inclinacionX, 
+                inclinacionY, 
+                factorProfundidadZ
+            ).normalize(); 
+
+            const distance = maxDim * (focusDistanceFactor * 0.58); 
+            const targetPos = center.clone().add(baseDir.multiplyScalar(distance)); 
+
+            const startPos = camera.position.clone(); 
+            const startTarget = controls.target.clone(); 
+            const startTime = performance.now(); 
+
+            function step(now) {
+                const t = Math.min(1, (now - startTime) / duration); 
+                const ease = t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2; 
+                
+                camera.position.lerpVectors(startPos, targetPos, ease); 
+                controls.target.lerpVectors(startTarget, center, ease); 
+                controls.update(); 
+                
+                if (t < 1) requestAnimationFrame(step); 
+            }
+            requestAnimationFrame(step); 
+        }
+
+        function calcularInterseccion(event) {
+            const rect = canvas.getBoundingClientRect();
+            mouse.x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
+            mouse.y = -((event.clientY - rect.top) / rect.height) * 2 + 1;
+            raycaster.setFromCamera(mouse, camera);
+            const intersects = raycaster.intersectObjects(scene.children, true);
+            
+            return intersects.filter(i => {
+                if (!i.object) return false;
+
+                let obj = i.object;
+                while (obj && obj.parent && (!obj.userData || !obj.userData.id)) {
+                    obj = obj.parent;
+                }
+
+                const isHidden = (obj && obj.visible === false) || i.object.visible === false;
+                if (isHidden) return false;
+
+                const empty = isEmptyRack(i.object.userData);
+                
+                const isFaded = i.object.material && 
+                                i.object.material.transparent && 
+                                i.object.material.opacity < 0.3; 
+
+                if (isFaded) return false;
+
+                if (empty && (!i.object.material || (i.object.material.transparent && i.object.material.opacity < 0.5))) {
+                    return false;
+                }
+                return true;
+            });
+        }
+
+        const longPressDuration = 600; 
+        let pressStartX = 0, pressStartY = 0;
+        let longPressed = false;
+        let pressedObject = null;
+        let longPressTimer = null;
+        let pressAnimationId = null;
+        let pressStartTime = 0;
+
+        canvas.addEventListener('pointerdown', (event) => {
+            pressStartX = event.clientX; pressStartY = event.clientY;
+            longPressed = false;
+            const intersects = calcularInterseccion(event);
+            pressedObject = (intersects.length > 0) ? intersects[0].object : null;
+            
+            if (!pressedObject) return;
+            
+            pressStartTime = performance.now();
+            let loaderShown = false;
+            function holdProgress(now) {
+                const elapsed = now - pressStartTime;
+                const pct = Math.min(1, elapsed / longPressDuration);
+                if (!loaderShown && pct > 0.25) {
+                    loaderShown = true;
+                    if (loader) {
+                        loader.style.left = '50%';
+                        loader.style.top = 'auto';
+                        loader.style.bottom = '24px';
+                        loader.style.transform = 'translateX(-50%)';
+                    }
+                    showLoader();
+                }
+                updateLoader(pct);
+                if (pct >= 1) {
+                    longPressed = true;
+                    if (pressedObject && pressedObject.userData && pressedObject.userData.id) {
+                        const dataWithStats = Object.assign({}, pressedObject.userData, { _showStats: true });
+                        mostrarInfo(dataWithStats);
+                        updateLoader(1);
+                        focusObject(pressedObject);
+                        hideLoader();
+                    } else {
+                        hideLoader();
+                    }
+                    pressAnimationId = null;
+                    return;
+                }
+                pressAnimationId = requestAnimationFrame(holdProgress);
+            }
+            pressAnimationId = requestAnimationFrame(holdProgress);
+        });
+
+        canvas.addEventListener('pointerup', (event) => {
+            if (longPressTimer) { clearTimeout(longPressTimer); longPressTimer = null; }
+            if (pressAnimationId) { cancelAnimationFrame(pressAnimationId); pressAnimationId = null; }
+            if (!longPressed) {
+                const intersects = calcularInterseccion(event);
+                if (intersects.length > 0) {
+                    const objetoTocado = intersects[0].object;
+                    if (objetoTocado.userData && objetoTocado.userData.id) {
+                        mostrarInfo(objetoTocado.userData);
+                    }
+                }
+                hideLoader();
+            }
+            pressedObject = null;
+            longPressed = false;
+        });
+
+        canvas.addEventListener('pointermove', (event) => {
+            if (!pressAnimationId && !longPressTimer) return;
+            const dx = event.clientX - pressStartX;
+            const dy = event.clientY - pressStartY;
+            if ((dx * dx + dy * dy) > (6 * 6)) { 
+                if (pressAnimationId) { cancelAnimationFrame(pressAnimationId); pressAnimationId = null; }
+                if (longPressTimer) { clearTimeout(longPressTimer); longPressTimer = null; }
+                pressedObject = null;
+                hideLoader();
+            }
+        });
+
+        canvas.addEventListener('pointercancel', () => {
+            if (longPressTimer) { clearTimeout(longPressTimer); longPressTimer = null; }
+            pressedObject = null;
+            longPressed = false;
+        });
+
+        // ─── PANEL ESTADÍSTICO DE PRODUCTO ────────────────────────────────────────
+
+        const statsPanel = document.getElementById('stats-floating');
+        const statsClose = document.getElementById('stats-close');
+
+        function computeProductStats(productName, codigoRef) {
+            // Busca todas las filas del inventario que coincidan con el producto
+            const term = (productName || codigoRef || '').toLowerCase().trim();
+            if (!term) return null;
+
+            // Recopilar todas las entradas del inventario que coincidan
+            const matchingRows = datosInventario.filter(item => {
+                const prod = (item.producto || '').toLowerCase();
+                const cod  = (item.codigo  || '').toLowerCase();
+                return prod === term || cod === term || prod.includes(term) || cod.includes(term);
+            });
+
+            if (matchingRows.length === 0) return null;
+
+            // Nombre y código canónicos (del primer resultado)
+            const canonName = matchingRows[0].producto || productName || '-';
+            const canonCod  = matchingRows[0].codigo  || codigoRef  || '-';
+
+            // Total ubicaciones únicas con el producto
+            const ubicSet = new Set();
+            matchingRows.forEach(r => { if (r.id && String(r.id).trim()) ubicSet.add(String(r.id).trim()); });
+
+            // Total unidades sumadas
+            let totalQty = 0;
+            matchingRows.forEach(r => {
+                const v = parseFloat(r.cantidad);
+                if (!isNaN(v)) totalQty += v;
+            });
+
+            // Lotes: agrupar por lote, sumar cantidad y listar ubicaciones
+            const lotesMap = {};
+            matchingRows.forEach(r => {
+                const lote = (r.lote || 'Sin lote').trim();
+                const id   = (r.id || '').trim();
+                const qty  = parseFloat(r.cantidad) || 0;
+                if (!lotesMap[lote]) lotesMap[lote] = { qty: 0, ubics: new Set() };
+                lotesMap[lote].qty += qty;
+                if (id) lotesMap[lote].ubics.add(id);
+            });
+
+            const lotes = Object.entries(lotesMap)
+                .map(([name, data]) => ({ name, qty: data.qty, ubics: [...data.ubics] }))
+                .sort((a, b) => b.qty - a.qty);
+
+            // Unidad de medida: tomar la más frecuente entre las filas
+            const umCount = {};
+            matchingRows.forEach(r => {
+                const um = (r.um || '').trim();
+                if (um) umCount[um] = (umCount[um] || 0) + 1;
+            });
+            const canonUm = Object.entries(umCount).sort((a, b) => b[1] - a[1]).map(e => e[0])[0] || '';
+
+            // Lista de ubicaciones únicas (ordenadas)
+            const ubicaciones = [...ubicSet].sort();
+
+            return { canonName, canonCod, totalUbics: ubicSet.size, totalQty, lotes, ubicaciones, canonUm };
+        }
+
+        function mostrarStatsPanel(productName, codigoRef) {
+            const stats = computeProductStats(productName, codigoRef);
+
+            if (!stats) {
+                ocultarStatsPanel();
+                return;
+            }
+
+            document.getElementById('stats-product-name').innerText = stats.canonName;
+            document.getElementById('stats-sku').innerText = `SKU: ${stats.canonCod}`;
+            document.getElementById('stats-total-ubics').innerText = stats.totalUbics;
+
+            // Formatear cantidad total: punto decimal, sin separador de miles
+            const qtyFormatted = stats.totalQty % 1 === 0
+                ? stats.totalQty
+                : stats.totalQty.toFixed(2);
+            document.getElementById('stats-total-qty').innerText = qtyFormatted;
+            // Mostrar la unidad de medida real del producto
+            document.getElementById('stats-um-label').innerText = stats.canonUm || 'Unidades';
+
+            // Lotes
+            const lotesEl = document.getElementById('stats-lotes-list');
+            if (stats.lotes.length === 0) {
+                lotesEl.innerHTML = '<div class="stats-no-data">Sin lotes registrados</div>';
+            } else {
+                lotesEl.innerHTML = stats.lotes.map(l => `
+                    <div class="stats-lote-row">
+                        <span class="stats-lote-name" title="${l.name}">${l.name}</span>
+                        <span class="stats-lote-meta">
+                            <span class="stats-lote-ubics">${l.ubics.length} ubic.</span>
+                            <span class="stats-lote-qty">${l.qty >= 1000 ? l.qty.toLocaleString('es') : l.qty}</span>
+                        </span>
+                    </div>`).join('');
+            }
+
+            // Ubicaciones como tags clicables
+            const ubicsEl = document.getElementById('stats-ubics-grid');
+            if (stats.ubicaciones.length === 0) {
+                ubicsEl.innerHTML = '<div class="stats-no-data">Sin ubicaciones en almacén</div>';
+            } else {
+                ubicsEl.innerHTML = stats.ubicaciones.map(id => `
+                    <span class="stats-ubic-tag" data-ubic-id="${id}">${id}</span>`
+                ).join('');
+
+                // Click en tag de ubicación: enfocar rack
+                ubicsEl.querySelectorAll('.stats-ubic-tag').forEach(tag => {
+                    tag.addEventListener('click', () => {
+                        const targetId = tag.getAttribute('data-ubic-id');
+                        // Resaltar el tag activo
+                        ubicsEl.querySelectorAll('.stats-ubic-tag').forEach(t => t.classList.remove('active'));
+                        tag.classList.add('active');
+                        // Buscar el mesh en la escena y enfocar
+                        let targetMesh = null;
+                        scene.traverse(child => {
+                            if (child.isMesh && child.userData && child.userData.id === targetId) {
+                                targetMesh = child;
+                            }
+                        });
+                        if (targetMesh) {
+                            mostrarInfo(targetMesh.userData);
+                            focusObject(targetMesh);
+                        }
+                    });
+                });
+            }
+
+            // Posicionamiento: si #info está visible, colocar stats debajo
+            posicionarStatsPanel();
+
+            statsPanel.style.display = 'block';
+            requestAnimationFrame(() => statsPanel.classList.add('visible'));
+        }
+
+        function posicionarStatsPanel() {
+            const kpiBar = document.getElementById('kpi-bar');
+            const kpiH = kpiBar ? kpiBar.offsetHeight : 72;
+            const rightPanel = document.getElementById('right-panel');
+            const rpRect = rightPanel ? rightPanel.getBoundingClientRect() : { left: window.innerWidth - 252 };
+            statsPanel.style.top = (kpiH + 16) + 'px';
+            statsPanel.style.right = (window.innerWidth - rpRect.left + 8) + 'px';
+            statsPanel.style.maxHeight = (window.innerHeight - kpiH - 100) + 'px';
+            statsPanel.style.left = 'auto';
+        }
+
+        function ocultarStatsPanel() {
+            statsPanel.classList.remove('visible');
+            setTimeout(() => {
+                if (!statsPanel.classList.contains('visible')) {
+                    statsPanel.style.display = 'none';
+                }
+            }, 300);
+        }
+
+        statsClose.addEventListener('click', ocultarStatsPanel);
+
+        // ─── FIN PANEL ESTADÍSTICO ─────────────────────────────────────────────────
+
+        infoClose.addEventListener('click', ocultarInfo);
+        resetViewButton.addEventListener('click', restablecerVista);
+        searchButton.addEventListener('click', () => {
+            currentSearchTerm = searchInput.value;
+            searchSuggestions.style.display = 'none';
+            applySearchFilter();
+            focusSearchMatches();
+            // Mostrar stats si hay término de búsqueda
+            if (currentSearchTerm.trim()) {
+                const firstMatch = datosInventario.find(item => {
+                    const prod = (item.producto || '').toLowerCase();
+                    const cod  = (item.codigo  || '').toLowerCase();
+                    const id   = (item.id      || '').toLowerCase();
+                    const t = currentSearchTerm.toLowerCase().trim();
+                    return prod.includes(t) || cod.includes(t) || id.includes(t);
+                });
+                if (firstMatch) mostrarStatsPanel(firstMatch.producto, firstMatch.codigo);
+                else ocultarStatsPanel();
+            } else {
+                ocultarStatsPanel();
+            }
+        });
+        clearSearchButton.addEventListener('click', () => {
+            currentSearchTerm = '';
+            searchInput.value = '';
+            renderSearchSuggestions();
+            applySearchFilter();
+            ocultarStatsPanel();
+        });
+        searchInput.addEventListener('input', () => {
+            currentSearchTerm = searchInput.value;
+            renderSearchSuggestions();
+            applySearchFilter();
+            ocultarStatsPanel();
+        });
+        searchInput.addEventListener('keydown', (event) => {
+            if (event.key === 'Enter') {
+                event.preventDefault();
+                currentSearchTerm = searchInput.value;
+                renderSearchSuggestions();
+                applySearchFilter();
+                focusSearchMatches();
+            }
+        });
+        resetViewBottomButton.addEventListener('click', restablecerVista);
+
+        // Lógica interactiva para la nueva botonera de Pasillos
+        const pasilloContainer = document.getElementById('pasillo-buttons-container');
+        if (pasilloContainer) {
+            pasilloContainer.addEventListener('click', (event) => {
+                const targetButton = event.target.closest('.nav-btn');
+                if (!targetButton) return;
+
+                pasilloContainer.querySelectorAll('.nav-btn').forEach(btn => {
+                    btn.classList.remove('active');
+                });
+
+                targetButton.classList.add('active');
+                pasilloSeleccionado = targetButton.getAttribute('data-pasillo');
+
+                applySearchFilter();
+                if (currentStatusFilter) aplicarFiltroEstado();
+                focusSearchMatches(); 
+            });
+
+            // Hover: mostrar capacidad del pasillo sin cambiar filtro
+            pasilloContainer.querySelectorAll('.nav-btn').forEach(btn => {
+                btn.addEventListener('mouseenter', () => {
+                    const aisle = btn.getAttribute('data-pasillo');
+                    if (aisle !== pasilloSeleccionado) {
+                        updateUsageOverlay(aisle);
+                    }
+                });
+                btn.addEventListener('mouseleave', () => {
+                    updateUsageOverlay(pasilloSeleccionado);
+                });
+            });
+        }
+
+
+
+        // ─── FILTRO POR ESTADO (Liberado / Retenido / Rechazado) ──────────────────
+        let currentStatusFilter = null; // 'liberado' | 'retenido' | 'rechazado' | null
+
+        document.querySelectorAll('#usage-status-breakdown .filter-badge').forEach(btn => {
+            btn.addEventListener('click', function() {
+                const status = this.dataset.status;
+                if (currentStatusFilter === status) {
+                    currentStatusFilter = null;
+                } else {
+                    currentStatusFilter = status;
+                }
+                aplicarFiltroEstado();
+            });
+        });
+
+        document.getElementById('usage-status-clear').addEventListener('click', () => {
+            currentStatusFilter = null;
+            aplicarFiltroEstado();
+        });
+
+        function aplicarFiltroEstado() {
+            const btns = document.querySelectorAll('#usage-status-breakdown .filter-badge');
+            btns.forEach(b => b.classList.remove('active'));
+            const clearBtn = document.getElementById('usage-status-clear');
+            const summaryPanel = document.getElementById('status-summary-panel');
+
+            if (!currentStatusFilter) {
+                clearBtn.style.display = 'none';
+                summaryPanel.classList.remove('visible');
+                // Re-aplicar el filtro de pasillo al limpiar el filtro de estado
+                applySearchFilter();
+                return;
+            }
+
+            // Marcar el botón activo
+            const activeBtn = document.querySelector(`#usage-status-breakdown .filter-badge[data-status="${currentStatusFilter}"]`);
+            if (activeBtn) activeBtn.classList.add('active', currentStatusFilter);
+            clearBtn.style.display = 'inline';
+
+            // Filtrar mallas por estado y contar productos
+            var productCounts = {};
+
+            scene.traverse((obj) => {
+                if (!obj.isMesh) return;
+
+                // No ocultar nunca objetos marcados como hiddenByPaletas
+                if (obj.userData && obj.userData.hiddenByPaletas) return;
+
+                var name = obj.name || '';
+                // Ambiente (suelo, rayados, bordes, etc.) siempre visible
+                var esRack = /^[1-9]/.test(name) || /^T\d{2}$/.test(name) || /^A\d{3}$/.test(name) || (obj.userData && obj.userData.subPaleta);
+                if (!esRack && (!obj.userData || !obj.userData.entries)) {
+                    obj.visible = true;
+                    if (obj.material) { obj.material.transparent = false; obj.material.opacity = 1.0; }
+                    return;
+                }
+
+                // Determinar si el rack cumple el estado filtrado
+                var entries = obj.userData && obj.userData.entries;
+                var match = false;
+                if (entries && entries.length > 0) {
+                    match = entries.some(function(e) {
+                        return (e.estado || '').toLowerCase() === currentStatusFilter;
+                    });
+                }
+
+                // Contar productos para retenidos/rechazados (no liberado)
+                if (currentStatusFilter !== 'liberado' && match) {
+                    entries.forEach(function(e) {
+                        if ((e.estado || '').toLowerCase() === currentStatusFilter) {
+                            var pName = e.producto || 'Sin nombre';
+                            if (!productCounts[pName]) productCounts[pName] = 0;
+                            var p = e.paletas !== undefined ? parseInt(e.paletas) || 0 : 0;
+                            if (p > 0) {
+                                productCounts[pName] += p;
+                            } else if (e.cantidad && parseInt(e.cantidad) > 0) {
+                                productCounts[pName] += 1;
+                            }
+                        }
+                    });
+                }
+                if (match) {
+                    obj.visible = true;
+                    if (obj.material) { obj.material.transparent = false; obj.material.opacity = 1.0; }
+                } else {
+                    obj.visible = true;
+                    if (obj.material) { obj.material.transparent = true; obj.material.opacity = 0.03; }
+                }
+            });
+
+            // Mostrar resumen de productos en el panel derecho para retenidos/rechazados
+            if (currentStatusFilter === 'liberado') {
+                summaryPanel.classList.remove('visible');
+                summaryPanel.innerHTML = '';
+                return;
+            }
+
+            var sorted = Object.keys(productCounts).sort();
+            var total = sorted.reduce(function(sum, p) { return sum + productCounts[p]; }, 0);
+            var color = currentStatusFilter === 'retenido' ? 'var(--warning)' : 'var(--danger)';
+            var html = '<div class="summary-header">';
+            html += '<span class="summary-icon" style="background:' + color + '"></span>';
+            html += '<span class="summary-title">' + currentStatusFilter.toUpperCase() + '</span>';
+            html += '<span class="summary-count">' + total + ' palets</span>';
+            html += '</div>';
+            html += '<div class="summary-body">';
+            sorted.forEach(function(p) {
+                html += '<div class="summary-item">';
+                html += '<span class="summary-item-dot" style="background:' + color + '"></span>';
+                html += '<span class="summary-item-name">' + p + '</span>';
+                html += '<span class="summary-item-qty">' + productCounts[p] + '</span>';
+                html += '</div>';
+            });
+            html += '</div>';
+            summaryPanel.innerHTML = html;
+            summaryPanel.classList.add('visible');
+        }
+
+        function animate() {
+            requestAnimationFrame(animate);
+            controls.update();
+            updateCoordsOverlay();
+            renderer.render(scene, camera);
+        }
+        animate();
+
+        window.addEventListener('resize', () => {
+            const s = getContainerSize();
+            camera.aspect = s.w / s.h;
+            camera.updateProjectionMatrix();
+            renderer.setSize(s.w, s.h);
+        });
+    </script>
+</body>
+</html>
