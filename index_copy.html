@@ -544,9 +544,16 @@
             display: none;
         }
         #stats-floating {
-            right: 252px;
-            top: calc(var(--kpi-h) + 16px);
-            max-height: calc(100vh - var(--kpi-h) - 100px);
+            position: static;
+            grid-row: 2;
+            grid-column: 2;
+            align-self: start;
+            justify-self: end;
+            margin-right: 12px;
+            margin-top: 8px;
+            z-index: 100;
+            display: none;
+            max-height: calc(100vh - var(--kpi-h) - 24px);
             overflow-y: auto;
         }
 
@@ -873,6 +880,45 @@
         <button id="info-close" style="width:100%;padding:8px;border-radius:6px;border:1px solid rgba(255,255,255,0.06);background:transparent;color:var(--md-text-secondary);font-size:12px;font-family:var(--md-font);cursor:pointer;">Cerrar Detalle</button>
     </div>
 
+    <!-- Stats Panel (floating) -->
+    <div id="stats-floating" class="floating-panel">
+        <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:8px;margin-bottom:14px;">
+            <div style="flex:1;min-width:0;">
+                <div style="display:flex;align-items:center;gap:6px;margin-bottom:4px;">
+                    <span style="width:6px;height:6px;border-radius:50%;background:var(--md-primary-light);flex-shrink:0;"></span>
+                    <span style="font-size:9px;font-weight:600;color:var(--md-primary-light);letter-spacing:0.8px;text-transform:uppercase;">Product Stats</span>
+                </div>
+                <div style="font-family:var(--md-mono);font-size:14px;font-weight:700;color:var(--md-text);line-height:1.3;word-break:break-word;" id="stats-product-name">-</div>
+                <div style="font-family:var(--md-mono);font-size:10px;color:var(--md-text-muted);margin-top:2px;" id="stats-sku">-</div>
+            </div>
+            <button id="stats-close" style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.06);color:var(--md-text-muted);cursor:pointer;font-size:11px;padding:4px 8px;border-radius:4px;flex-shrink:0;font-family:var(--md-font);transition:all 120ms;" onmouseover="this.style.borderColor='var(--md-primary-light)';this.style.color='var(--md-primary-light)'" onmouseout="this.style.borderColor='rgba(255,255,255,0.06)';this.style.color='var(--md-text-muted)'">✕</button>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px;">
+            <div style="background:linear-gradient(135deg,rgba(37,99,235,0.08),rgba(37,99,235,0.02));border:1px solid rgba(37,99,235,0.12);border-radius:6px;padding:12px;">
+                <div style="font-family:var(--md-mono);font-size:24px;font-weight:700;color:var(--md-primary-light);line-height:1;letter-spacing:-0.5px;" id="stats-total-ubics">-</div>
+                <div style="font-size:9px;font-weight:600;color:var(--md-text-muted);text-transform:uppercase;letter-spacing:0.5px;margin-top:4px;">Ubicaciones</div>
+            </div>
+            <div style="background:linear-gradient(135deg,rgba(37,99,235,0.08),rgba(37,99,235,0.02));border:1px solid rgba(37,99,235,0.12);border-radius:6px;padding:12px;">
+                <div style="font-family:var(--md-mono);font-size:24px;font-weight:700;color:var(--md-primary-light);line-height:1;letter-spacing:-0.5px;" id="stats-total-qty">-</div>
+                <div style="font-size:9px;font-weight:600;color:var(--md-text-muted);text-transform:uppercase;letter-spacing:0.5px;margin-top:4px;" id="stats-um-label">Unidades</div>
+            </div>
+        </div>
+        <div style="font-size:9px;font-weight:600;color:var(--md-text-muted);text-transform:uppercase;letter-spacing:0.8px;margin-bottom:8px;display:flex;align-items:center;gap:6px;">
+            Lotes
+            <div style="flex:1;height:1px;background:rgba(255,255,255,0.04);"></div>
+        </div>
+        <div id="stats-lotes-list" style="display:flex;flex-direction:column;gap:4px;margin-bottom:14px;">
+            <div style="font-size:11px;color:var(--md-text-muted);text-align:center;padding:16px 0;">Sin datos</div>
+        </div>
+        <div style="font-size:9px;font-weight:600;color:var(--md-text-muted);text-transform:uppercase;letter-spacing:0.8px;margin-bottom:8px;display:flex;align-items:center;gap:6px;">
+            Ubicaciones
+            <div style="flex:1;height:1px;background:rgba(255,255,255,0.04);"></div>
+        </div>
+        <div id="stats-ubics-grid" style="display:flex;flex-wrap:wrap;gap:4px;">
+            <div style="font-size:11px;color:var(--md-text-muted);text-align:center;padding:16px 0;width:100%;">Sin datos</div>
+        </div>
+    </div>
+
     <!-- ===== LEFT SIDEBAR NAV ===== -->
     <aside id="sidebar">
         <div class="sidebar-logo">
@@ -1064,44 +1110,6 @@
         </div>
 
 
-        <!-- Stats Panel (floating) -->
-        <div id="stats-floating" class="floating-panel">
-            <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:8px;margin-bottom:14px;">
-                <div style="flex:1;min-width:0;">
-                    <div style="display:flex;align-items:center;gap:6px;margin-bottom:4px;">
-                        <span style="width:6px;height:6px;border-radius:50%;background:var(--md-primary-light);flex-shrink:0;"></span>
-                        <span style="font-size:9px;font-weight:600;color:var(--md-primary-light);letter-spacing:0.8px;text-transform:uppercase;">Product Stats</span>
-                    </div>
-                    <div style="font-family:var(--md-mono);font-size:14px;font-weight:700;color:var(--md-text);line-height:1.3;word-break:break-word;" id="stats-product-name">-</div>
-                    <div style="font-family:var(--md-mono);font-size:10px;color:var(--md-text-muted);margin-top:2px;" id="stats-sku">-</div>
-                </div>
-                <button id="stats-close" style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.06);color:var(--md-text-muted);cursor:pointer;font-size:11px;padding:4px 8px;border-radius:4px;flex-shrink:0;font-family:var(--md-font);transition:all 120ms;" onmouseover="this.style.borderColor='var(--md-primary-light)';this.style.color='var(--md-primary-light)'" onmouseout="this.style.borderColor='rgba(255,255,255,0.06)';this.style.color='var(--md-text-muted)'">✕</button>
-            </div>
-            <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px;">
-                <div style="background:linear-gradient(135deg,rgba(37,99,235,0.08),rgba(37,99,235,0.02));border:1px solid rgba(37,99,235,0.12);border-radius:6px;padding:12px;">
-                    <div style="font-family:var(--md-mono);font-size:24px;font-weight:700;color:var(--md-primary-light);line-height:1;letter-spacing:-0.5px;" id="stats-total-ubics">-</div>
-                    <div style="font-size:9px;font-weight:600;color:var(--md-text-muted);text-transform:uppercase;letter-spacing:0.5px;margin-top:4px;">Ubicaciones</div>
-                </div>
-                <div style="background:linear-gradient(135deg,rgba(37,99,235,0.08),rgba(37,99,235,0.02));border:1px solid rgba(37,99,235,0.12);border-radius:6px;padding:12px;">
-                    <div style="font-family:var(--md-mono);font-size:24px;font-weight:700;color:var(--md-primary-light);line-height:1;letter-spacing:-0.5px;" id="stats-total-qty">-</div>
-                    <div style="font-size:9px;font-weight:600;color:var(--md-text-muted);text-transform:uppercase;letter-spacing:0.5px;margin-top:4px;" id="stats-um-label">Unidades</div>
-                </div>
-            </div>
-            <div style="font-size:9px;font-weight:600;color:var(--md-text-muted);text-transform:uppercase;letter-spacing:0.8px;margin-bottom:8px;display:flex;align-items:center;gap:6px;">
-                Lotes
-                <div style="flex:1;height:1px;background:rgba(255,255,255,0.04);"></div>
-            </div>
-            <div id="stats-lotes-list" style="display:flex;flex-direction:column;gap:4px;margin-bottom:14px;">
-                <div style="font-size:11px;color:var(--md-text-muted);text-align:center;padding:16px 0;">Sin datos</div>
-            </div>
-            <div style="font-size:9px;font-weight:600;color:var(--md-text-muted);text-transform:uppercase;letter-spacing:0.8px;margin-bottom:8px;display:flex;align-items:center;gap:6px;">
-                Ubicaciones
-                <div style="flex:1;height:1px;background:rgba(255,255,255,0.04);"></div>
-            </div>
-            <div id="stats-ubics-grid" style="display:flex;flex-wrap:wrap;gap:4px;">
-                <div style="font-size:11px;color:var(--md-text-muted);text-align:center;padding:16px 0;width:100%;">Sin datos</div>
-            </div>
-        </div>
 
         <!-- Status summary panel -->
         <div id="status-summary-panel"></div>
@@ -2315,13 +2323,21 @@
             var fullEntries = getEntriesForId(infoRack.id);
             var entriesList = fullEntries.length > 0 ? fullEntries : (infoRack.entries);
             if (entriesList && entriesList.length > 1) {
-                var prodHtml = entriesList.map(function(e, i) {
-                    return (i + 1) + '. ' + (e.producto || '-') + ' [' + (e.codigo || '-') + ']';
-                }).join('<br>');
-                document.getElementById('rack-prod').innerHTML = prodHtml;
-                document.getElementById('rack-cod').innerText = entriesList.length + ' productos';
-                var lotes = entriesList.map(function(e) { return e.lote || '-'; }).filter(function(l, i, a) { return a.indexOf(l) === i; }).join(', ');
-                document.getElementById('rack-lote').innerText = lotes || '-';
+                var sameProduct = entriesList.every(function(e) { return e.producto === entriesList[0].producto && e.codigo === entriesList[0].codigo; });
+                if (sameProduct) {
+                    document.getElementById('rack-prod').innerText = entriesList[0].producto || '-';
+                    document.getElementById('rack-cod').innerText = entriesList[0].codigo || '-';
+                    var lotesList = entriesList.map(function(e, i) { return (i+1) + '. ' + (e.lote || '-'); }).join('<br>');
+                    document.getElementById('rack-lote').innerHTML = lotesList;
+                } else {
+                    var prodHtml = entriesList.map(function(e, i) {
+                        return (i + 1) + '. ' + (e.producto || '-') + ' [' + (e.codigo || '-') + ']';
+                    }).join('<br>');
+                    document.getElementById('rack-prod').innerHTML = prodHtml;
+                    document.getElementById('rack-cod').innerText = entriesList.length + ' productos';
+                    var lotes = entriesList.map(function(e) { return e.lote || '-'; }).filter(function(l, i, a) { return a.indexOf(l) === i; }).join(', ');
+                    document.getElementById('rack-lote').innerText = lotes || '-';
+                }
                 var totalCant = entriesList.reduce(function(s, e) { return s + (parseFloat(e.cantidad) || 0); }, 0);
                 document.getElementById('rack-cant').innerText = totalCant;
                 document.getElementById('rack-um').innerText = entriesList[0].um || '';
@@ -2850,22 +2866,8 @@
                 });
             }
 
-            // Posicionamiento: si #info está visible, colocar stats debajo
-            posicionarStatsPanel();
-
             statsPanel.style.display = 'block';
             requestAnimationFrame(() => statsPanel.classList.add('visible'));
-        }
-
-        function posicionarStatsPanel() {
-            const kpiBar = document.getElementById('kpi-bar');
-            const kpiH = kpiBar ? kpiBar.offsetHeight : 72;
-            const rightPanel = document.getElementById('right-panel');
-            const rpRect = rightPanel ? rightPanel.getBoundingClientRect() : { left: window.innerWidth - 252 };
-            statsPanel.style.top = (kpiH + 16) + 'px';
-            statsPanel.style.right = (window.innerWidth - rpRect.left + 8) + 'px';
-            statsPanel.style.maxHeight = (window.innerHeight - kpiH - 100) + 'px';
-            statsPanel.style.left = 'auto';
         }
 
         function ocultarStatsPanel() {
