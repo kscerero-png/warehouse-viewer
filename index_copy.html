@@ -2342,32 +2342,63 @@
             document.getElementById('rack-id').innerText = infoRack.id || '-';
             var fullEntries = getEntriesForId(infoRack.id);
             var entriesList = fullEntries.length > 0 ? fullEntries : (infoRack.entries);
+            function mergeLotes(lotes) {
+                var map = {};
+                lotes.forEach(function(l) {
+                    var lk = (l.lote || '-').trim() || '-';
+                    if (!map[lk]) map[lk] = { lote: lk, cantidad: 0 };
+                    map[lk].cantidad += l.cantidad;
+                });
+                return Object.keys(map).map(function(k) { return map[k]; });
+            }
+            var totalCant = 0, totalPaletas = 0, um = '', nivel = '';
             if (entriesList && entriesList.length > 1) {
-                var sameProduct = entriesList.every(function(e) { return (e.producto || '').trim() === (entriesList[0].producto || '').trim(); });
-                if (sameProduct) {
-                    document.getElementById('rack-prod').innerText = (entriesList[0].producto || '').trim() || '-';
-                    var sameCode = entriesList.every(function(e) { return (e.codigo || '').trim() === (entriesList[0].codigo || '').trim(); });
-                    document.getElementById('rack-cod').innerText = sameCode ? (entriesList[0].codigo || '-') : 'Varios códigos';
-                    var lotesList = entriesList.map(function(e, i) {
-                        var lbl = e.lote || '-';
-                        if (!sameCode) lbl += ' [' + (e.codigo || '-') + ']';
-                        return (i+1) + '. ' + lbl;
-                    }).join('<br>');
-                    document.getElementById('rack-lote').innerHTML = lotesList;
+                var groups = {};
+                entriesList.forEach(function(e) {
+                    var key = ((e.producto || '').trim() + '|' + (e.codigo || '').trim()) || 'unknown';
+                    if (!groups[key]) {
+                        groups[key] = { producto: (e.producto || '').trim(), codigo: (e.codigo || '').trim(), lotes: [], paletas: 0, cantidad: 0, um: e.um || '' };
+                    }
+                    groups[key].lotes.push({ lote: e.lote || '-', cantidad: parseFloat(e.cantidad) || 0 });
+                    groups[key].paletas += parseInt(e.paletas) || 0;
+                    groups[key].cantidad += parseFloat(e.cantidad) || 0;
+                });
+                var gKeys = Object.keys(groups);
+                var allSameProduct = gKeys.every(function(k) { return groups[k].producto === groups[gKeys[0]].producto; });
+                if (allSameProduct) {
+                    document.getElementById('rack-prod').innerText = groups[gKeys[0]].producto || '-';
+                    if (gKeys.length === 1) {
+                        var g = groups[gKeys[0]];
+                        document.getElementById('rack-cod').innerText = g.codigo || '-';
+                        var merged = mergeLotes(g.lotes);
+                        var lotesList = merged.map(function(l, i) { return (i+1) + '. ' + l.lote + (merged.length > 1 && l.cantidad > 0 ? ' (' + l.cantidad + ')' : ''); }).join('<br>');
+                        document.getElementById('rack-lote').innerHTML = lotesList;
+                        totalCant = g.cantidad; totalPaletas = g.paletas; um = g.um;
+                    } else {
+                        document.getElementById('rack-cod').innerText = 'Varios códigos';
+                        var lotesList = gKeys.map(function(k) {
+                            var g = groups[k];
+                            var merged = mergeLotes(g.lotes);
+                            return '<b>' + (g.codigo || '-') + '</b><br>' + merged.map(function(l, i) { return '&nbsp;&nbsp;' + (i+1) + '. ' + l.lote + (l.cantidad > 0 ? ' (' + l.cantidad + ')' : ''); }).join('<br>');
+                        }).join('<br>');
+                        document.getElementById('rack-lote').innerHTML = lotesList;
+                        totalCant = gKeys.reduce(function(s, k) { return s + groups[k].cantidad; }, 0);
+                        totalPaletas = gKeys.reduce(function(s, k) { return s + groups[k].paletas; }, 0);
+                        um = groups[gKeys[0]].um || '';
+                    }
                 } else {
-                    var prodHtml = entriesList.map(function(e, i) {
-                        return (i + 1) + '. ' + (e.producto || '-') + ' [' + (e.codigo || '-') + ']';
+                    var prodHtml = gKeys.map(function(k, i) {
+                        var g = groups[k];
+                        var merged = mergeLotes(g.lotes);
+                        return (i+1) + '. ' + (g.producto || '-') + ' [' + (g.codigo || '-') + ']' + (merged.length === 1 ? ' — Lote: ' + merged[0].lote : ' — Lotes: ' + merged.map(function(l) { return l.lote; }).join(', '));
                     }).join('<br>');
                     document.getElementById('rack-prod').innerHTML = prodHtml;
-                    document.getElementById('rack-cod').innerText = entriesList.length + ' productos';
-                    var lotes = entriesList.map(function(e) { return e.lote || '-'; }).filter(function(l, i, a) { return a.indexOf(l) === i; }).join(', ');
-                    document.getElementById('rack-lote').innerText = lotes || '-';
+                    document.getElementById('rack-cod').innerText = gKeys.length + ' productos';
+                    document.getElementById('rack-lote').innerText = '-';
+                    totalCant = gKeys.reduce(function(s, k) { return s + groups[k].cantidad; }, 0);
+                    totalPaletas = gKeys.reduce(function(s, k) { return s + groups[k].paletas; }, 0);
+                    um = groups[gKeys[0]].um || '';
                 }
-                var totalCant = entriesList.reduce(function(s, e) { return s + (parseFloat(e.cantidad) || 0); }, 0);
-                document.getElementById('rack-cant').innerText = totalCant;
-                document.getElementById('rack-um').innerText = entriesList[0].um || '';
-                document.getElementById('rack-paletas').innerText = entriesList.reduce(function(s, e) { return s + (parseInt(e.paletas) || 0); }, 0);
-                document.getElementById('rack-nivel').innerText = entriesList[0].nivel ? entriesList[0].nivel + ' niveles' : '1 nivel';
             } else {
                 var entry = entriesList ? entriesList[0] : infoRack;
                 document.getElementById('rack-prod').innerText = entry.producto || '-';
@@ -2377,6 +2408,12 @@
                 document.getElementById('rack-um').innerText = entry.um || '';
                 document.getElementById('rack-paletas').innerText = (entry.paletas !== undefined) ? entry.paletas : (entriesList ? entriesList.reduce(function(s, e) { return s + (parseInt(e.paletas) || 0); }, 0) : '-');
                 document.getElementById('rack-nivel').innerText = entry.nivel ? entry.nivel + ' niveles' : '1 nivel';
+            }
+            if (entriesList && entriesList.length > 1) {
+                document.getElementById('rack-cant').innerText = totalCant;
+                document.getElementById('rack-um').innerText = um;
+                document.getElementById('rack-paletas').innerText = totalPaletas;
+                document.getElementById('rack-nivel').innerText = (entriesList[0].nivel || entriesList.some(function(e) { return e.nivel; }) ? (entriesList[0].nivel || '1') + ' niveles' : '1 nivel');
             }
             const estadoEl = document.getElementById('rack-estado');
             const estado = (infoRack.estado || 'liberado').toLowerCase();
