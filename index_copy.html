@@ -544,7 +544,7 @@
             display: none;
         }
         #stats-floating {
-            right: 16px;
+            right: calc(220px + 16px + 12px);
             top: 16px;
             z-index: 60;
             max-height: calc(100vh - 100px);
@@ -2343,10 +2343,10 @@
             var fullEntries = getEntriesForId(infoRack.id);
             var entriesList = fullEntries.length > 0 ? fullEntries : (infoRack.entries);
             if (entriesList && entriesList.length > 1) {
-                var sameProduct = entriesList.every(function(e) { return e.producto === entriesList[0].producto; });
+                var sameProduct = entriesList.every(function(e) { return (e.producto || '').trim() === (entriesList[0].producto || '').trim(); });
                 if (sameProduct) {
-                    document.getElementById('rack-prod').innerText = entriesList[0].producto || '-';
-                    var sameCode = entriesList.every(function(e) { return e.codigo === entriesList[0].codigo; });
+                    document.getElementById('rack-prod').innerText = (entriesList[0].producto || '').trim() || '-';
+                    var sameCode = entriesList.every(function(e) { return (e.codigo || '').trim() === (entriesList[0].codigo || '').trim(); });
                     document.getElementById('rack-cod').innerText = sameCode ? (entriesList[0].codigo || '-') : 'Varios códigos';
                     var lotesList = entriesList.map(function(e, i) {
                         var lbl = e.lote || '-';
