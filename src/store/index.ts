@@ -22,6 +22,9 @@ export interface AppStore {
   clearSelection: () => void;
   resetAll: () => void;
 
+  resetViewSignal: number;
+  triggerResetView: () => void;
+
   showInfoPanel: boolean;
   showStatsPanel: boolean;
   showZoneOccupancy: boolean;
@@ -66,7 +69,9 @@ export const useStore = create<AppStore>((set, get) => ({
   selectedRackId: null,
   setSelectedRack: (entries, id) => set({ selectedRack: entries, selectedRackId: id, showInfoPanel: true }),
   clearSelection: () => set({ selectedRack: null, selectedRackId: null, showInfoPanel: false, showStatsPanel: false }),
-  resetAll: () => set({ selectedRack: null, selectedRackId: null, showInfoPanel: false, showStatsPanel: false, pasilloSeleccionado: 'todos', searchQuery: '', currentStatusFilter: null }),
+  resetAll: () => { set({ selectedRack: null, selectedRackId: null, showInfoPanel: false, showStatsPanel: false, pasilloSeleccionado: 'todos', searchQuery: '', currentStatusFilter: null }); get().triggerResetView(); },
+  resetViewSignal: 0,
+  triggerResetView: () => set((s) => ({ resetViewSignal: s.resetViewSignal + 1 })),
 
   showInfoPanel: false,
   showStatsPanel: false,

@@ -21,6 +21,7 @@ export default function ThreeCanvas({ modelUrl }: Props) {
   const pasilloSeleccionado = useStore((s) => s.pasilloSeleccionado);
   const currentStatusFilter = useStore((s) => s.currentStatusFilter);
   const searchQuery = useStore((s) => s.searchQuery);
+  const resetViewSignal = useStore((s) => s.resetViewSignal);
 
   const handleMeshClick = useCallback((entries: any[]) => {
     setSelectedRack(entries, entries[0]?.id || null);
@@ -72,6 +73,13 @@ export default function ThreeCanvas({ modelUrl }: Props) {
     if (!scene || !scene.modelReady) return;
     scene.focusSearchMatches();
   }, [pasilloSeleccionado, searchQuery]);
+
+  // Direct reset view trigger (for resetAll when state values don't change)
+  useEffect(() => {
+    const scene = sceneRef.current;
+    if (!scene || !scene.modelReady || resetViewSignal === 0) return;
+    scene.resetView();
+  }, [resetViewSignal]);
 
   return (
     <div

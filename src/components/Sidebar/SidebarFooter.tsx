@@ -72,7 +72,7 @@ export default function SidebarFooter() {
   }, [setInventario]);
 
   const handleResetView = useCallback(() => {
-    useStore.getState().clearSelection();
+    useStore.getState().triggerResetView();
   }, []);
 
   return (
