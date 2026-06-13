@@ -8,7 +8,7 @@ export default function KpiBar() {
   const totalRacks = Object.values(rackCounts).reduce((sum, c) => sum + c, 0);
   const usedIds = new Set<string>();
   datosInventario.forEach((e) => {
-    if ((parseInt(String(e.paletas)) || 0) > 0 || (parseFloat(String(e.cantidad)) || 0) > 0) {
+    if ((parseFloat(String(e.paletas)) || 0) > 0 || (parseFloat(String(e.cantidad)) || 0) > 0) {
       usedIds.add(e.id);
     }
   });

@@ -12,7 +12,7 @@ export default function StatusSummaryPanel() {
     datosInventario.forEach((e) => {
       if ((e.estado || '').toLowerCase() === currentStatusFilter) {
         const pName = e.producto || 'Sin nombre';
-        const p = parseInt(String(e.paletas)) || 0;
+        const p = parseFloat(String(e.paletas)) || 0;
         productCounts[pName] = (productCounts[pName] || 0) + (p > 0 ? p : (e.cantidad && parseInt(String(e.cantidad)) > 0 ? 1 : 0));
       }
     });

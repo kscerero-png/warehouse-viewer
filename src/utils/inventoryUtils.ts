@@ -47,7 +47,7 @@ export function groupEntries(entries: InventoryEntry[]): GroupedEntry[] {
       groups[key] = { producto: (e.producto || '').trim(), codigo: (e.codigo || '').trim(), lotes: [], paletas: 0, cantidad: 0, um: e.um || '' };
     }
     groups[key].lotes.push({ lote: e.lote || '-', cantidad: parseFloat(String(e.cantidad)) || 0 });
-    groups[key].paletas += parseInt(String(e.paletas)) || 0;
+    groups[key].paletas += parseFloat(String(e.paletas)) || 0;
     groups[key].cantidad += parseFloat(String(e.cantidad)) || 0;
   });
   return Object.values(groups).map((g) => ({ ...g, lotes: mergeLotes(g.lotes) }));

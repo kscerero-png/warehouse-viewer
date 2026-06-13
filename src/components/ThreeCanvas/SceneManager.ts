@@ -410,7 +410,7 @@ export class SceneManager {
     this.meshes.forEach((mesh, name) => {
       if (isFiveDigitId(name) && mesh.userData.entries && mesh.userData.entries.length > 0) {
         const firstEntry = mesh.userData.entries[0];
-        const p = parseInt(String(firstEntry.paletas)) || 0;
+        const p = parseFloat(String(firstEntry.paletas)) || 0;
         if (p <= 1) return;
 
         const base = name.substring(0, 3);

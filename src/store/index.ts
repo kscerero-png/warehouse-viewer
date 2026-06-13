@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import type { InventoryEntry, Pasillo, StatusFilter, RackUserData, StatusBreakdown, ProductCount, ProductStats } from '../types';
+import type { InventoryEntry, Pasillo, StatusFilter, StatusBreakdown, ProductCount, ProductStats } from '../types';
 import { calculateStatusBreakdown, computeTopProducts, computeProductStats } from '../utils/metrics';
 import { calculateAllZonesMetrics } from '../utils/zoneMetrics';
 
@@ -51,7 +51,10 @@ export const useStore = create<AppStore>((set, get) => ({
   },
 
   pasilloSeleccionado: 'todos',
-  setPasillo: (p: Pasillo) => set({ pasilloSeleccionado: p }),
+  setPasillo: (p: Pasillo) => {
+    set({ pasilloSeleccionado: p });
+    get().updateMetrics();
+  },
 
   currentStatusFilter: null,
   setStatusFilter: (f: StatusFilter) => set({ currentStatusFilter: f }),
@@ -93,9 +96,37 @@ export const useStore = create<AppStore>((set, get) => ({
           return id[0] === pasilloSeleccionado;
         }
       : undefined;
-    const statusBreakdown = calculateStatusBreakdown(datosInventario, zoneFilter);
-    const topProducts = computeTopProducts(datosInventario);
+
+    // zoneMetrics needed for T/A/S/P total calculation
     const zoneMetrics = calculateAllZonesMetrics(datosInventario, rackCounts);
+
+    // Compute total positions based on zone type
+    let totalRacks: number;
+    const isCapacityZone = pasilloSeleccionado === 'T' || pasilloSeleccionado === 'P';
+    const isSubPosZone = pasilloSeleccionado === 'A' || pasilloSeleccionado === 'S';
+    if (pasilloSeleccionado === 'todos') {
+      totalRacks = Object.values(rackCounts).reduce((a, b) => a + b, 0);
+    } else if (isCapacityZone) {
+      totalRacks = zoneMetrics[pasilloSeleccionado]?.total || 0;
+    } else if (isSubPosZone) {
+      totalRacks = (rackCounts[pasilloSeleccionado] || 0) * 2;
+    } else {
+      totalRacks = rackCounts[pasilloSeleccionado] || 0;
+    }
+    // Fallback when 3D model hasn't loaded rackCounts yet
+    if (totalRacks === 0) {
+      if (isSubPosZone) {
+        const zone = datosInventario.filter((e) => zoneFilter ? zoneFilter(e.id) : true);
+        const parents = new Set(zone.map((e) => e.id));
+        totalRacks = parents.size * 2 || 1;
+      } else {
+        const zone = zoneFilter ? datosInventario.filter((e) => zoneFilter(e.id)) : datosInventario;
+        totalRacks = zone.length || 1;
+      }
+    }
+
+    const statusBreakdown = calculateStatusBreakdown(datosInventario, zoneFilter, totalRacks, pasilloSeleccionado);
+    const topProducts = computeTopProducts(datosInventario);
     set({ statusBreakdown, topProducts, zoneMetrics });
   },
 

@@ -56,8 +56,8 @@ function normalizeEntry(raw: any) {
     cantidad: parseFloat(raw.cantidad || raw.Cantidad || raw.CANTIDAD || 0) || 0,
     um: String(raw.um || raw.UM || raw.Um || raw.Unidad || '').trim(),
     estado: normalizeEstado(raw.estado || raw.Estado || raw.ESTADO || raw.lote_estado || ''),
-    paletas: parseInt(raw.paletas || raw.Paletas || raw.PALETAS || 0) || 0,
-    nivel: parseInt(raw.nivel || raw.Nivel || raw.NIVEL || 0) || 0,
+    paletas: parseFloat(raw.paletas || raw.Paletas || raw.PALETAS || 0) || 0,
+    nivel: parseFloat(raw.nivel || raw.Nivel || raw.NIVEL || 0) || 0,
   };
 }
 
