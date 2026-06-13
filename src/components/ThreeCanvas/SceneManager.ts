@@ -75,6 +75,8 @@ export class SceneManager {
   public meshes: Map<string, THREE.Mesh> = new Map();
   private subPaletaMeshes: Map<string, THREE.Mesh> = new Map();
   public modelReady: boolean = false;
+  private static NON_RACK_NAMES = new Set(['Jaula', 'PAREDCAVA', 'formulacion', 'condorV']);
+
   private meshByName: Map<string, THREE.Mesh> = new Map();
   public datosInventario: InventoryEntry[] = [];
   public currentSearchTerm: string = '';
@@ -322,12 +324,11 @@ export class SceneManager {
     const name = mesh.name || mesh.userData.id || '';
     if (!name) return;
 
-    if (name === 'Jaula' || name === 'PAREDCAVA') {
-      const isJaula = name === 'Jaula';
+    if (SceneManager.NON_RACK_NAMES.has(name)) {
       mesh.material = new THREE.MeshStandardMaterial({
-        color: isJaula ? 0x3b5998 : 0x4a6fa5,
+        color: 0x3b5998,
         transparent: true,
-        opacity: isJaula ? 0.25 : 0.15,
+        opacity: 0.25,
         roughness: 0.6,
         side: THREE.DoubleSide,
       });
@@ -360,7 +361,7 @@ export class SceneManager {
     const meshByName = this.meshByName;
 
     this.meshes.forEach((child, name) => {
-      if (name === 'Jaula' || name === 'PAREDCAVA' || child.userData.subPaleta) return;
+      if (SceneManager.NON_RACK_NAMES.has(name) || child.userData.subPaleta) return;
 
       const isRack = /^[1-9]/.test(name) || isTransitId(name) || isFormulacionId(name) || isGalponAnexoId(name) || isJaulaId(name);
       if (!isRack) return;
@@ -463,7 +464,7 @@ export class SceneManager {
     const statusFilter = this.currentStatusFilter;
 
     this.meshes.forEach((mesh, name) => {
-      if (name === 'Jaula' || name === 'PAREDCAVA') { mesh.visible = true; return; }
+      if (SceneManager.NON_RACK_NAMES.has(name)) { mesh.visible = true; return; }
       if (mesh.userData.hiddenByPaletas) return;
 
       let visible = true;
@@ -519,7 +520,7 @@ export class SceneManager {
     const seen = new Set<string>();
     const subParents = new Set<string>();
     this.meshes.forEach((mesh, name) => {
-      if (name === 'Jaula' || name === 'PAREDCAVA') return;
+      if (SceneManager.NON_RACK_NAMES.has(name)) return;
       if (mesh.userData.subPaleta) {
         const parentId = name.replace(/-\d+$/, '');
         if (/^(A\d{3}|SQ\d{2})$/.test(parentId)) subParents.add(parentId);
@@ -740,7 +741,7 @@ export class SceneManager {
     const matches: THREE.Mesh[] = [];
 
     this.meshes.forEach((mesh, name) => {
-      if (name === 'Jaula' || name === 'PAREDCAVA') return;
+      if (SceneManager.NON_RACK_NAMES.has(name)) return;
       if (pasillo !== 'todos') {
         const id = mesh.userData.id || name;
         if (pasillo === 'T' && !/^T\d{2}/.test(id)) return;
