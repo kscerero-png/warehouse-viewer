@@ -75,7 +75,7 @@ export class SceneManager {
   public meshes: Map<string, THREE.Mesh> = new Map();
   private subPaletaMeshes: Map<string, THREE.Mesh> = new Map();
   public modelReady: boolean = false;
-  private static NON_RACK_NAMES = new Set(['Jaula', 'PAREDCAVA', 'formulacion', 'condorV']);
+  private static NON_RACK_NAMES = new Set(['Jaula', 'PAREDCAVA', 'Formulacion', 'condorV']);
 
   private meshByName: Map<string, THREE.Mesh> = new Map();
   public datosInventario: InventoryEntry[] = [];
