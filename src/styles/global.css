@@ -333,14 +333,6 @@ html, body {
   margin-bottom: 12px;
 }
 
-.donut-ring {
-  width: 72px;
-  height: 72px;
-  border-radius: 50%;
-  border: 6px solid;
-  transform: rotate(-45deg);
-}
-
 .status-list {
   display: flex;
   flex-direction: column;
