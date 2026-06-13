@@ -322,11 +322,12 @@ export class SceneManager {
     const name = mesh.name || mesh.userData.id || '';
     if (!name) return;
 
-    if (name === 'Jaula') {
+    if (name === 'Jaula' || name === 'PAREDCAVA') {
+      const isJaula = name === 'Jaula';
       mesh.material = new THREE.MeshStandardMaterial({
-        color: 0x3b5998,
+        color: isJaula ? 0x3b5998 : 0x4a6fa5,
         transparent: true,
-        opacity: 0.25,
+        opacity: isJaula ? 0.25 : 0.15,
         roughness: 0.6,
         side: THREE.DoubleSide,
       });
@@ -359,7 +360,7 @@ export class SceneManager {
     const meshByName = this.meshByName;
 
     this.meshes.forEach((child, name) => {
-      if (name === 'Jaula' || child.userData.subPaleta) return;
+      if (name === 'Jaula' || name === 'PAREDCAVA' || child.userData.subPaleta) return;
 
       const isRack = /^[1-9]/.test(name) || isTransitId(name) || isFormulacionId(name) || isGalponAnexoId(name) || isJaulaId(name);
       if (!isRack) return;
@@ -462,7 +463,7 @@ export class SceneManager {
     const statusFilter = this.currentStatusFilter;
 
     this.meshes.forEach((mesh, name) => {
-      if (name === 'Jaula') { mesh.visible = true; return; }
+      if (name === 'Jaula' || name === 'PAREDCAVA') { mesh.visible = true; return; }
       if (mesh.userData.hiddenByPaletas) return;
 
       let visible = true;
@@ -518,7 +519,7 @@ export class SceneManager {
     const seen = new Set<string>();
     const subParents = new Set<string>();
     this.meshes.forEach((mesh, name) => {
-      if (name === 'Jaula') return;
+      if (name === 'Jaula' || name === 'PAREDCAVA') return;
       if (mesh.userData.subPaleta) {
         const parentId = name.replace(/-\d+$/, '');
         if (/^(A\d{3}|SQ\d{2})$/.test(parentId)) subParents.add(parentId);
@@ -739,7 +740,7 @@ export class SceneManager {
     const matches: THREE.Mesh[] = [];
 
     this.meshes.forEach((mesh, name) => {
-      if (name === 'Jaula') return;
+      if (name === 'Jaula' || name === 'PAREDCAVA') return;
       if (pasillo !== 'todos') {
         const id = mesh.userData.id || name;
         if (pasillo === 'T' && !/^T\d{2}/.test(id)) return;
