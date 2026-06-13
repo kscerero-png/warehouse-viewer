@@ -14,13 +14,11 @@ export default function InfoPanel() {
   const estadoClass = `estado-${estado}`;
 
   return (
-    <div className="floating-panel visible" id="info-panel" style={{
+    <div className="floating-panel visible panel-info" style={{
       position: 'absolute',
       left: 12,
       top: 12,
       zIndex: 100,
-      minWidth: 240,
-      maxWidth: 320,
     }}>
       <div className="floating-panel-header">
         <span className="floating-panel-title">

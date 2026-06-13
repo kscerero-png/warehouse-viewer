@@ -669,6 +669,18 @@ html, body {
 }
 
 /* Zone Occupancy */
+/* Panel sizing */
+.panel-info {
+  min-width: 240px;
+  max-width: 320px;
+}
+
+.panel-stats {
+  max-height: calc(100vh - 100px);
+  min-width: 240px;
+  max-width: 320px;
+}
+
 #zone-occupancy {
   position: absolute;
   right: 236px;
@@ -890,6 +902,8 @@ html, body {
   :root { --sidebar-w: 220px; --kpi-h: 64px; }
   #right-panel { width: 180px; }
   #zone-occupancy { width: 240px; right: 196px; }
+  .panel-info { min-width: 200px; max-width: 280px; }
+  .panel-stats { min-width: 200px; max-width: 280px; }
   .kpi-card { min-width: 100px; padding: 8px 14px; }
   .kpi-value { font-size: 18px; }
 }
@@ -898,6 +912,8 @@ html, body {
   :root { --sidebar-w: 180px; --kpi-h: 56px; }
   #right-panel { width: 160px; }
   #zone-occupancy { width: 200px; right: 176px; }
+  .panel-info { min-width: 160px; max-width: 240px; }
+  .panel-stats { min-width: 160px; max-width: 240px; }
   .kpi-card { min-width: 80px; padding: 6px 10px; }
   .kpi-value { font-size: 16px; }
 }
@@ -905,4 +921,5 @@ html, body {
 @media (max-height: 700px) {
   :root { --kpi-h: 48px; }
   #controls-legend { display: none; }
+  .panel-stats { max-height: calc(100vh - 70px); }
 }

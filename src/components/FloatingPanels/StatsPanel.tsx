@@ -8,12 +8,11 @@ export default function StatsPanel() {
   if (!showStatsPanel || !productStats) return null;
 
   return (
-    <div className="floating-panel visible" id="stats-floating" style={{
+    <div className="floating-panel visible panel-stats" style={{
       position: 'absolute',
       right: 12,
       top: 16,
       zIndex: 60,
-      maxHeight: 'calc(100vh - 100px)',
     }}>
       <div className="floating-panel-header">
         <span className="floating-panel-title">Estadísticas</span>
