@@ -16,3 +16,10 @@ R5741R08_ARC001_3481277_PDF.csv
 
 # Duplicate inventory
 inventario (1).json
+
+# Node
+node_modules/
+dist/
+
+# Vite
+*.local
