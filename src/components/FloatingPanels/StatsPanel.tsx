@@ -10,7 +10,7 @@ export default function StatsPanel() {
   return (
     <div className="floating-panel visible" id="stats-floating" style={{
       position: 'absolute',
-      right: 'calc(220px + 16px + 12px)',
+      right: 12,
       top: 16,
       zIndex: 60,
       maxHeight: 'calc(100vh - 100px)',
