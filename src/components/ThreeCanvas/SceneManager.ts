@@ -712,15 +712,6 @@ export class SceneManager {
   resetView(): void {
     const defaultPos = new THREE.Vector3(15, 22, 35);
     const defaultTarget = new THREE.Vector3(0, 8, 0);
-
-    if (this.pasilloSeleccionado !== 'todos') {
-      const matches = this.getSearchMatches();
-      if (matches.length > 0) {
-        this.computeFocusFromConfig(this.pasilloSeleccionado, matches, 1000);
-        return;
-      }
-    }
-
     this.animateCamera(this.camera.position, this.controls.target, defaultPos, defaultTarget, 1000);
   }
 
