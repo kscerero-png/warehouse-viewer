@@ -646,18 +646,11 @@
 
         /* === STATUS SUMMARY (overlay for rejected/retained) === */
         #status-summary-panel {
-            position: absolute;
-            left: calc(var(--sidebar-w) + 16px);
-            bottom: 16px;
-            z-index: 30;
-            min-width: 260px;
-            max-width: 320px;
-            max-height: 200px;
             display: none;
             flex-direction: column;
             font-size: 12px;
+            max-height: 160px;
             overflow: hidden;
-            padding: 0;
             background: var(--md-surface-2);
             border: 1px solid rgba(255,255,255,0.08);
             border-radius: var(--md-radius);
@@ -1020,6 +1013,7 @@
                     <div style="text-align:center;padding:8px 0;color:var(--md-text-muted);">Sin datos</div>
                 </div>
             </div>
+            <div id="status-summary-panel"></div>
         </div>
 
         <!-- Stats Panel (floating) -->
@@ -1115,9 +1109,6 @@
         </div>
 
 
-
-        <!-- Status summary panel -->
-        <div id="status-summary-panel"></div>
 
         <!-- Reset view button -->
         <button id="reset-view-bottom">Restablecer Sistema Visual</button>
