@@ -17,7 +17,7 @@ export default function InfoPanel() {
     <div className="floating-panel visible" id="info-panel" style={{
       position: 'absolute',
       left: 12,
-      bottom: 48,
+      top: 12,
       zIndex: 100,
       minWidth: 240,
       maxWidth: 320,

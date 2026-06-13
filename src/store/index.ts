@@ -76,7 +76,7 @@ export const useStore = create<AppStore>((set, get) => ({
   toggleZoneOccupancy: () => set((s) => ({ showZoneOccupancy: !s.showZoneOccupancy })),
 
   productStats: null,
-  setProductStats: (s) => set({ productStats: s }),
+  setProductStats: (s) => set({ productStats: s, showStatsPanel: s !== null }),
 
   statusBreakdown: { retenido: 0, rechazado: 0, liberado: 0, vacio: 0, pctRetenido: 0, pctRechazado: 0, pctLiberado: 0, pctVacio: 0 },
   topProducts: [],
