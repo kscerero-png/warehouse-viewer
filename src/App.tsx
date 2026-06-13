@@ -13,7 +13,7 @@ import ResetViewButton from './components/Overlays/ResetViewButton';
 import { useStore } from './store';
 import { isRackId } from './utils/idHelpers';
 
-const MODEL_URL = '/almacen.glb';
+const MODEL_URL = `${import.meta.env.BASE_URL}almacen.glb`;
 const INVENTARIO_URL = 'https://script.google.com/macros/s/AKfycbz40VVLFFkSnkSV-kll7OQRd30wGyiZGiHq1kNo5d-hn8o9lIT2hy_K53SNb8YDDH8tkw/exec';
 
 export default function App() {
@@ -29,7 +29,7 @@ export default function App() {
         setInventario(mapped);
       };
     } else {
-      fetch('/inventario.json')
+      fetch(`${import.meta.env.BASE_URL}inventario.json`)
         .then((r) => r.json())
         .then((data) => {
           const mapped = data.map(normalizeEntry).filter((e: any) => e.id && isRackId(e.id));
