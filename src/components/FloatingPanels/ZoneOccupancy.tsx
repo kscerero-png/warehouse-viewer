@@ -20,7 +20,7 @@ export default function ZoneOccupancy() {
     };
   }, [datosInventario, rackCounts]);
 
-  if (!showZoneOccupancy) return null;
+  if (!showZoneOccupancy || Object.keys(rackCounts).length === 0) return null;
 
   return (
     <div id="zone-occupancy">

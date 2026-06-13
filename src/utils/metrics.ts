@@ -55,20 +55,23 @@ export function calculateStatusBreakdown(
 
     for (const entries of Object.values(parentMap)) {
       let acc = 0;
+      let parentCount = 0;
       for (const e of entries) {
-        if (occupiedCount >= 2) break;
         const p = parseFloat(String(e.paletas)) || 0;
         if (p <= 0) continue;
         const newAcc = acc + p;
         const estado = (e.estado || 'liberado').toLowerCase();
-        if (acc < 1 && newAcc >= 1) {
+        if (parentCount < 1 && acc < 1 && newAcc >= 1) {
           if (estado === 'retenido') ret++; else if (estado === 'rechazado') rej++; else lib++;
+          parentCount++;
           occupiedCount++;
         }
-        if (occupiedCount < 2 && acc < 2 && newAcc >= 2) {
+        if (parentCount < 2 && acc < 2 && newAcc >= 2) {
           if (estado === 'retenido') ret++; else if (estado === 'rechazado') rej++; else lib++;
+          parentCount++;
           occupiedCount++;
         }
+        if (parentCount >= 2) break;
         acc = newAcc;
       }
     }

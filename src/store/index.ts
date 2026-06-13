@@ -84,9 +84,11 @@ export const useStore = create<AppStore>((set, get) => ({
   rackCounts: {},
   setRackCounts: (counts) => {
     set({ rackCounts: counts, zoneMetrics: calculateAllZonesMetrics(get().datosInventario, counts) });
+    get().updateMetrics();
   },
   updateMetrics: () => {
     const { datosInventario, pasilloSeleccionado, rackCounts } = get();
+    if (Object.keys(rackCounts).length === 0) return;
     const zoneFilter = pasilloSeleccionado !== 'todos'
       ? (id: string) => {
           if (pasilloSeleccionado === 'T') return /^T\d{2}$/.test(id);

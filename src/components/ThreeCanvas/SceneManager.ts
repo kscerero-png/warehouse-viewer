@@ -516,8 +516,14 @@ export class SceneManager {
   getRackCountsByZone(): Record<string, number> {
     const counts: Record<string, number> = {};
     const seen = new Set<string>();
+    const subParents = new Set<string>();
     this.meshes.forEach((mesh, name) => {
-      if (name === 'Jaula' || mesh.userData.subPaleta) return;
+      if (name === 'Jaula') return;
+      if (mesh.userData.subPaleta) {
+        const parentId = name.replace(/-\d+$/, '');
+        if (/^(A\d{3}|SQ\d{2})$/.test(parentId)) subParents.add(parentId);
+        return;
+      }
       const id = mesh.userData.id || name;
       if (!id || seen.has(id)) return;
       seen.add(id);
@@ -530,6 +536,11 @@ export class SceneManager {
       else return;
       counts[zone] = (counts[zone] || 0) + 1;
     });
+    for (const parentId of subParents) {
+      if (seen.has(parentId)) continue;
+      const zone = /^A\d{3}$/.test(parentId) ? 'A' : 'S';
+      counts[zone] = (counts[zone] || 0) + 1;
+    }
     return counts;
   }
 
