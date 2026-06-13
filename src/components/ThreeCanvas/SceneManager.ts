@@ -681,16 +681,7 @@ export class SceneManager {
     if (matches.length === 0) return;
 
     if (this.pasilloSeleccionado === 'todos' || !this.pasilloSeleccionado) {
-      if (matches.length === 1) { this.smoothFocus(matches[0], duration); return; }
-      const box = new THREE.Box3();
-      for (const m of matches) box.expandByObject(m);
-      const center = box.getCenter(new THREE.Vector3());
-      const size = box.getSize(new THREE.Vector3());
-      const maxDim = Math.max(size.x, size.y, size.z);
-      const dir = new THREE.Vector3(-0.5, 0.4, 0.8).normalize();
-      const dist = maxDim * 1.4;
-      const targetPos = center.clone().add(dir.clone().multiplyScalar(dist));
-      this.animateCamera(this.camera.position, this.controls.target, targetPos, center, duration);
+      this.resetView();
       return;
     }
 
