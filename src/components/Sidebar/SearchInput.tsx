@@ -1,9 +1,11 @@
 import { useState, useCallback, useRef, useEffect } from 'react';
 import { useStore } from '../../store';
+import { computeProductStats } from '../../utils/metrics';
 
 export default function SearchInput() {
   const searchQuery = useStore((s) => s.searchQuery);
   const setSearchQuery = useStore((s) => s.setSearchQuery);
+  const setProductStats = useStore((s) => s.setProductStats);
   const pasilloSeleccionado = useStore((s) => s.pasilloSeleccionado);
   const datosInventario = useStore((s) => s.datosInventario);
   const [suggestions, setSuggestions] = useState<{ id: string; producto: string; codigo: string }[]>([]);
@@ -54,10 +56,12 @@ export default function SearchInput() {
     }
   }, []);
 
-  const handleSelect = useCallback((value: string) => {
+  const handleSelect = useCallback((value: string, codigo?: string) => {
     setSearchQuery(value);
     setShowSuggestions(false);
-  }, [setSearchQuery]);
+    const stats = computeProductStats(value, codigo, datosInventario);
+    if (stats) setProductStats(stats);
+  }, [setSearchQuery, datosInventario, setProductStats]);
 
   const handleClear = useCallback(() => {
     setSearchQuery('');
@@ -123,7 +127,7 @@ export default function SearchInput() {
             <div className="no-result">Sin resultados</div>
           ) : (
             suggestions.map((s, i) => (
-              <button key={i} onClick={() => handleSelect(s.producto)}>
+              <button key={i} onClick={() => handleSelect(s.producto, s.codigo)}>
                 <strong>{s.producto}</strong> {s.codigo && <span style={{color:'#64748b'}}>— {s.codigo}</span>}
               </button>
             ))

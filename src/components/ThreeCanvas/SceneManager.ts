@@ -578,7 +578,7 @@ export class SceneManager {
     }
 
     const baseDir = new THREE.Vector3(inclinacionX, inclinacionY, factorProfundidadZ).normalize();
-    const distance = maxDim * 3.48;
+    const distance = maxDim * 2.2;
     const targetPos = center.clone().add(baseDir.multiplyScalar(distance));
 
     this.animateCamera(this.camera.position, this.controls.target, targetPos, center, duration);
@@ -609,7 +609,7 @@ export class SceneManager {
     }
 
     const baseDir = new THREE.Vector3(inclinacionX, inclinacionY, factorProfundidadZ).normalize();
-    const distance = maxDim * 3.48;
+    const distance = maxDim * 2.2;
     const targetPos = center.clone().add(baseDir.multiplyScalar(distance));
 
     this.animateCamera(this.camera.position, this.controls.target, targetPos, center, duration);
@@ -688,7 +688,7 @@ export class SceneManager {
       const size = box.getSize(new THREE.Vector3());
       const maxDim = Math.max(size.x, size.y, size.z);
       const dir = new THREE.Vector3(-0.5, 0.4, 0.8).normalize();
-      const dist = maxDim * 1.8;
+      const dist = maxDim * 1.4;
       const targetPos = center.clone().add(dir.clone().multiplyScalar(dist));
       this.animateCamera(this.camera.position, this.controls.target, targetPos, center, duration);
       return;
