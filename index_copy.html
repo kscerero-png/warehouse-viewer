@@ -201,6 +201,10 @@
             border-color: rgba(220,38,38,0.2);
         }
         .nav-btn.zone-p:hover { border-color: var(--md-danger); color: var(--md-danger); }
+        .nav-btn.zone-s {
+            border-color: rgba(124,58,237,0.2);
+        }
+        .nav-btn.zone-s:hover { border-color: #7c3aed; color: #7c3aed; }
 
         .sidebar-footer {
             padding: 10px 14px;
@@ -509,6 +513,7 @@
         #zone-occupancy .zo-item.zo-t .zo-bar-fill { background: var(--md-success); }
         #zone-occupancy .zo-item.zo-a .zo-bar-fill { background: var(--md-warning); }
         #zone-occupancy .zo-item.zo-p .zo-bar-fill { background: var(--md-danger); }
+        #zone-occupancy .zo-item.zo-s .zo-bar-fill { background: #7c3aed; }
 
         /* === FLOATING PANELS (info, stats, etc) === */
         .floating-panel {
@@ -905,6 +910,7 @@
                 <button type="button" class="nav-btn zone-t" data-pasillo="T">T <span class="nav-badge">Tránsito</span></button>
                 <button type="button" class="nav-btn zone-a" data-pasillo="A">F <span class="nav-badge">Formulación</span></button>
                 <button type="button" class="nav-btn zone-p" data-pasillo="P">P <span class="nav-badge">Galpón Anexo</span></button>
+                <button type="button" class="nav-btn zone-s" data-pasillo="S">J <span class="nav-badge">Jaula</span></button>
             </div>
 
             <div class="nav-section-title">Acciones</div>
@@ -1084,6 +1090,11 @@
                     <div class="zo-value" id="zo-p">-</div>
                     <div class="zo-bar"><div class="zo-bar-fill" id="zo-bar-p" style="width:0%"></div></div>
                 </div>
+                <div class="zo-item zo-s">
+                    <div class="zo-name">Jaula</div>
+                    <div class="zo-value" id="zo-s">-</div>
+                    <div class="zo-bar"><div class="zo-bar-fill" id="zo-bar-s" style="width:0%"></div></div>
+                </div>
             </div>
         </div>
 
@@ -1250,7 +1261,7 @@
                 if (!idStr || countedIds.has(idStr)) return;
                 const pasillo = idStr.charAt(0);
                 if (aisle !== 'todos' && pasillo !== aisle) return;
-                if (aisle === 'todos' && (pasillo === 'T' || pasillo === 'A' || pasillo === 'P')) return;
+                if (aisle === 'todos' && (pasillo === 'T' || pasillo === 'A' || pasillo === 'P' || pasillo === 'S')) return;
                 countedIds.add(idStr);
                 var cap = getCapacityForObj(obj);
                 total += cap.total;
@@ -1263,6 +1274,8 @@
                 used += computeFromInventario(isFormulacionId).used;
                 total += computeFromInventario(isGalponAnexoId).total;
                 used += computeFromInventario(isGalponAnexoId).used;
+                total += computeFromInventario(isJaulaId).total;
+                used += computeFromInventario(isJaulaId).used;
             }
             const empty = total - used;
             const percent = total === 0 ? 0 : Math.round((used / total) * 100);
@@ -1305,6 +1318,7 @@
             }
             if (aisle === 'T' || aisle === 'todos') countFromInventario(isTransitId);
             if (aisle === 'A' || aisle === 'todos') countFromInventario(isFormulacionId);
+            if (aisle === 'S' || aisle === 'todos') countFromInventario(isJaulaId);
             scene.traverse((obj) => {
                 if (!obj.isMesh || !obj.userData || !obj.userData.id) return;
                 if (obj.userData.subPaleta) return;
@@ -1345,6 +1359,7 @@
             }
             if (aisle === 'T' || aisle === 'todos') countFromInventario(isTransitId);
             if (aisle === 'A' || aisle === 'todos') countFromInventario(isFormulacionId);
+            if (aisle === 'S' || aisle === 'todos') countFromInventario(isJaulaId);
             scene.traverse((obj) => {
                 if (!obj.isMesh || !obj.userData || !obj.userData.id) return;
                 if (obj.userData.subPaleta) return;
@@ -1462,6 +1477,19 @@
                 var e = tot - usd;
                 return { total: tot, used: usd, empty: e, percent: tot === 0 ? 0 : Math.round((usd / tot) * 100) };
             })();
+            var sMetrics = (function() {
+                var tot = 0, usd = 0;
+                for (var i = 0; i < datosInventario.length; i++) {
+                    var item = datosInventario[i];
+                    var idStr = String(item.id || '').trim();
+                    if (!isJaulaId(idStr)) continue;
+                    var pal = item.paletas !== undefined ? parseInt(item.paletas) || 0 : 0;
+                    if (pal > 0) { tot += getEffectivePositions(item); usd += pal; }
+                    else if (item.cantidad && item.cantidad > 0) { tot += 1; usd += 1; }
+                }
+                var e = tot - usd;
+                return { total: tot, used: usd, empty: e, percent: tot === 0 ? 0 : Math.round((usd / tot) * 100) };
+            })();
             var pMetrics = (function() {
                 var tot = 0, usd = 0;
                 for (var i = 0; i < datosInventario.length; i++) {
@@ -1481,6 +1509,7 @@
             const zoT = document.getElementById('zo-t');
             const zoA = document.getElementById('zo-a');
             const zoP = document.getElementById('zo-p');
+            const zoS = document.getElementById('zo-s');
             const zoBarPrimary = document.getElementById('zo-bar-primary');
             const zoBarCava = document.getElementById('zo-bar-cava');
             const zoBarT = document.getElementById('zo-bar-t');
@@ -1491,11 +1520,14 @@
             if (zoT) zoT.innerText = `${tMetrics.used} / ${tMetrics.total} (${tMetrics.percent}%)`;
             if (zoA) zoA.innerText = `${aMetrics.used} / ${aMetrics.total} (${aMetrics.percent}%)`;
             if (zoP) zoP.innerText = `${pMetrics.used} / ${pMetrics.total} (${pMetrics.percent}%)`;
+            if (zoS) zoS.innerText = `${sMetrics.used} / ${sMetrics.total} (${sMetrics.percent}%)`;
             if (zoBarPrimary) zoBarPrimary.style.width = principalMetrics.percent + '%';
             if (zoBarCava) zoBarCava.style.width = cavaMetrics.percent + '%';
             if (zoBarT) zoBarT.style.width = tMetrics.percent + '%';
             if (zoBarA) zoBarA.style.width = aMetrics.percent + '%';
             if (zoBarP) zoBarP.style.width = pMetrics.percent + '%';
+            const zoBarS = document.getElementById('zo-bar-s');
+            if (zoBarS) zoBarS.style.width = sMetrics.percent + '%';
         }
 
         const controls = new THREE.OrbitControls(camera, renderer.domElement);
@@ -1646,11 +1678,23 @@
             loader.load('almacen.glb', function (gltf) {
                 const modelo = gltf.scene;
                 
-                const esLane = (name) => /^[1-9]/.test(name) || /^T\d{2}$/.test(name) || /^A\d{3}$/.test(name) || /^P\d{2}$/.test(name);
-                const esSubPaleta = (name) => /^(T\d{2}|A\d{3}|P\d{2})-\d+$/.test(name);
+                const esLane = (name) => /^[1-9]/.test(name) || /^T\d{2}$/.test(name) || /^A\d{3}$/.test(name) || /^P\d{2}$/.test(name) || /^SQ\d{2}$/.test(name);
+                const esSubPaleta = (name) => /^(T\d{2}|A\d{3}|P\d{2}|SQ\d{2})-\d+$/.test(name);
 
                 modelo.traverse((child) => {
                     if (child.isMesh) {
+                        if (child.name === 'Jaula') {
+                            child.material = new THREE.MeshStandardMaterial({
+                                color: 0x3b5998,
+                                roughness: 0.6,
+                                metalness: 0.05,
+                                transparent: true,
+                                opacity: 0.25,
+                                side: THREE.DoubleSide
+                            });
+                            child.userData = { jaula: true, id: child.name };
+                            return;
+                        }
                         if (esLane(child.name)) {
                             const infoRacks = getEntriesForId(child.name);
                             if (infoRacks.length > 0) {
@@ -1770,6 +1814,9 @@
         }
         function isGalponAnexoId(id) {
             return /^P\d{2}$/.test(id);
+        }
+        function isJaulaId(id) {
+            return /^SQ\d{2}$/.test(id);
         }
 
         function getEffectivePositions(entry) {
@@ -1919,6 +1966,7 @@
             const results = [];
             scene.traverse((child) => {
                 if (!child.isMesh || !child.userData || !child.userData.id) return;
+                if (child.userData.jaula) return;
                 
                 const idStr = String(child.userData.id).trim();
                 const primerDigito = idStr.charAt(0);
@@ -1965,8 +2013,8 @@
                 return;
             }
 
-            // Pasillo Transito y Formulación: cámara dinámica basada en el bounding box
-            if (pasilloSeleccionado === 'T' || pasilloSeleccionado === 'A') {
+            // Pasillo Transito, Formulación y Jaula: cámara dinámica basada en el bounding box
+            if (pasilloSeleccionado === 'T' || pasilloSeleccionado === 'A' || pasilloSeleccionado === 'S') {
                 var tBox = new THREE.Box3();
                 for (var m of matches) tBox.expandByObject(m);
                 var tCenter = new THREE.Vector3();
@@ -2044,6 +2092,7 @@
             scene.traverse((obj) => {
                 if (obj.isMesh && obj.userData && obj.userData.id) {
                     if (obj.userData.hiddenByPaletas) return;
+                    if (obj.userData.jaula) { obj.visible = true; return; }
 
                     const idStr = String(obj.userData.id).trim();
                     const primerDigito = idStr.charAt(0);
@@ -2141,7 +2190,7 @@
         }
 
         function updateSceneFromInventario() {
-            const esLane = (name) => /^[1-9]/.test(name) || /^T\d{2}$/.test(name) || /^A\d{3}$/.test(name) || /^P\d{2}$/.test(name);
+            const esLane = (name) => /^[1-9]/.test(name) || /^T\d{2}$/.test(name) || /^A\d{3}$/.test(name) || /^P\d{2}$/.test(name) || /^SQ\d{2}$/.test(name);
             var meshByName = {};
             scene.traverse((child) => {
                 if (child.isMesh && child.name) meshByName[child.name] = child;
@@ -2171,12 +2220,12 @@
                             if (idx <= cumulative) { entry = parentRacks[k]; break; }
                         }
                         var show = idx <= cumulative && isSlotVisible(idx, entry ? entry.nivel : 0);
-                        child.visible = show || isFormulacionId(parentId);
+                        child.visible = show || isFormulacionId(parentId) || isJaulaId(parentId);
                         child.userData.hiddenByPaletas = !show;
                         if (show) {
                             child.material = getRackMaterial(entry);
                             child.userData = Object.assign({}, entry, { subPaleta: true, id: parentId, hiddenByPaletas: false });
-                        } else if (isFormulacionId(parentId)) {
+                        } else if (isFormulacionId(parentId) || isJaulaId(parentId)) {
                             child.material = getRackMaterial({ id: parentId, cantidad: 0 });
                             child.userData = { id: parentId, producto: '', codigo: '', lote: '', cantidad: 0, um: '', estado: 'liberado', subPaleta: true, hiddenByPaletas: false };
                         }
@@ -2214,12 +2263,12 @@
                     if (idx <= cumulative) { entry = parentRacks[k]; break; }
                 }
                 var show = idx <= cumulative && isSlotVisible(idx, entry ? entry.nivel : 0);
-                child.visible = show || isFormulacionId(parentId);
+                child.visible = show || isFormulacionId(parentId) || isJaulaId(parentId);
                 child.userData.hiddenByPaletas = !show;
                 if (show) {
                     child.material = getRackMaterial(entry);
                     child.userData = Object.assign({}, entry, { subPaleta: true, id: parentId, hiddenByPaletas: false });
-                } else if (isFormulacionId(parentId)) {
+                } else if (isFormulacionId(parentId) || isJaulaId(parentId)) {
                     child.material = getRackMaterial({ id: parentId, cantidad: 0 });
                     child.userData = { id: parentId, producto: '', codigo: '', lote: '', cantidad: 0, um: '', estado: 'liberado', subPaleta: true, hiddenByPaletas: false };
                 }
@@ -3071,12 +3120,13 @@
             scene.traverse((obj) => {
                 if (!obj.isMesh) return;
 
-                // No ocultar nunca objetos marcados como hiddenByPaletas
+                // No ocultar nunca objetos marcados como hiddenByPaletas o jaula
                 if (obj.userData && obj.userData.hiddenByPaletas) return;
+                if (obj.userData && obj.userData.jaula) { obj.visible = true; return; }
 
                 var name = obj.name || '';
                 // Ambiente (suelo, rayados, bordes, etc.) siempre visible
-                var esRack = /^[1-9]/.test(name) || /^T\d{2}$/.test(name) || /^A\d{3}$/.test(name) || /^P\d{2}$/.test(name) || (obj.userData && obj.userData.subPaleta);
+                var esRack = /^[1-9]/.test(name) || /^T\d{2}$/.test(name) || /^A\d{3}$/.test(name) || /^P\d{2}$/.test(name) || /^SQ\d{2}$/.test(name) || (obj.userData && obj.userData.subPaleta);
                 if (!esRack && (!obj.userData || !obj.userData.entries)) {
                     obj.visible = true;
                     if (obj.material) { obj.material.transparent = false; obj.material.opacity = 1.0; }
