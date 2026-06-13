@@ -3,9 +3,65 @@ import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 import type { RackUserData, InventoryEntry } from '../../types';
 import { isTransitId, isFormulacionId, isGalponAnexoId, isJaulaId, isSubPaletaName, isFiveDigitId, isFrontFacingLocation, getFrontDirectionFromId } from '../../utils/idHelpers';
-import { getRackMaterial } from '../../utils/materials';
+import { getRackMaterial, greyMat, okMat, retenidoMat, rechazadoMat } from '../../utils/materials';
 import { getEntriesForId, mergeEntryState, isEmptyRack } from '../../utils/inventoryUtils';
 import { getEffectivePositions, isSlotVisible } from '../../utils/capacity';
+
+// ─── Zone Camera Config ───────────────────────────────────────────
+// Tweak these values to adjust camera perspective per zone.
+interface ZoneCamConfig {
+  /** Camera offset from zone center (all zones)
+   *  pos.x = center.x + xFactor * sceneSize
+   *  pos.y = yFactor * sceneSize + yBase
+   *  pos.z = center.z + (zFactor * sceneSize + zBase) * frontZ
+   *  where sceneSize = max(size.x, size.z)
+   */
+  xFactor: number;
+  yFactor: number;
+  zFactor: number;
+  yBase: number;
+  zBase: number;
+  frontZ: number;
+  targetY: number;
+  targetYMin?: number; // if set, targetY = min(center.y, targetYMin)
+}
+
+function cfg(c: Partial<ZoneCamConfig>): ZoneCamConfig {
+  return {
+    xFactor: c.xFactor ?? 0, yFactor: c.yFactor ?? 0, zFactor: c.zFactor ?? 0,
+    yBase: c.yBase ?? 0, zBase: c.zBase ?? 0, frontZ: c.frontZ ?? 1,
+    targetY: c.targetY ?? 0, targetYMin: c.targetYMin,
+  };
+}
+
+const DEFAULT_ZONE_CAM = cfg({
+  xFactor: -0.3, yFactor: 0.5, zFactor: 0.7, yBase: 8, zBase: 12, targetY: -0.51,
+});
+
+const ZONE_CAM_CONFIG: Record<string, ZoneCamConfig> = {
+  // Almacén Principal / CAVA
+  '1': cfg({ xFactor: 0, yFactor: 0.2, zFactor: 0.65, yBase: 5, zBase: 2, targetY: -0.51, frontZ: 1 }),
+  '2': cfg({ xFactor: 0, yFactor: 0.2, zFactor: 0.65, yBase: 5, zBase: 2, targetY: -0.51, frontZ: 1 }),
+  '3': cfg({ xFactor: 0, yFactor: 0.2, zFactor: 0.65, yBase: 5, zBase: 2, targetY: -0.51, frontZ: 1 }),
+  '4': cfg({ xFactor: 0, yFactor: 0.2, zFactor: 0.65, yBase: 5, zBase: 2, targetY: -0.51, frontZ: 1 }),
+  '5': cfg({ xFactor: 0, yFactor: 0.2, zFactor: 0.65, yBase: 5, zBase: 2, targetY: -0.51, frontZ: 1 }),
+  '6': cfg({ xFactor: 0, yFactor: 0.2, zFactor: 0.65, yBase: 5, zBase: 2, targetY: -0.51, frontZ: 1 }),
+  '7': cfg({ xFactor: 0, yFactor: 0.2, zFactor: 0.65, yBase: 5, zBase: 2, targetY: -0.51, frontZ: 1 }),
+  '8': cfg({ xFactor: 0, yFactor: 0.2, zFactor: 0.65, yBase: 5, zBase: 2, targetY: -0.51, frontZ: 1 }),
+  '9': cfg({ xFactor: 0, yFactor: 0.2, zFactor: 0.65, yBase: 5, zBase: 2, targetY: -0.51, frontZ: -1 }),
+
+  // Tránsito, Formulación, Jaula, Galpón Anexo — relative, ajustables como 1-9
+  'T': cfg({ xFactor: -1, yFactor: 0.6, zFactor: -0.5, yBase: 2, zBase: 2, targetY: -0.51, frontZ: -1, targetYMin: 1 }),
+  'A': cfg({ xFactor: 0, yFactor: 0.2, zFactor: 0.65, yBase: 5, zBase: 2, targetY: -0.51, frontZ: 1, targetYMin: 0 }),
+  'S': cfg({ xFactor: 5, yFactor: 0.5, zFactor: 0.9, yBase: 5, zBase: 10, targetY: -0.51, frontZ: 0.6, targetYMin: 0.1 }),
+  'P': cfg({ xFactor: 0.3, yFactor: 0.4, zFactor: 0.4, yBase: 8, zBase: 0, targetY: -1, frontZ: 1, targetYMin: 0 }),
+};
+
+function getZoneCamConfig(zone: string): ZoneCamConfig {
+  return ZONE_CAM_CONFIG[zone] || DEFAULT_ZONE_CAM;
+}
+
+// ─── SceneManager ─────────────────────────────────────────────────
 
 export class SceneManager {
   private container: HTMLElement;
@@ -313,7 +369,7 @@ export class SceneManager {
         child.userData = Object.assign({}, infoRacks[0], { entries: infoRacks });
         child.userData.estado = mergeEntryState(infoRacks);
       } else {
-        child.userData = { id: name, entries: [], producto: '', codigo: '', lote: '', cantidad: 0, um: '', estado: 'liberado' };
+        child.userData = { id: name, entries: [], producto: '', codigo: '', lote: '', cantidad: 0, um: '', estado: '' };
       }
       child.material = getRackMaterial(child.userData as RackUserData);
     });
@@ -343,8 +399,8 @@ export class SceneManager {
         child.material = getRackMaterial(entry);
         child.userData = Object.assign({}, entry, { subPaleta: true, id: parentId, hiddenByPaletas: false });
       } else if (isFormulacionId(parentId) || isJaulaId(parentId)) {
-        child.material = getRackMaterial({ id: parentId, cantidad: 0, estado: 'liberado', entries: [] } as any);
-        child.userData = { id: parentId, producto: '', codigo: '', lote: '', cantidad: 0, um: '', estado: 'liberado', subPaleta: true, hiddenByPaletas: false };
+        child.material = getRackMaterial({ id: parentId, cantidad: 0, estado: '', entries: [] } as any);
+        child.userData = { id: parentId, producto: '', codigo: '', lote: '', cantidad: 0, um: '', estado: '', subPaleta: true, hiddenByPaletas: false };
       }
     });
   }
@@ -413,10 +469,10 @@ export class SceneManager {
 
       if (pasillo !== 'todos') {
         const primerDigito = name[0];
-        if (pasillo === 'T') visible = /^T\d{2}$/.test(name);
-        else if (pasillo === 'A') visible = /^A\d{3}$/.test(name);
-        else if (pasillo === 'P') visible = /^P\d{2}$/.test(name);
-        else if (pasillo === 'S') visible = /^SQ\d{2}$/.test(name);
+        if (pasillo === 'T') visible = /^T\d{2}(-\d+)?$/.test(name);
+        else if (pasillo === 'A') visible = /^A\d{3}(-\d+)?$/.test(name);
+        else if (pasillo === 'P') visible = /^P\d{2}(-\d+)?$/.test(name);
+        else if (pasillo === 'S') visible = /^SQ\d{2}(-\d+)?$/.test(name);
         else visible = primerDigito === pasillo;
       }
 
@@ -440,7 +496,11 @@ export class SceneManager {
 
       mesh.visible = true;
       if (mesh.material) {
-        const mat = mesh.material as THREE.MeshStandardMaterial;
+        let mat = mesh.material as THREE.MeshStandardMaterial;
+        if (mat === greyMat || mat === okMat || mat === retenidoMat || mat === rechazadoMat) {
+          mat = mat.clone();
+          mesh.material = mat;
+        }
         if (visible) {
           mat.transparent = false;
           mat.opacity = 1.0;
@@ -451,6 +511,26 @@ export class SceneManager {
         mat.needsUpdate = true;
       }
     });
+  }
+
+  getRackCountsByZone(): Record<string, number> {
+    const counts: Record<string, number> = {};
+    const seen = new Set<string>();
+    this.meshes.forEach((mesh, name) => {
+      if (name === 'Jaula' || mesh.userData.subPaleta) return;
+      const id = mesh.userData.id || name;
+      if (!id || seen.has(id)) return;
+      seen.add(id);
+      let zone: string;
+      if (/^T\d{2}$/.test(id)) zone = 'T';
+      else if (/^A\d{3}$/.test(id)) zone = 'A';
+      else if (/^P\d{2}$/.test(id)) zone = 'P';
+      else if (/^SQ\d{2}$/.test(id)) zone = 'S';
+      else if (/^[1-9]/.test(id)) zone = id[0];
+      else return;
+      counts[zone] = (counts[zone] || 0) + 1;
+    });
+    return counts;
   }
 
   focusObject(object: THREE.Mesh, duration = 900): void {
@@ -552,99 +632,61 @@ export class SceneManager {
     this.animateCamera(this.camera.position, this.controls.target, targetPos, sCenter, duration);
   }
 
-  focusZone(zone: string): void {
-    if (zone === 'todos') {
+  private computeFocusFromConfig(zone: string, matches: THREE.Object3D[], duration: number): boolean {
+    if (matches.length === 0) return false;
+
+    // Deduplicate by parent ID so sub-paletas don't double-count
+    const seen = new Set<string>();
+    const unique: THREE.Object3D[] = [];
+    for (const m of matches) {
+      const id = (m.userData as any)?.id || (m as any).name || '';
+      if (id && seen.has(id)) continue;
+      if (id) seen.add(id);
+      unique.push(m);
+    }
+
+    const box = new THREE.Box3();
+    for (const m of unique) box.expandByObject(m);
+    const center = box.getCenter(new THREE.Vector3());
+    const size = box.getSize(new THREE.Vector3());
+    const s2d = Math.max(size.x, size.z) || 40;
+    const cfg = getZoneCamConfig(zone);
+
+    const targetY = cfg.targetYMin !== undefined
+      ? Math.min(center.y, cfg.targetYMin)
+      : cfg.targetY;
+    const targetCenter = new THREE.Vector3(center.x, targetY, center.z);
+    const targetPos = new THREE.Vector3(
+      targetCenter.x + cfg.xFactor * s2d,
+      cfg.yFactor * s2d + cfg.yBase,
+      targetCenter.z + (cfg.zFactor * s2d + cfg.zBase) * cfg.frontZ
+    );
+    this.animateCamera(this.camera.position, this.controls.target, targetPos, targetCenter, duration);
+    return true;
+  }
+
+  focusSearchMatches(duration = 1100): void {
+    if (this.pasilloSeleccionado === 'todos') {
       this.resetView();
       return;
     }
 
-    const matches: THREE.Mesh[] = [];
-    this.meshes.forEach((mesh, name) => {
-      if (name === 'Jaula') return;
-      if (zone === 'T' && /^T\d{2}$/.test(name)) matches.push(mesh);
-      else if (zone === 'A' && /^A\d{3}$/.test(name)) matches.push(mesh);
-      else if (zone === 'P' && /^P\d{2}$/.test(name)) matches.push(mesh);
-      else if (zone === 'S' && /^SQ\d{2}$/.test(name)) matches.push(mesh);
-      else if (name[0] === zone) matches.push(mesh);
-    });
-
-    if (matches.length === 0) { this.resetView(); return; }
-
-    if (zone === 'P') {
-      const target = new THREE.Vector3(-63.84, 26.01, 33.04);
-      const dir = new THREE.Vector3(-0.48, 0.45, 0.74).normalize();
-      const pos = target.clone().add(dir.multiplyScalar(25));
-      this.animateCamera(this.camera.position, this.controls.target, pos, target, 900);
-      return;
-    }
-
-    const box = new THREE.Box3();
-    for (const m of matches) box.expandByObject(m);
-    const center = box.getCenter(new THREE.Vector3());
-    const size = box.getSize(new THREE.Vector3());
-    const maxDim = Math.max(size.x, size.y, size.z);
-    const dist = Math.max(maxDim * 0.5 + 8, maxDim * 0.7 + 12);
-
-    const dir = new THREE.Vector3(0.3, 0.4, 0.8).normalize();
-    const pos = center.clone().add(dir.multiplyScalar(dist));
-    this.animateCamera(this.camera.position, this.controls.target, pos, center, 900);
-  }
-
-  focusSearchMatches(): void {
     const matches = this.getSearchMatches();
-    if (matches.length === 0) { this.resetView(); return; }
+    if (matches.length === 0) return;
 
-    const activeAisle = this.pasilloSeleccionado;
-    if (activeAisle === 'P') {
-      this.focusZone('P');
+    // Single match with front-facing location: use front/smooth focus
+    if (matches.length === 1) {
+      const mesh = matches[0];
+      if (mesh.userData && isFrontFacingLocation(mesh.userData.id)) {
+        this.focusObjectFront(mesh, duration);
+      } else {
+        this.smoothFocus(mesh, duration);
+      }
       return;
     }
-    if (activeAisle === 'T' || activeAisle === 'A' || activeAisle === 'S') {
-      this.focusZone(activeAisle);
-      return;
-    }
 
-    const box = new THREE.Box3();
-    for (const m of matches) box.expandByObject(m);
-    const center = box.getCenter(new THREE.Vector3());
-    const size = box.getSize(new THREE.Vector3());
-    const maxDim = Math.max(size.x, size.y, size.z);
-    const dist = Math.max(maxDim * 0.5 + 8, maxDim * 0.7 + 12);
-
-    const dir = new THREE.Vector3(0, 0.5, 1).normalize();
-    const pos = center.clone().add(dir.multiplyScalar(dist));
-    this.animateCamera(this.camera.position, this.controls.target, pos, center, 900);
-  }
-
-  private getSearchMatches(): THREE.Mesh[] {
-    const term = this.currentSearchTerm.toLowerCase().trim();
-    const pasillo = this.pasilloSeleccionado;
-    const matches: THREE.Mesh[] = [];
-
-    this.meshes.forEach((mesh, name) => {
-      if (name === 'Jaula') return;
-      if (pasillo !== 'todos') {
-        if (pasillo === 'T' && !/^T\d{2}$/.test(name)) return;
-        else if (pasillo === 'A' && !/^A\d{3}$/.test(name)) return;
-        else if (pasillo === 'P' && !/^P\d{2}$/.test(name)) return;
-        else if (pasillo === 'S' && !/^SQ\d{2}$/.test(name)) return;
-        else if (/^\d+$/.test(pasillo) && name[0] !== pasillo) return;
-      }
-      if (term) {
-        const entries = mesh.userData.entries || this.datosInventario.filter((e) => e.id === (mesh.userData.id || name));
-        const match = entries.some((e: any) => {
-          const prod = (e.producto || '').toLowerCase();
-          const cod = (e.codigo || '').toLowerCase();
-          const id = (e.id || name).toLowerCase();
-          const lote = (e.lote || '').toLowerCase();
-          return prod.includes(term) || cod.includes(term) || id.includes(term) || lote.includes(term);
-        });
-        if (!match) return;
-      }
-      matches.push(mesh);
-    });
-
-    return matches;
+    // Multiple matches: use zone config (handles relative/direction/fixed modes)
+    this.computeFocusFromConfig(this.pasilloSeleccionado, matches, duration);
   }
 
   resetView(): void {
@@ -654,11 +696,7 @@ export class SceneManager {
     if (this.pasilloSeleccionado !== 'todos') {
       const matches = this.getSearchMatches();
       if (matches.length > 0) {
-        const box = new THREE.Box3();
-        for (const m of matches) box.expandByObject(m);
-        const center = box.getCenter(new THREE.Vector3());
-        const pos = new THREE.Vector3(center.x - 1.05, 12.28, center.z + 32.0);
-        this.animateCamera(this.camera.position, this.controls.target, pos, new THREE.Vector3(center.x, -0.51, center.z), 1000);
+        this.computeFocusFromConfig(this.pasilloSeleccionado, matches, 1000);
         return;
       }
     }
@@ -680,6 +718,38 @@ export class SceneManager {
       if (t < 1) requestAnimationFrame(step);
     };
     requestAnimationFrame(step);
+  }
+
+  private getSearchMatches(): THREE.Mesh[] {
+    const term = this.currentSearchTerm.toLowerCase().trim();
+    const pasillo = this.pasilloSeleccionado;
+    const matches: THREE.Mesh[] = [];
+
+    this.meshes.forEach((mesh, name) => {
+      if (name === 'Jaula') return;
+      if (pasillo !== 'todos') {
+        const id = mesh.userData.id || name;
+        if (pasillo === 'T' && !/^T\d{2}/.test(id)) return;
+        else if (pasillo === 'A' && !/^A\d{3}/.test(id)) return;
+        else if (pasillo === 'P' && !/^P\d{2}/.test(id)) return;
+        else if (pasillo === 'S' && !/^SQ\d{2}/.test(id)) return;
+        else if (/^\d+$/.test(pasillo) && id[0] !== pasillo) return;
+      }
+      if (term) {
+        const entries = mesh.userData.entries || this.datosInventario.filter((e) => e.id === (mesh.userData.id || name));
+        const match = entries.some((e: any) => {
+          const prod = (e.producto || '').toLowerCase();
+          const cod = (e.codigo || '').toLowerCase();
+          const id = (e.id || name).toLowerCase();
+          const lote = (e.lote || '').toLowerCase();
+          return prod.includes(term) || cod.includes(term) || id.includes(term) || lote.includes(term);
+        });
+        if (!match) return;
+      }
+      matches.push(mesh);
+    });
+
+    return matches;
   }
 
   getSearchSuggestions(data: InventoryEntry[]): { id: string; producto: string; codigo: string }[] {

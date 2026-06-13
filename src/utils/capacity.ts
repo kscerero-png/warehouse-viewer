@@ -35,22 +35,47 @@ export function getCapacityForObj(obj: RackUserData): { total: number; used: num
   return { total, used };
 }
 
-export function calculateCapacityUsageForAisle(aisle: string, data: InventoryEntry[]): { total: number; used: number; empty: number; percent: number } {
-  const filtered = data.filter((e) => {
-    if (aisle === 'T') return /^T\d{2}$/.test(e.id);
-    if (aisle === 'A') return /^A\d{3}$/.test(e.id);
-    if (aisle === 'P') return /^P\d{2}$/.test(e.id);
-    if (aisle === 'S') return /^SQ\d{2}$/.test(e.id);
-    return e.id[0] === aisle;
-  });
-  const total = filtered.length;
-  const used = filtered.filter((e) => (parseInt(String(e.paletas)) || 0) > 0).length;
+export function calculateCapacityUsageForAisle(aisle: string, data: InventoryEntry[], rackCounts: Record<string, number>): { total: number; used: number; empty: number; percent: number } {
+  let total = 0, used = 0;
+
+  if (aisle === 'T' || aisle === 'A' || aisle === 'P' || aisle === 'S') {
+    const test = aisle === 'T' ? /^T\d{2}$/
+      : aisle === 'A' ? /^A\d{3}$/
+      : aisle === 'P' ? /^P\d{2}$/
+      : /^SQ\d{2}$/;
+    data.forEach((e) => {
+      if (!test.test(e.id)) return;
+      const p = parseInt(String(e.paletas)) || 0;
+      if (p > 0) {
+        total += getEffectivePositions(e);
+        used += p;
+      } else if (parseFloat(String(e.cantidad)) > 0) {
+        total += 1;
+        used += 1;
+      }
+    });
+  } else {
+    total = rackCounts[aisle] || 0;
+    const usedIds = new Set<string>();
+    data.forEach((e) => {
+      if (e.id[0] === aisle && ((parseInt(String(e.paletas)) || 0) > 0 || (parseFloat(String(e.cantidad)) || 0) > 0)) {
+        usedIds.add(e.id);
+      }
+    });
+    used = usedIds.size;
+  }
+
   return { total, used, empty: total - used, percent: total > 0 ? Math.round((used / total) * 100) : 0 };
 }
 
-export function calculateCapacityUsageForAisleGroup(digits: string[], data: InventoryEntry[]): { total: number; used: number; empty: number; percent: number } {
-  const filtered = data.filter((e) => digits.includes(e.id[0]));
-  const total = filtered.length;
-  const used = filtered.filter((e) => (parseInt(String(e.paletas)) || 0) > 0).length;
+export function calculateCapacityUsageForAisleGroup(digits: string[], data: InventoryEntry[], rackCounts: Record<string, number>): { total: number; used: number; empty: number; percent: number } {
+  const total = digits.reduce((sum, d) => sum + (rackCounts[d] || 0), 0);
+  const usedIds = new Set<string>();
+  data.forEach((e) => {
+    if (digits.includes(e.id[0]) && ((parseInt(String(e.paletas)) || 0) > 0 || (parseFloat(String(e.cantidad)) || 0) > 0)) {
+      usedIds.add(e.id);
+    }
+  });
+  const used = usedIds.size;
   return { total, used, empty: total - used, percent: total > 0 ? Math.round((used / total) * 100) : 0 };
 }

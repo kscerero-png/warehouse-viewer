@@ -17,6 +17,7 @@ export default function ThreeCanvas({ modelUrl }: Props) {
   const setSelectedRack = useStore((s) => s.setSelectedRack);
   const setProductStats = useStore((s) => s.setProductStats);
   const setHoveredMeshId = useStore((s) => s.setHoveredMeshId);
+  const setRackCounts = useStore((s) => s.setRackCounts);
   const pasilloSeleccionado = useStore((s) => s.pasilloSeleccionado);
   const currentStatusFilter = useStore((s) => s.currentStatusFilter);
   const searchQuery = useStore((s) => s.searchQuery);
@@ -44,15 +45,16 @@ export default function ThreeCanvas({ modelUrl }: Props) {
       const data = useStore.getState().datosInventario;
       if (data.length > 0) {
         scene.updateSceneFromInventario(data);
+        setRackCounts(scene.getRackCountsByZone());
       }
     };
 
     scene.loadModel(modelUrl);
 
     return () => scene.dispose();
-  }, [modelUrl, handleMeshClick, handleMeshLongPress, setHoveredMeshId]);
+  }, [modelUrl, handleMeshClick, handleMeshLongPress, setHoveredMeshId, setRackCounts]);
 
-  // Sync store → scene
+  // Sync data → scene (no camera focus)
   useEffect(() => {
     const scene = sceneRef.current;
     if (!scene || !scene.modelReady) return;
@@ -61,7 +63,15 @@ export default function ThreeCanvas({ modelUrl }: Props) {
     scene.currentSearchTerm = searchQuery;
     scene.currentStatusFilter = currentStatusFilter;
     scene.updateSceneFromInventario(datosInventario);
-  }, [datosInventario, pasilloSeleccionado, searchQuery, currentStatusFilter]);
+    setRackCounts(scene.getRackCountsByZone());
+  }, [datosInventario, pasilloSeleccionado, searchQuery, currentStatusFilter, setRackCounts]);
+
+  // Focus camera when filter changes
+  useEffect(() => {
+    const scene = sceneRef.current;
+    if (!scene || !scene.modelReady) return;
+    scene.focusSearchMatches();
+  }, [pasilloSeleccionado, searchQuery]);
 
   return (
     <div

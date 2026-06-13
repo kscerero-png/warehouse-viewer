@@ -20,6 +20,7 @@ export interface AppStore {
   selectedRackId: string | null;
   setSelectedRack: (entries: InventoryEntry[] | null, id: string | null) => void;
   clearSelection: () => void;
+  resetAll: () => void;
 
   showInfoPanel: boolean;
   showStatsPanel: boolean;
@@ -34,6 +35,8 @@ export interface AppStore {
   statusBreakdown: StatusBreakdown;
   topProducts: ProductCount[];
   zoneMetrics: Record<string, any>;
+  rackCounts: Record<string, number>;
+  setRackCounts: (counts: Record<string, number>) => void;
   updateMetrics: () => void;
 
   hoveredMeshId: string | null;
@@ -60,6 +63,7 @@ export const useStore = create<AppStore>((set, get) => ({
   selectedRackId: null,
   setSelectedRack: (entries, id) => set({ selectedRack: entries, selectedRackId: id, showInfoPanel: true }),
   clearSelection: () => set({ selectedRack: null, selectedRackId: null, showInfoPanel: false, showStatsPanel: false }),
+  resetAll: () => set({ selectedRack: null, selectedRackId: null, showInfoPanel: false, showStatsPanel: false, pasilloSeleccionado: 'todos', searchQuery: '', currentStatusFilter: null }),
 
   showInfoPanel: false,
   showStatsPanel: false,
@@ -71,11 +75,15 @@ export const useStore = create<AppStore>((set, get) => ({
   productStats: null,
   setProductStats: (s) => set({ productStats: s }),
 
-  statusBreakdown: { retenido: 0, rechazado: 0, liberado: 0, pctRetenido: 0, pctRechazado: 0 },
+  statusBreakdown: { retenido: 0, rechazado: 0, liberado: 0, vacio: 0, pctRetenido: 0, pctRechazado: 0, pctLiberado: 0, pctVacio: 0 },
   topProducts: [],
   zoneMetrics: {},
+  rackCounts: {},
+  setRackCounts: (counts) => {
+    set({ rackCounts: counts, zoneMetrics: calculateAllZonesMetrics(get().datosInventario, counts) });
+  },
   updateMetrics: () => {
-    const { datosInventario, pasilloSeleccionado } = get();
+    const { datosInventario, pasilloSeleccionado, rackCounts } = get();
     const zoneFilter = pasilloSeleccionado !== 'todos'
       ? (id: string) => {
           if (pasilloSeleccionado === 'T') return /^T\d{2}$/.test(id);
@@ -87,7 +95,7 @@ export const useStore = create<AppStore>((set, get) => ({
       : undefined;
     const statusBreakdown = calculateStatusBreakdown(datosInventario, zoneFilter);
     const topProducts = computeTopProducts(datosInventario);
-    const zoneMetrics = calculateAllZonesMetrics(datosInventario);
+    const zoneMetrics = calculateAllZonesMetrics(datosInventario, rackCounts);
     set({ statusBreakdown, topProducts, zoneMetrics });
   },
 

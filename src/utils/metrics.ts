@@ -10,16 +10,31 @@ export function calculateZoneMetrics(entries: InventoryEntry[], zoneFilter: (id:
 export function calculateStatusBreakdown(entries: InventoryEntry[], zoneFilter?: (id: string) => boolean): StatusBreakdown {
   const zone = zoneFilter ? entries.filter((e) => zoneFilter(e.id)) : entries;
   const total = zone.length || 1;
-  const ret = zone.filter((e) => (e.estado || '').toLowerCase() === 'retenido').length;
-  const rej = zone.filter((e) => (e.estado || '').toLowerCase() === 'rechazado').length;
-  const lib = zone.filter((e) => (e.estado || '').toLowerCase() === 'liberado').length;
-  const vacio = zone.filter((e) => !e.cantidad || e.cantidad === 0).length;
+  // Count occupied entries (paletas > 0 OR cantidad > 0), grouped by estado
+  const ret = zone.filter((e) => {
+    const ocupado = (parseInt(String(e.paletas)) || 0) > 0 || (parseFloat(String(e.cantidad)) || 0) > 0;
+    return (e.estado || '').toLowerCase() === 'retenido' && ocupado;
+  }).length;
+  const rej = zone.filter((e) => {
+    const ocupado = (parseInt(String(e.paletas)) || 0) > 0 || (parseFloat(String(e.cantidad)) || 0) > 0;
+    return (e.estado || '').toLowerCase() === 'rechazado' && ocupado;
+  }).length;
+  const lib = zone.filter((e) => {
+    const ocupado = (parseInt(String(e.paletas)) || 0) > 0 || (parseFloat(String(e.cantidad)) || 0) > 0;
+    const estado = (e.estado || '').toLowerCase();
+    return (estado === 'liberado' || estado === '') && ocupado;
+  }).length;
+  // vacío = total entries - occupied ones (mutually exclusive)
+  const vacio = total - ret - rej - lib;
   return {
     retenido: ret,
     rechazado: rej,
-    liberado: lib + vacio,
+    liberado: lib,
+    vacio: Math.max(0, vacio),
     pctRetenido: Math.round((ret / total) * 100),
     pctRechazado: Math.round((rej / total) * 100),
+    pctLiberado: Math.round((lib / total) * 100),
+    pctVacio: Math.round((Math.max(0, vacio) / total) * 100),
   };
 }
 

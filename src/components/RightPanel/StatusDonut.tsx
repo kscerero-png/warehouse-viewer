@@ -4,13 +4,8 @@ export default function StatusDonut() {
   const statusBreakdown = useStore((s) => s.statusBreakdown);
   const currentStatusFilter = useStore((s) => s.currentStatusFilter);
   const setStatusFilter = useStore((s) => s.setStatusFilter);
-  const datosInventario = useStore((s) => s.datosInventario);
 
-  const { retenido, rechazado, liberado, pctRetenido, pctRechazado } = statusBreakdown;
-  const total = datosInventario.length;
-  const vacio = total - retenido - rechazado - liberado;
-  const pctLib = total > 0 ? Math.round((liberado / total) * 100) : 0;
-  const pctVac = total > 0 ? Math.round((vacio / total) * 100) : 0;
+  const { retenido, rechazado, liberado, vacio, pctRetenido, pctRechazado, pctLiberado, pctVacio } = statusBreakdown;
 
   const toggle = (status: string) => {
     if (currentStatusFilter === status) setStatusFilter(null);
@@ -24,10 +19,10 @@ export default function StatusDonut() {
         <div className="donut-ring" style={{ borderColor: '#2563eb #d97706 #dc2626 rgba(255,255,255,0.06)' }} />
       </div>
       <div className="status-list" id="donut-status-list">
-        <StatusBar label="Liberado" count={liberado} pct={pctLib} color="#2563eb" status="liberado" active={currentStatusFilter === 'liberado'} onClick={() => toggle('liberado')} />
+        <StatusBar label="Liberado" count={liberado} pct={pctLiberado} color="#2563eb" status="liberado" active={currentStatusFilter === 'liberado'} onClick={() => toggle('liberado')} />
         <StatusBar label="Retenido" count={retenido} pct={pctRetenido} color="#d97706" status="retenido" active={currentStatusFilter === 'retenido'} onClick={() => toggle('retenido')} />
         <StatusBar label="Rechazado" count={rechazado} pct={pctRechazado} color="#dc2626" status="rechazado" active={currentStatusFilter === 'rechazado'} onClick={() => toggle('rechazado')} />
-        <StatusBar label="Vacío" count={vacio} pct={pctVac} color="rgba(255,255,255,0.15)" status="" active={false} onClick={() => {}} />
+        <StatusBar label="Vacío" count={vacio} pct={pctVacio} color="rgba(255,255,255,0.15)" status="" active={false} onClick={() => {}} />
       </div>
     </div>
   );

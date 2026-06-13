@@ -29,9 +29,8 @@ export default function SearchInput() {
 
       const prod = (item.producto || '').toLowerCase();
       const cod = (item.codigo || '').toLowerCase();
-      const id = (item.id || '').toLowerCase();
-      if (prod.includes(t) || cod.includes(t) || id.includes(t)) {
-        const key = `${item.producto}|${item.codigo}|${item.id}`;
+      if (prod.includes(t) || cod.includes(t)) {
+        const key = `${item.producto}|${item.codigo}`;
         if (!seen.has(key)) {
           seen.add(key);
           results.push({ id: item.id, producto: item.producto, codigo: item.codigo });
@@ -55,8 +54,8 @@ export default function SearchInput() {
     }
   }, []);
 
-  const handleSelect = useCallback((id: string) => {
-    setSearchQuery(id);
+  const handleSelect = useCallback((value: string) => {
+    setSearchQuery(value);
     setShowSuggestions(false);
   }, [setSearchQuery]);
 
@@ -124,9 +123,8 @@ export default function SearchInput() {
             <div className="no-result">Sin resultados</div>
           ) : (
             suggestions.map((s, i) => (
-              <button key={i} onClick={() => handleSelect(s.id)}>
+              <button key={i} onClick={() => handleSelect(s.producto)}>
                 <strong>{s.producto}</strong> {s.codigo && <span style={{color:'#64748b'}}>— {s.codigo}</span>}
-                <span style={{float:'right',color:'#64748b',fontSize:11}}>{s.id}</span>
               </button>
             ))
           )}

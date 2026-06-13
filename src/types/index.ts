@@ -57,8 +57,11 @@ export interface StatusBreakdown {
   retenido: number;
   rechazado: number;
   liberado: number;
+  vacio: number;
   pctRetenido: number;
   pctRechazado: number;
+  pctLiberado: number;
+  pctVacio: number;
 }
 
 export interface ProductStats {

@@ -1,21 +1,21 @@
 import * as THREE from 'three';
 import type { RackUserData } from '../types';
 
-const greyMat = new THREE.MeshStandardMaterial({ color: 0x444444, roughness: 0.6, metalness: 0.1 });
+export const greyMat = new THREE.MeshStandardMaterial({ color: 0x444444, roughness: 0.6, metalness: 0.1 });
 
-const okMat = new THREE.MeshStandardMaterial({
+export const okMat = new THREE.MeshStandardMaterial({
   color: 0x2563eb,
   roughness: 0.5,
   metalness: 0.1,
 });
 
-const retenidoMat = new THREE.MeshStandardMaterial({
+export const retenidoMat = new THREE.MeshStandardMaterial({
   color: 0xd97706,
   roughness: 0.5,
   metalness: 0.1,
 });
 
-const rechazadoMat = new THREE.MeshStandardMaterial({
+export const rechazadoMat = new THREE.MeshStandardMaterial({
   color: 0xdc2626,
   roughness: 0.5,
   metalness: 0.1,

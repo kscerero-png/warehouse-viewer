@@ -5,18 +5,20 @@ import { calculateCapacityUsageForAisle, calculateCapacityUsageForAisleGroup } f
 export default function ZoneOccupancy() {
   const showZoneOccupancy = useStore((s) => s.showZoneOccupancy);
   const datosInventario = useStore((s) => s.datosInventario);
+  const rackCounts = useStore((s) => s.rackCounts);
 
   const zones = useMemo(() => {
     const d = datosInventario;
+    const rc = rackCounts;
     return {
-      '1-4': calculateCapacityUsageForAisleGroup(['1', '2', '3', '4'], d),
-      '5-9': calculateCapacityUsageForAisleGroup(['5', '6', '7', '8', '9'], d),
-      T: calculateCapacityUsageForAisle('T', d),
-      A: calculateCapacityUsageForAisle('A', d),
-      P: calculateCapacityUsageForAisle('P', d),
-      S: calculateCapacityUsageForAisle('S', d),
+      '1-4': calculateCapacityUsageForAisleGroup(['1', '2', '3', '4'], d, rc),
+      '5-9': calculateCapacityUsageForAisleGroup(['5', '6', '7', '8', '9'], d, rc),
+      T: calculateCapacityUsageForAisle('T', d, rc),
+      A: calculateCapacityUsageForAisle('A', d, rc),
+      P: calculateCapacityUsageForAisle('P', d, rc),
+      S: calculateCapacityUsageForAisle('S', d, rc),
     };
-  }, [datosInventario]);
+  }, [datosInventario, rackCounts]);
 
   if (!showZoneOccupancy) return null;
 

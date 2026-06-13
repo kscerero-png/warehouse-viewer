@@ -14,37 +14,15 @@ import { useStore } from './store';
 import { isRackId } from './utils/idHelpers';
 
 const MODEL_URL = `${import.meta.env.BASE_URL}almacen.glb`;
-const INVENTARIO_URL = 'https://script.google.com/macros/s/AKfycbz40VVLFFkSnkSV-kll7OQRd30wGyiZGiHq1kNo5d-hn8o9lIT2hy_K53SNb8YDDH8tkw/exec';
+const INVENTARIO_URL = 'https://script.google.com/macros/s/AKfycbxJthmAczBij7ilAhDQF8ylNpUEs1WreP-oTBe03xRuV6VCAF3WbM79YD6u_ZjhUuqC/exec';
 
 export default function App() {
   const setInventario = useStore((s) => s.setInventario);
 
   useEffect(() => {
-    const urlParams = new URLSearchParams(window.location.search);
-    const callbackName = urlParams.get('callback');
-
-    if (callbackName) {
-      (window as any)[callbackName] = (data: any) => {
-        const mapped = (data.data || data).map(normalizeEntry).filter((e: any) => e.id && isRackId(e.id));
-        setInventario(mapped);
-      };
-    } else {
-      fetch(`${import.meta.env.BASE_URL}inventario.json`)
-        .then((r) => r.json())
-        .then((data) => {
-          const mapped = data.map(normalizeEntry).filter((e: any) => e.id && isRackId(e.id));
-          setInventario(mapped);
-        })
-        .catch(() => {
-          loadJsonp(INVENTARIO_URL, 'cargarInventario');
-        });
-
-      const interval = setInterval(() => {
-        loadJsonp(INVENTARIO_URL, 'cargarInventario');
-      }, 60000);
-
-      return () => clearInterval(interval);
-    }
+    cargarInventarioJsonp(INVENTARIO_URL, true);
+    const interval = setInterval(() => recargarInventarioPeriodico(), 60000);
+    return () => clearInterval(interval);
   }, [setInventario]);
 
   return (
@@ -90,16 +68,56 @@ function normalizeEstado(e: string): 'liberado' | 'retenido' | 'rechazado' {
   return 'liberado';
 }
 
-function loadJsonp(url: string, callbackName: string) {
-  const script = document.createElement('script');
-  script.src = `${url}?callback=${callbackName}`;
-  (window as any)[callbackName] = (data: any) => {
-    const mapped = (data.data || data).map(normalizeEntry).filter((e: any) => e.id && isRackId(e.id));
-    useStore.getState().setInventario(mapped);
+function cargarInventarioJsonp(url: string, fallback: boolean) {
+  const cb = 'jsonp_' + Date.now();
+  (window as any)[cb] = (data: any) => {
+    delete (window as any)[cb];
+    if (Array.isArray(data)) {
+      const mapped = data.map(normalizeEntry).filter((e: any) => e.id && isRackId(e.id));
+      useStore.getState().setInventario(mapped);
+    } else if (fallback) {
+      cargarInventarioFetch();
+    }
   };
+  const script = document.createElement('script');
+  script.src = url + (url.indexOf('?') > -1 ? '&' : '?') + 'callback=' + cb + '&_=' + Date.now();
+  script.onerror = () => {
+    delete (window as any)[cb];
+    if (fallback) cargarInventarioFetch();
+  };
+  const timeout = setTimeout(() => {
+    if ((window as any)[cb]) {
+      delete (window as any)[cb];
+      if (fallback) cargarInventarioFetch();
+    }
+  }, 10000);
   document.body.appendChild(script);
-  setTimeout(() => {
-    const existing = document.querySelector(`script[src*="${callbackName}"]`);
-    if (existing) existing.remove();
-  }, 15000);
+  setTimeout(() => script.remove(), 15000);
+}
+
+function recargarInventarioPeriodico() {
+  const cb = 'jsonp_' + Date.now();
+  (window as any)[cb] = (data: any) => {
+    delete (window as any)[cb];
+    if (Array.isArray(data)) {
+      const mapped = data.map(normalizeEntry).filter((e: any) => e.id && isRackId(e.id));
+      useStore.getState().setInventario(mapped);
+    }
+  };
+  const script = document.createElement('script');
+  script.src = INVENTARIO_URL + '?callback=' + cb + '&_=' + Date.now();
+  script.onerror = () => { delete (window as any)[cb]; };
+  setTimeout(() => { if ((window as any)[cb]) delete (window as any)[cb]; }, 10000);
+  document.body.appendChild(script);
+  setTimeout(() => script.remove(), 15000);
+}
+
+function cargarInventarioFetch() {
+  fetch(`${import.meta.env.BASE_URL}inventario.json`)
+    .then((r) => r.json())
+    .then((data) => {
+      const mapped = data.map(normalizeEntry).filter((e: any) => e.id && isRackId(e.id));
+      useStore.getState().setInventario(mapped);
+    })
+    .catch(() => console.error('Error cargando inventario.json'));
 }

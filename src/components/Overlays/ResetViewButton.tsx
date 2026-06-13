@@ -1,16 +1,13 @@
 import { useStore } from '../../store';
 
 export default function ResetViewButton() {
-  const clearSelection = useStore((s) => s.clearSelection);
-  const showInfoPanel = useStore((s) => s.showInfoPanel);
-
-  if (!showInfoPanel) return null;
+  const resetAll = useStore((s) => s.resetAll);
 
   return (
     <button
       id="reset-view-bottom"
       className="visible reset-view-bottom"
-      onClick={clearSelection}
+      onClick={resetAll}
     >
       Restablecer Vista
     </button>

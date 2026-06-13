@@ -3,14 +3,20 @@ import { useStore } from '../store';
 export default function KpiBar() {
   const datosInventario = useStore((s) => s.datosInventario);
   const statusBreakdown = useStore((s) => s.statusBreakdown);
+  const rackCounts = useStore((s) => s.rackCounts);
 
-  const total = datosInventario.length;
-  const used = datosInventario.filter((e) => (parseInt(String(e.paletas)) || 0) > 0).length;
-  const pct = total > 0 ? Math.round((used / total) * 100) : 0;
+  const totalRacks = Object.values(rackCounts).reduce((sum, c) => sum + c, 0);
+  const usedIds = new Set<string>();
+  datosInventario.forEach((e) => {
+    if ((parseInt(String(e.paletas)) || 0) > 0 || (parseFloat(String(e.cantidad)) || 0) > 0) {
+      usedIds.add(e.id);
+    }
+  });
+  const pct = totalRacks > 0 ? Math.round((usedIds.size / totalRacks) * 100) : 0;
 
   return (
     <div id="kpi-bar">
-      <KpiCard label="Total Ubicaciones" value={String(total)} colorClass="kpi-blue" />
+      <KpiCard label="Total Ubicaciones" value={String(totalRacks)} colorClass="kpi-blue" />
       <KpiCard label="Ocupación" value={`${pct}%`} colorClass="kpi-green" />
       <KpiCard label="Retenidos" value={String(statusBreakdown.retenido)} colorClass="kpi-amber" />
       <KpiCard label="Rechazados" value={String(statusBreakdown.rechazado)} colorClass="kpi-red" />
