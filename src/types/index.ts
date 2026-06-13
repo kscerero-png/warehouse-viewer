@@ -11,21 +11,6 @@ export interface InventoryEntry {
   ocupacion?: number;
 }
 
-export interface ZoneMetrics {
-  total: number;
-  used: number;
-  empty: number;
-  percent: number;
-}
-
-export interface StatusBreakdown {
-  retenido: number;
-  rechazado: number;
-  liberado: number;
-  pctRetenido: number;
-  pctRechazado: number;
-}
-
 export interface RackUserData {
   id: string;
   producto?: string;
@@ -41,6 +26,7 @@ export interface RackUserData {
   hiddenByPaletas?: boolean;
   jaula?: boolean;
   _paletaSpreadDone?: boolean;
+  _showStats?: boolean;
 }
 
 export interface GroupedEntry {
@@ -58,4 +44,29 @@ export type StatusFilter = 'liberado' | 'retenido' | 'rechazado' | null;
 export interface ProductCount {
   name: string;
   count: number;
+}
+
+export interface ZoneMetrics {
+  total: number;
+  used: number;
+  empty: number;
+  percent: number;
+}
+
+export interface StatusBreakdown {
+  retenido: number;
+  rechazado: number;
+  liberado: number;
+  pctRetenido: number;
+  pctRechazado: number;
+}
+
+export interface ProductStats {
+  canonName: string;
+  canonCod: string;
+  totalUbics: number;
+  totalQty: number;
+  lotes: { name: string; qty: number; ubics: string[] }[];
+  ubicaciones: string[];
+  canonUm: string;
 }

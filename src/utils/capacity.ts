@@ -1,5 +1,4 @@
 import type { InventoryEntry, RackUserData } from '../types';
-import { isFormulacionId } from './idHelpers';
 
 export function getEffectivePositions(entry: InventoryEntry): number {
   const p = parseInt(String(entry.paletas)) || 0;
@@ -34,4 +33,24 @@ export function getCapacityForObj(obj: RackUserData): { total: number; used: num
     }
   });
   return { total, used };
+}
+
+export function calculateCapacityUsageForAisle(aisle: string, data: InventoryEntry[]): { total: number; used: number; empty: number; percent: number } {
+  const filtered = data.filter((e) => {
+    if (aisle === 'T') return /^T\d{2}$/.test(e.id);
+    if (aisle === 'A') return /^A\d{3}$/.test(e.id);
+    if (aisle === 'P') return /^P\d{2}$/.test(e.id);
+    if (aisle === 'S') return /^SQ\d{2}$/.test(e.id);
+    return e.id[0] === aisle;
+  });
+  const total = filtered.length;
+  const used = filtered.filter((e) => (parseInt(String(e.paletas)) || 0) > 0).length;
+  return { total, used, empty: total - used, percent: total > 0 ? Math.round((used / total) * 100) : 0 };
+}
+
+export function calculateCapacityUsageForAisleGroup(digits: string[], data: InventoryEntry[]): { total: number; used: number; empty: number; percent: number } {
+  const filtered = data.filter((e) => digits.includes(e.id[0]));
+  const total = filtered.length;
+  const used = filtered.filter((e) => (parseInt(String(e.paletas)) || 0) > 0).length;
+  return { total, used, empty: total - used, percent: total > 0 ? Math.round((used / total) * 100) : 0 };
 }

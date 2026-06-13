@@ -2,34 +2,28 @@ import { useStore } from '../store';
 
 export default function KpiBar() {
   const datosInventario = useStore((s) => s.datosInventario);
+  const statusBreakdown = useStore((s) => s.statusBreakdown);
+
   const total = datosInventario.length;
   const used = datosInventario.filter((e) => (parseInt(String(e.paletas)) || 0) > 0).length;
   const pct = total > 0 ? Math.round((used / total) * 100) : 0;
 
   return (
-    <div
-      style={{
-        height: 72,
-        background: '#1e1e2e',
-        borderBottom: '1px solid #333',
-        display: 'flex',
-        alignItems: 'center',
-        gap: 32,
-        padding: '0 24px',
-      }}
-    >
-      <Kpi label="Total Ubicaciones" value={String(total)} />
-      <Kpi label="Ocupadas" value={String(used)} />
-      <Kpi label="Ocupación" value={`${pct}%`} />
+    <div id="kpi-bar">
+      <KpiCard label="Total Ubicaciones" value={String(total)} colorClass="kpi-blue" />
+      <KpiCard label="Ocupación" value={`${pct}%`} colorClass="kpi-green" />
+      <KpiCard label="Retenidos" value={String(statusBreakdown.retenido)} colorClass="kpi-amber" />
+      <KpiCard label="Rechazados" value={String(statusBreakdown.rechazado)} colorClass="kpi-red" />
+      <div className="kpi-actions" />
     </div>
   );
 }
 
-function Kpi({ label, value }: { label: string; value: string }) {
+function KpiCard({ label, value, colorClass }: { label: string; value: string; colorClass: string }) {
   return (
-    <div>
-      <div style={{ fontSize: 11, color: '#888', textTransform: 'uppercase', letterSpacing: 1 }}>{label}</div>
-      <div style={{ fontSize: 22, fontWeight: 700, color: '#e0e0e0', marginTop: 2 }}>{value}</div>
+    <div className={`kpi-card ${colorClass}`}>
+      <div style={{ fontSize: 10, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: 0.5 }}>{label}</div>
+      <div className="kpi-value">{value}</div>
     </div>
   );
 }

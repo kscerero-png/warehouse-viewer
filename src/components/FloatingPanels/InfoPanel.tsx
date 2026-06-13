@@ -3,46 +3,60 @@ import { groupEntries } from '../../utils/inventoryUtils';
 
 export default function InfoPanel() {
   const showInfoPanel = useStore((s) => s.showInfoPanel);
-  const selectedMesh = useStore((s) => s.selectedMesh);
-  const datosInventario = useStore((s) => s.datosInventario);
+  const selectedRack = useStore((s) => s.selectedRack);
+  const selectedRackId = useStore((s) => s.selectedRackId);
+  const clearSelection = useStore((s) => s.clearSelection);
 
-  if (!showInfoPanel || !selectedMesh) return null;
+  if (!showInfoPanel || !selectedRack || selectedRack.length === 0) return null;
 
-  const entries = datosInventario.filter((e) => e.id === selectedMesh.id);
-  const groups = groupEntries(entries);
-  const hasDuplicates = groups.length > 1;
-  const firstProduct = groups.length > 0 ? groups[0].producto : '';
+  const groups = groupEntries(selectedRack);
+  const estado = selectedRack[0]?.estado || 'liberado';
+  const estadoClass = `estado-${estado}`;
 
   return (
-    <div
-      style={{
-        position: 'absolute',
-        left: 12,
-        bottom: 48,
-        background: '#1e1e2e',
-        border: '1px solid #444',
-        borderRadius: 8,
-        padding: 12,
-        minWidth: 200,
-        maxWidth: 320,
-        zIndex: 50,
-        boxShadow: '0 4px 20px rgba(0,0,0,0.5)',
-      }}
-    >
-      <div style={{ fontSize: 11, color: '#888', textTransform: 'uppercase', marginBottom: 8 }}>{selectedMesh.id}</div>
-      {groups.map((g, i) => (
-        <div key={i} style={{ marginBottom: i < groups.length - 1 ? 8 : 0 }}>
-          {hasDuplicates && g.producto !== firstProduct && (
-            <div style={{ fontSize: 12, color: '#e0e0e0', fontWeight: 600, marginBottom: 4 }}>{g.producto}</div>
-          )}
-          {!hasDuplicates && (
-            <div style={{ fontSize: 12, color: '#e0e0e0', fontWeight: 600, marginBottom: 4 }}>{g.producto}</div>
-          )}
-          <div style={{ fontSize: 11, color: '#aaa' }}>Código: {g.codigo}</div>
-          <div style={{ fontSize: 11, color: '#aaa' }}>Lotes: {g.lotes.map((l) => l.lote).join(', ')}</div>
-          <div style={{ fontSize: 11, color: '#aaa' }}>Paletas: {g.paletas}</div>
+    <div className="floating-panel visible" id="info-panel" style={{
+      position: 'absolute',
+      left: 12,
+      bottom: 48,
+      zIndex: 100,
+      minWidth: 240,
+      maxWidth: 320,
+    }}>
+      <div className="floating-panel-header">
+        <span className="floating-panel-title">
+          <span className="mono" id="rack-id">{selectedRackId || '-'}</span>
+        </span>
+        <button className="floating-panel-close" id="info-close" onClick={clearSelection}>✕</button>
+      </div>
+      <div className="floating-panel-body" style={{ maxHeight: 300, overflowY: 'auto' }}>
+        {groups.map((g, i) => (
+          <div key={i} style={{ marginBottom: i < groups.length - 1 ? 10 : 0 }}>
+            <div id="rack-prod" style={{ fontSize: 13, fontWeight: 600, color: '#f1f5f9', marginBottom: 2 }}>
+              {g.producto || '-'}
+            </div>
+            <div style={{ fontSize: 11, color: '#94a3b8', marginBottom: 1 }}>
+              <span id="rack-cod">{g.codigo || '-'}</span>
+            </div>
+            <div style={{ fontSize: 11, color: '#94a3b8', marginBottom: 1 }}>
+              Lote: <span id="rack-lote">{g.lotes.map((l) => l.lote).join(', ') || '-'}</span>
+            </div>
+            <div style={{ fontSize: 11, color: '#94a3b8', marginBottom: 1 }}>
+              Cant: <span id="rack-cant">{g.cantidad}</span> <span id="rack-um">{g.um || ''}</span>
+            </div>
+            <div style={{ fontSize: 11, color: '#94a3b8', marginBottom: 1 }}>
+              Palets: <span id="rack-paletas">{g.paletas}</span>
+            </div>
+            <div style={{ fontSize: 11, color: '#94a3b8', marginBottom: 1 }}>
+              Nivel: <span id="rack-nivel">{selectedRack[0]?.nivel ? `${selectedRack[0].nivel} niveles` : '1 nivel'}</span>
+            </div>
+          </div>
+        ))}
+        <div style={{ marginTop: 8 }}>
+          <span className={`estado-badge ${estadoClass}`} id="rack-estado">
+            {estado.toUpperCase()}
+          </span>
         </div>
-      ))}
+      </div>
     </div>
   );
 }

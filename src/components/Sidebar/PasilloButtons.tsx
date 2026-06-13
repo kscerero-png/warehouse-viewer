@@ -1,53 +1,51 @@
-import type { Pasillo } from '../../types';
+import { useStore } from '../../store';
+import { getAisleGroupLabel } from '../../utils/idHelpers';
 
-interface Props {
-  selected: Pasillo;
-  onSelect: (p: Pasillo) => void;
-}
-
-const PASILLOS: { label: string; value: Pasillo }[] = [
-  { label: 'Todos', value: 'todos' },
-  { label: '1', value: '1' },
-  { label: '2', value: '2' },
-  { label: '3', value: '3' },
-  { label: '4', value: '4' },
-  { label: '5', value: '5' },
-  { label: '6', value: '6' },
-  { label: '7', value: '7' },
-  { label: '8', value: '8' },
-  { label: '9', value: '9' },
-  { label: 'Transito', value: 'T' },
-  { label: 'Formulación', value: 'A' },
-  { label: 'Galpón Anexo', value: 'P' },
-  { label: 'Jaula', value: 'S' },
+const PASILLOS: { label: string; value: string; badge: string; zoneClass?: string }[] = [
+  { label: 'Todos', value: 'todos', badge: 'General' },
+  { label: '01', value: '1', badge: 'Ppal' },
+  { label: '02', value: '2', badge: 'Ppal' },
+  { label: '03', value: '3', badge: 'Ppal' },
+  { label: '04', value: '4', badge: 'Ppal' },
+  { label: '05', value: '5', badge: 'Cava' },
+  { label: '06', value: '6', badge: 'Cava' },
+  { label: '07', value: '7', badge: 'Cava' },
+  { label: '08', value: '8', badge: 'Cava' },
+  { label: '09', value: '9', badge: 'Cava' },
+  { label: 'T', value: 'T', badge: 'Tránsito', zoneClass: 'zone-t' },
+  { label: 'F', value: 'A', badge: 'Formulación', zoneClass: 'zone-a' },
+  { label: 'P', value: 'P', badge: 'Galpón Anexo', zoneClass: 'zone-p' },
+  { label: 'J', value: 'S', badge: 'Jaula', zoneClass: 'zone-s' },
 ];
 
-export default function PasilloButtons({ selected, onSelect }: Props) {
+export default function PasilloButtons() {
+  const pasilloSeleccionado = useStore((s) => s.pasilloSeleccionado);
+  const setPasillo = useStore((s) => s.setPasillo);
+  const zoneMetrics = useStore((s) => s.zoneMetrics);
+
   return (
-    <div style={{ padding: '0 16px 12px' }}>
-      <div style={{ fontSize: 11, color: '#888', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 8 }}>
+    <div className="sidebar-nav">
+      <div style={{ fontSize: 10, fontWeight: 600, color: '#64748b', textTransform: 'uppercase', letterSpacing: 1, padding: '12px 10px 6px' }}>
         Pasillos
       </div>
-      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
-        {PASILLOS.map((p) => (
-          <button
-            key={p.value}
-            onClick={() => onSelect(p.value)}
-            style={{
-              padding: '6px 12px',
-              borderRadius: 6,
-              border: 'none',
-              background: selected === p.value ? '#5c6bc0' : '#333',
-              color: selected === p.value ? '#fff' : '#aaa',
-              fontSize: 12,
-              cursor: 'pointer',
-              fontWeight: selected === p.value ? 600 : 400,
-              transition: 'all 0.15s',
-            }}
-          >
-            {p.label}
-          </button>
-        ))}
+      <div className="nav-aisle-grid" id="pasillo-buttons-container">
+        {PASILLOS.map((p) => {
+          const isActive = pasilloSeleccionado === p.value;
+          const metric = zoneMetrics[p.value];
+          const pct = metric ? `${metric.percent}%` : '--';
+          return (
+            <button
+              key={p.value}
+              className={`nav-btn ${isActive ? 'active' : ''} ${p.zoneClass || ''}`}
+              data-pasillo={p.value}
+              onClick={() => setPasillo(p.value as any)}
+              title={`${p.label}: ${pct} ocupado`}
+            >
+              {p.label}
+              <span className="nav-badge">{pct}</span>
+            </button>
+          );
+        })}
       </div>
     </div>
   );

@@ -2,27 +2,53 @@ import { useStore } from '../../store';
 
 export default function StatusDonut() {
   const statusBreakdown = useStore((s) => s.statusBreakdown);
+  const currentStatusFilter = useStore((s) => s.currentStatusFilter);
+  const setStatusFilter = useStore((s) => s.setStatusFilter);
+  const datosInventario = useStore((s) => s.datosInventario);
+
   const { retenido, rechazado, liberado, pctRetenido, pctRechazado } = statusBreakdown;
+  const total = datosInventario.length;
+  const vacio = total - retenido - rechazado - liberado;
+  const pctLib = total > 0 ? Math.round((liberado / total) * 100) : 0;
+  const pctVac = total > 0 ? Math.round((vacio / total) * 100) : 0;
+
+  const toggle = (status: string) => {
+    if (currentStatusFilter === status) setStatusFilter(null);
+    else setStatusFilter(status as any);
+  };
 
   return (
-    <div style={{ padding: 16, borderBottom: '1px solid #333' }}>
-      <div style={{ fontSize: 11, color: '#888', textTransform: 'uppercase', marginBottom: 12 }}>Estado</div>
-      <div style={{ display: 'flex', gap: 16 }}>
-        <Bar label="Liberado" count={liberado} color="#4caf50" />
-        <Bar label="Retenido" count={retenido} pct={pctRetenido} color="#ff9800" />
-        <Bar label="Rechazado" count={rechazado} pct={pctRechazado} color="#f44336" />
+    <div className="md-card" id="donut-status">
+      <div className="card-title">Estado</div>
+      <div className="donut-placeholder">
+        <div className="donut-ring" style={{ borderColor: '#2563eb #d97706 #dc2626 rgba(255,255,255,0.06)' }} />
+      </div>
+      <div className="status-list" id="donut-status-list">
+        <StatusBar label="Liberado" count={liberado} pct={pctLib} color="#2563eb" status="liberado" active={currentStatusFilter === 'liberado'} onClick={() => toggle('liberado')} />
+        <StatusBar label="Retenido" count={retenido} pct={pctRetenido} color="#d97706" status="retenido" active={currentStatusFilter === 'retenido'} onClick={() => toggle('retenido')} />
+        <StatusBar label="Rechazado" count={rechazado} pct={pctRechazado} color="#dc2626" status="rechazado" active={currentStatusFilter === 'rechazado'} onClick={() => toggle('rechazado')} />
+        <StatusBar label="Vacío" count={vacio} pct={pctVac} color="rgba(255,255,255,0.15)" status="" active={false} onClick={() => {}} />
       </div>
     </div>
   );
 }
 
-function Bar({ label, count, color, pct }: { label: string; count: number; color: string; pct?: number }) {
+function StatusBar({ label, count, pct, color, status, active, onClick }: {
+  label: string; count: number; pct: number; color: string; status: string; active: boolean; onClick: () => void;
+}) {
+  const size = pct > 0 ? pct : (count > 0 ? 2 : 0);
   return (
-    <div style={{ flex: 1, textAlign: 'center' }}>
-      <div style={{ fontSize: 18, fontWeight: 700, color }}>{count}</div>
-      <div style={{ fontSize: 10, color: '#888', marginTop: 2 }}>
-        {label}{pct !== undefined ? ` (${pct}%)` : ''}
+    <div
+      className={`status-row ${active ? 'active' : ''}`}
+      data-status={status}
+      onClick={onClick}
+      style={{ cursor: status ? 'pointer' : 'default' }}
+    >
+      <span className="status-label">{label}</span>
+      <div className="status-bar">
+        <div className="bar-fill" id={`bar-${label.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '')}`} style={{ width: `${size}%`, background: color }} />
       </div>
+      <span className="status-qty">{count}</span>
     </div>
   );
 }

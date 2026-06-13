@@ -1,20 +1,22 @@
 import StatusDonut from './StatusDonut';
 import TopProducts from './TopProducts';
+import StatusSummaryPanel from './StatusSummaryPanel';
 
 export default function RightPanel() {
   return (
-    <div
-      style={{
-        width: 220,
-        background: '#1e1e2e',
-        borderLeft: '1px solid #333',
-        overflowY: 'auto',
-        display: 'flex',
-        flexDirection: 'column',
-      }}
-    >
+    <div id="right-panel">
       <StatusDonut />
+      <div className="filter-badge-row" id="usage-status-breakdown">
+        <span
+          className="filter-badge"
+          id="usage-status-clear"
+          style={{ display: 'none' }}
+        >
+          ✕ Limpiar
+        </span>
+      </div>
       <TopProducts />
+      <StatusSummaryPanel />
     </div>
   );
 }

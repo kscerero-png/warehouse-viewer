@@ -24,6 +24,11 @@ export function isEmptyRack(rackData: RackUserData | InventoryEntry | null | und
   return true;
 }
 
+export function countEntries(rackData: RackUserData): number {
+  if (!rackData || !rackData.entries) return 0;
+  return rackData.entries.length;
+}
+
 export function mergeLotes(lotes: { lote: string; cantidad: number }[]): { lote: string; cantidad: number }[] {
   const map: Record<string, { lote: string; cantidad: number }> = {};
   lotes.forEach((l) => {
