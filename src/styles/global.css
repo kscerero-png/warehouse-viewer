@@ -92,14 +92,14 @@ html, body {
 }
 
 .logo-text {
-  font-size: 14px;
+  font-size: 15px;
   font-weight: 700;
   color: var(--md-text);
   letter-spacing: 0.3px;
 }
 
 .logo-sub {
-  font-size: 9px;
+  font-size: 10px;
   color: var(--md-text-muted);
   font-weight: 400;
   letter-spacing: 1px;
@@ -115,12 +115,12 @@ html, body {
 .sidebar-search input {
   width: 100%;
   box-sizing: border-box;
-  padding: 8px 10px;
+  padding: 9px 10px;
   border-radius: 6px;
   border: 1px solid rgba(255,255,255,0.06);
   background: rgba(255,255,255,0.03);
   color: var(--md-text);
-  font-size: 12px;
+  font-size: 13px;
   font-family: var(--md-font);
   outline: none;
   transition: border-color 150ms ease;
@@ -134,15 +134,15 @@ html, body {
 
 #search-suggestions button {
   width: 100%; text-align: left; border: none; background: transparent;
-  color: var(--md-text-secondary); padding: 10px 12px; cursor: pointer;
-  font-size: 12px; font-family: var(--md-font);
+  color: var(--md-text); padding: 10px 12px; cursor: pointer;
+  font-size: 13px; font-family: var(--md-font);
   border-bottom: 1px solid rgba(255,255,255,0.03);
 }
 
 #search-suggestions button:hover { background: rgba(37,99,235,0.08); color: var(--md-primary-light); }
 
 #search-suggestions .no-result {
-  padding: 10px 12px; color: var(--md-text-muted); font-size: 12px;
+  padding: 10px 12px; color: var(--md-text-muted); font-size: 13px;
 }
 
 .sidebar-nav {
@@ -177,8 +177,8 @@ html, body {
   background: transparent;
   border: 1px solid rgba(255,255,255,0.04);
   color: var(--md-text-muted);
-  padding: 6px 4px;
-  font-size: 11px;
+  padding: 7px 4px;
+  font-size: 12px;
   font-family: var(--md-font);
   font-weight: 500;
   text-align: center;
@@ -257,7 +257,7 @@ html, body {
 .kpi-card:last-of-type { border-right: none; }
 
 .kpi-value {
-  font-size: 26px;
+  font-size: 28px;
   font-weight: 700;
   color: var(--md-text);
   line-height: 1.1;
@@ -270,7 +270,7 @@ html, body {
 .kpi-red .kpi-value { color: var(--md-danger); }
 
 .kpi-label {
-  font-size: 9px;
+  font-size: 10px;
   color: var(--md-text-muted);
   text-transform: uppercase;
   letter-spacing: 0.5px;
@@ -312,11 +312,11 @@ html, body {
 }
 
 .card-title {
-  font-size: 9px;
+  font-size: 11px;
   font-weight: 600;
   color: var(--md-text-muted);
   text-transform: uppercase;
-  letter-spacing: 1px;
+  letter-spacing: 0.8px;
   display: flex;
   align-items: center;
   gap: 8px;
@@ -350,9 +350,9 @@ html, body {
 .status-row.active { background: rgba(37,99,235,0.08); }
 
 .status-label {
-  font-size: 10px;
+  font-size: 12px;
   color: var(--md-text-secondary);
-  width: 52px;
+  width: 60px;
   flex-shrink: 0;
 }
 
@@ -371,10 +371,10 @@ html, body {
 }
 
 .status-qty {
-  font-size: 11px;
+  font-size: 13px;
   font-weight: 600;
   color: var(--md-text);
-  width: 28px;
+  width: 32px;
   text-align: right;
   font-variant-numeric: tabular-nums;
 }
@@ -388,9 +388,9 @@ html, body {
 }
 
 .filter-badge {
-  padding: 3px 8px;
+  padding: 4px 10px;
   border-radius: 10px;
-  font-size: 9px;
+  font-size: 11px;
   font-weight: 500;
   cursor: pointer;
   background: rgba(255,255,255,0.03);
@@ -417,22 +417,22 @@ html, body {
 .top-product-row:last-child { border-bottom: none; }
 
 .top-product-idx {
-  font-size: 9px;
+  font-size: 11px;
   color: var(--md-text-muted);
-  width: 16px;
+  width: 18px;
 }
 
 .top-product-name {
   flex: 1;
-  font-size: 10px;
-  color: var(--md-text-secondary);
+  font-size: 12px;
+  color: var(--md-text);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
 .top-product-count {
-  font-size: 11px;
+  font-size: 13px;
   font-weight: 600;
   color: var(--md-text);
   font-variant-numeric: tabular-nums;
@@ -460,7 +460,7 @@ html, body {
 }
 
 .summary-title {
-  font-size: 10px;
+  font-size: 12px;
   font-weight: 700;
   color: var(--md-text);
   letter-spacing: 0.5px;
@@ -468,7 +468,7 @@ html, body {
 
 .summary-count {
   margin-left: auto;
-  font-size: 11px;
+  font-size: 13px;
   font-weight: 700;
   color: var(--md-text);
 }
@@ -497,15 +497,15 @@ html, body {
 
 .summary-item-name {
   flex: 1;
-  font-size: 10px;
-  color: var(--md-text-secondary);
+  font-size: 11px;
+  color: var(--md-text);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
 .summary-item-qty {
-  font-size: 10px;
+  font-size: 12px;
   font-weight: 600;
   color: var(--md-text);
 }
@@ -516,14 +516,14 @@ html, body {
 }
 
 .zp-summary-ubics {
-  font-size: 9px;
+  font-size: 11px;
   color: var(--md-text-muted);
   white-space: nowrap;
   margin-right: 6px;
 }
 
 .zp-summary-qty {
-  font-size: 10px;
+  font-size: 12px;
   font-weight: 600;
   color: var(--md-text);
   font-variant-numeric: tabular-nums;
@@ -561,7 +561,7 @@ html, body {
 }
 
 .floating-panel-title {
-  font-size: 10px;
+  font-size: 11px;
   font-weight: 600;
   color: var(--md-text-muted);
   text-transform: uppercase;
@@ -590,7 +590,7 @@ html, body {
   display: inline-block;
   padding: 2px 8px;
   border-radius: 4px;
-  font-size: 10px;
+  font-size: 11px;
   font-weight: 700;
   letter-spacing: 0.5px;
 }
@@ -609,14 +609,14 @@ html, body {
 .stats-metric { flex: 1; }
 
 .stats-metric-value {
-  font-size: 18px;
+  font-size: 20px;
   font-weight: 700;
   color: var(--md-text);
   font-variant-numeric: tabular-nums;
 }
 
 .stats-metric-label {
-  font-size: 9px;
+  font-size: 10px;
   color: var(--md-text-muted);
   text-transform: uppercase;
   letter-spacing: 0.5px;
@@ -627,12 +627,12 @@ html, body {
   align-items: center;
   padding: 3px 0;
   border-bottom: 1px solid rgba(255,255,255,0.03);
-  font-size: 10px;
+  font-size: 11px;
 }
 
 .stats-lote-name {
   flex: 1;
-  color: var(--md-text-secondary);
+  color: var(--md-text);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -646,7 +646,7 @@ html, body {
 
 .stats-lote-ubics {
   color: var(--md-text-muted);
-  font-size: 9px;
+  font-size: 10px;
 }
 
 .stats-lote-qty {
@@ -657,7 +657,7 @@ html, body {
 }
 
 .stats-no-data {
-  font-size: 10px;
+  font-size: 11px;
   color: var(--md-text-muted);
   padding: 3px 0;
 }
@@ -674,7 +674,7 @@ html, body {
   background: rgba(37,99,235,0.08);
   border: 1px solid rgba(37,99,235,0.15);
   border-radius: 3px;
-  font-size: 9px;
+  font-size: 10px;
   font-family: var(--md-mono);
   color: var(--md-primary-light);
   cursor: pointer;
@@ -718,16 +718,16 @@ html, body {
 .zone-label-row {
   display: flex;
   justify-content: space-between;
-  font-size: 9px;
-  margin-bottom: 1px;
+  font-size: 10px;
+  margin-bottom: 2px;
 }
 
-.zone-label { color: var(--md-text-secondary); }
+.zone-label { color: var(--md-text); }
 
 .zone-stats {
   color: var(--md-text-muted);
   font-family: var(--md-mono);
-  font-size: 8px;
+  font-size: 9px;
 }
 
 .zone-bar {
@@ -762,7 +762,7 @@ html, body {
   padding: 6px 10px;
   min-width: 160px;
   font-family: var(--md-mono);
-  font-size: 9px;
+  font-size: 11px;
 }
 
 #coords-overlay.collapsed .overlay-body { display: none; }
@@ -771,7 +771,7 @@ html, body {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  font-size: 8px;
+  font-size: 9px;
   color: var(--md-text-muted);
   text-transform: uppercase;
   letter-spacing: 0.5px;
@@ -779,7 +779,7 @@ html, body {
 
 .btn-toggle {
   cursor: pointer;
-  font-size: 9px;
+  font-size: 10px;
   color: var(--md-text-muted);
 }
 
@@ -799,7 +799,7 @@ html, body {
 }
 
 .coord-value {
-  color: var(--md-text-secondary);
+  color: var(--md-text);
 }
 
 /* Controls Legend */
@@ -821,7 +821,7 @@ html, body {
   display: flex;
   gap: 6px;
   padding: 1px 0;
-  font-size: 9px;
+  font-size: 10px;
 }
 
 .control-row kbd {
@@ -829,7 +829,7 @@ html, body {
   padding: 1px 5px;
   border-radius: 3px;
   font-family: var(--md-mono);
-  color: var(--md-text-secondary);
+  color: var(--md-text);
   min-width: 44px;
 }
 
