@@ -28,7 +28,7 @@ export default function KpiBar() {
 function KpiCard({ label, value, colorClass }: { label: string; value: string; colorClass: string }) {
   return (
     <div className={`kpi-card ${colorClass}`}>
-      <div style={{ fontSize: 10, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: 0.5 }}>{label}</div>
+      <div className="kpi-label">{label}</div>
       <div className="kpi-value">{value}</div>
     </div>
   );

@@ -1,6 +1,7 @@
 import StatusDonut from './StatusDonut';
 import TopProducts from './TopProducts';
 import StatusSummaryPanel from './StatusSummaryPanel';
+import ZoneProductSummary from './ZoneProductSummary';
 
 export default function RightPanel() {
   return (
@@ -16,6 +17,7 @@ export default function RightPanel() {
         </span>
       </div>
       <TopProducts />
+      <ZoneProductSummary />
       <StatusSummaryPanel />
     </div>
   );
