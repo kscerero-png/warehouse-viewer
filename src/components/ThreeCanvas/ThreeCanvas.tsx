@@ -22,6 +22,7 @@ export default function ThreeCanvas({ modelUrl }: Props) {
   const currentStatusFilter = useStore((s) => s.currentStatusFilter);
   const searchQuery = useStore((s) => s.searchQuery);
   const resetViewSignal = useStore((s) => s.resetViewSignal);
+  const viewMode = useStore((s) => s.viewMode);
 
   const handleMeshClick = useCallback((entries: any[]) => {
     setSelectedRack(entries, entries[0]?.id || null);
@@ -63,9 +64,10 @@ export default function ThreeCanvas({ modelUrl }: Props) {
     scene.pasilloSeleccionado = pasilloSeleccionado;
     scene.currentSearchTerm = searchQuery;
     scene.currentStatusFilter = currentStatusFilter;
+    scene.viewMode = viewMode;
     scene.updateSceneFromInventario(datosInventario);
     setRackCounts(scene.getRackCountsByZone());
-  }, [datosInventario, pasilloSeleccionado, searchQuery, currentStatusFilter, setRackCounts]);
+  }, [datosInventario, pasilloSeleccionado, searchQuery, currentStatusFilter, viewMode, setRackCounts]);
 
   // Focus camera when filter changes
   useEffect(() => {

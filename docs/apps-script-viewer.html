@@ -57,7 +57,7 @@
     }
     .logo-text { font-size: 15px; font-weight: 700; color: var(--md-text); line-height: 1.2; }
     .logo-sub { font-size: 10px; color: var(--md-text-muted); text-transform: uppercase; letter-spacing: 0.5px; }
-    .sidebar-search { padding: 10px 10px 4px; }
+    .sidebar-search { padding: 10px 10px 4px; position: relative; }
     .sidebar-search input {
       width: 100%; padding: 8px 10px; border-radius: var(--md-radius-sm);
       background: var(--md-surface-2); border: 1px solid var(--md-border);
@@ -86,6 +86,7 @@
     .nav-btn.zone-a { border-left: 3px solid var(--md-success); }
     .nav-btn.zone-p { border-left: 3px solid var(--md-primary-light); }
     .nav-btn.zone-s { border-left: 3px solid var(--md-secondary); }
+    .nav-btn.has-matches { border-color: var(--md-primary-light); background: rgba(129,140,248,.1); }
     .sidebar-footer {
       padding: 10px; border-top: 1px solid var(--md-border);
       display: flex; flex-direction: column; gap: 4px;
@@ -108,6 +109,14 @@
     .kpi-green .kpi-value { color: #4ade80; }
     .kpi-amber .kpi-value { color: #fbbf24; }
     .kpi-red .kpi-value { color: #f87171; }
+    .kpi-cyan .kpi-value { color: #22d3ee; }
+    .kpi-split { display: flex; gap: 14px; margin-top: 4px; }
+    .kpi-split-item { display: flex; flex-direction: column; align-items: center; }
+    .kpi-split-unit { font-size: 9px; font-weight: 600; text-transform: uppercase; color: var(--md-text-muted); letter-spacing: 0.5px; }
+    .kpi-split-val { font-size: 15px; font-weight: 700; }
+    .kpi-progress { height: 3px; background: rgba(255,255,255,0.06); border-radius: 2px; overflow: hidden; margin-top: 4px; }
+    .kpi-progress-fill { height: 100%; border-radius: 2px; transition: width 0.5s; }
+    .kpi-green .kpi-progress-fill { background: #4ade80; }
     .kpi-actions { flex: 1; display: flex; align-items: center; justify-content: flex-end; gap: 6px; padding: 0 8px; }
     /* ─── Main Area ─── */
     #main-area {
@@ -126,28 +135,34 @@
     .md-card { background: var(--md-surface-2); border: 1px solid var(--md-border); border-radius: var(--md-radius); padding: 10px; margin-bottom: 10px; }
     .card-title { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.8px; color: var(--md-text-secondary); margin-bottom: 8px; }
     /* Donut */
-    .donut-placeholder { display: flex; justify-content: center; margin-bottom: 8px; }
+    .donut-placeholder { position: relative; display: flex; justify-content: center; margin-bottom: 10px; }
+    .donut-center { position: absolute; top: 50%; left: 50%; transform: translate(-50%,-50%); text-align: center; pointer-events: none; }
+    .donut-center .val { font-size: 20px; font-weight: 700; color: var(--md-text); line-height: 1.1; }
+    .donut-center .lbl { font-size: 8px; color: var(--md-text-muted); text-transform: uppercase; letter-spacing: 0.5px; margin-top: 1px; }
     .status-list { display: flex; flex-direction: column; gap: 4px; }
     .status-row {
       display: flex; align-items: center; gap: 6px; font-size: 11px;
-      padding: 3px 6px; border-radius: var(--md-radius-sm); transition: background 0.15s;
+      padding: 4px 6px; border-radius: var(--md-radius-sm); transition: background 0.15s;
     }
     .status-row:hover { background: rgba(255,255,255,0.03); }
     .status-row.active { background: rgba(79,70,229,0.15); }
-    .status-label { width: 55px; color: var(--md-text-secondary); flex-shrink: 0; }
-    .status-bar { flex: 1; height: 4px; background: rgba(255,255,255,0.06); border-radius: 2px; overflow: hidden; }
-    .bar-fill { height: 100%; border-radius: 2px; transition: width 0.3s; }
-    .status-qty { width: 24px; text-align: right; font-weight: 600; color: var(--md-text); font-size: 12px; }
+    .status-dot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
+    .status-label { display: flex; align-items: center; gap: 5px; color: var(--md-text-secondary); flex-shrink: 0; min-width: 70px; }
+    .status-bar { flex: 1; height: 5px; background: rgba(255,255,255,0.06); border-radius: 3px; overflow: hidden; }
+    .bar-fill { height: 100%; border-radius: 3px; transition: width 0.3s; }
+    .status-qty { display: flex; align-items: center; gap: 3px; text-align: right; font-weight: 600; color: var(--md-text); font-size: 12px; min-width: 50px; justify-content: flex-end; }
+    .status-pct { font-weight: 400; color: var(--md-text-muted); font-size: 10px; }
     /* Top Products */
     #top-products-list { display: flex; flex-direction: column; gap: 3px; }
     .top-product-row {
-      display: flex; align-items: center; gap: 6px; padding: 4px 6px;
-      border-radius: var(--md-radius-sm); font-size: 12px;
+      display: flex; align-items: center; gap: 8px; padding: 5px 6px;
+      border-radius: var(--md-radius-sm); font-size: 12px; position: relative; overflow: hidden;
     }
     .top-product-row:hover { background: rgba(255,255,255,0.03); }
-    .top-product-idx { color: var(--md-text-muted); font-size: 10px; width: 16px; }
-    .top-product-name { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 500; }
-    .top-product-count { font-weight: 700; color: var(--md-primary-light); font-family: 'JetBrains Mono', monospace; font-size: 11px; }
+    .top-product-bar { position: absolute; left: 0; top: 0; bottom: 0; background: rgba(79,70,229,0.08); border-radius: var(--md-radius-sm); transition: width 0.3s; pointer-events: none; }
+    .top-product-idx { position: relative; z-index: 1; color: var(--md-text-muted); font-size: 10px; width: 18px; text-align: center; font-weight: 600; }
+    .top-product-name { position: relative; z-index: 1; flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 500; }
+    .top-product-count { position: relative; z-index: 1; font-weight: 700; color: var(--md-primary-light); font-family: 'JetBrains Mono', monospace; font-size: 11px; }
     /* Zone Product Summary / Status Summary */
     .zone-summary-row, .product-summary-row {
       display: flex; align-items: center; padding: 4px 6px; font-size: 11px; gap: 6px;
@@ -165,9 +180,11 @@
       position: absolute; z-index: 100; pointer-events: auto;
       background: rgba(15,15,15,0.92); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
       border: 1px solid var(--md-border-subtle); border-radius: var(--md-radius);
-      box-shadow: 0 8px 32px rgba(0,0,0,0.5); min-width: 200px; display: none;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.5); width: 280px; display: none;
     }
     .floating-panel.visible { display: block; }
+    #info-panel { left: 20px; top: 20px; }
+    #stats-panel { left: 20px; top: 20px; }
     .floating-panel-header {
       display: flex; align-items: center; justify-content: space-between;
       padding: 10px 12px; border-bottom: 1px solid var(--md-border);
@@ -177,7 +194,7 @@
       background: none; border: none; color: var(--md-text-muted); cursor: pointer; font-size: 14px; padding: 2px 6px; border-radius: 4px;
     }
     .floating-panel-close:hover { background: rgba(255,255,255,0.06); }
-    .floating-panel-body { padding: 10px 12px; }
+    .floating-panel-body { padding: 10px 12px; max-height: 320px; overflow-y: auto; }
     .mono { font-family: 'JetBrains Mono', monospace; font-size: 13px; color: var(--md-primary-light); }
     .estado-badge { font-size: 10px; font-weight: 700; padding: 2px 10px; border-radius: 10px; text-transform: uppercase; }
     .estado-liberado { background: rgba(37,99,235,0.2); color: #60a5fa; }
@@ -205,18 +222,26 @@
     }
     /* Zone Occupancy */
     #zone-occupancy {
-      position: absolute; bottom: 12px; right: calc(var(--right-panel-w) + 12px);
+      position: absolute; bottom: 12px; right: 12px;
       z-index: 50; pointer-events: auto;
-      background: rgba(15,15,15,0.85); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
-      border: 1px solid var(--md-border); border-radius: var(--md-radius);
-      min-width: 200px; display: none;
+      background: rgba(15,15,15,0.88); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+      border: 1px solid var(--md-border-subtle); border-radius: var(--md-radius);
+      min-width: 230px; display: none; box-shadow: 0 4px 20px rgba(0,0,0,0.3);
     }
     #zone-occupancy.visible { display: block; }
-    .zone-item { margin: 6px 0; }
-    .zone-label-row { display: flex; justify-content: space-between; font-size: 10px; color: var(--md-text-secondary); margin-bottom: 2px; }
-    .zone-stats { font-family: 'JetBrains Mono', monospace; font-size: 10px; }
-    .zone-bar { height: 4px; background: rgba(255,255,255,0.06); border-radius: 2px; overflow: hidden; }
-    .zone-bar-fill { height: 100%; border-radius: 2px; transition: width 0.5s; }
+    .zone-item { padding: 4px 0; }
+    .zone-label-row { display: flex; justify-content: space-between; align-items: center; font-size: 12px; color: var(--md-text); margin-bottom: 4px; }
+    .zone-label { display: flex; align-items: center; gap: 5px; }
+    .zone-dot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
+    .zo-primary .zone-dot { background: var(--md-primary); }
+    .zo-cava .zone-dot { background: #06b6d4; }
+    .zo-t .zone-dot { background: var(--md-warning); }
+    .zo-a .zone-dot { background: var(--md-success); }
+    .zo-p .zone-dot { background: var(--md-primary-light); }
+    .zo-s .zone-dot { background: var(--md-secondary); }
+    .zone-stats { font-family: 'JetBrains Mono', monospace; font-size: 12px; color: var(--md-text-secondary); }
+    .zone-bar { height: 5px; background: rgba(255,255,255,0.06); border-radius: 3px; overflow: hidden; }
+    .zone-bar-fill { height: 100%; border-radius: 3px; transition: width 0.5s ease; }
     .zo-primary .zone-bar-fill { background: var(--md-primary); }
     .zo-cava .zone-bar-fill { background: #06b6d4; }
     .zo-t .zone-bar-fill { background: var(--md-warning); }
@@ -231,6 +256,39 @@
     }
     .filter-badge:hover { background: var(--md-surface-2); }
     .filter-badge.active { background: var(--md-primary); border-color: var(--md-primary); color: #fff; }
+    /* Group legend */
+    #group-legend { display: none; }
+    #group-legend.visible { display: block; }
+    .group-legend-grid { display: flex; flex-direction: column; gap: 3px; max-height: 200px; overflow-y: auto; }
+    .group-legend-row {
+      display: flex; align-items: center; gap: 6px; padding: 4px 6px; border-radius: var(--md-radius-sm);
+      font-size: 11px; cursor: pointer; transition: background 0.15s;
+    }
+    .group-legend-row:hover { background: rgba(255,255,255,0.03); }
+    .group-legend-row.active { background: rgba(79,70,229,0.15); }
+    .group-legend-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+    .group-legend-name { flex: 1; color: var(--md-text-secondary); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .group-legend-count { font-family: 'JetBrains Mono', monospace; font-size: 10px; color: var(--md-text-muted); }
+    /* Top products dropdown */
+    #top-products-dropdown {
+      position: absolute; top: 100%; right: 0; z-index: 300;
+      background: var(--md-surface-2); border: 1px solid var(--md-border-subtle);
+      border-radius: var(--md-radius-sm); min-width: 260px;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.5); display: none; max-height: 360px; overflow-y: auto;
+    }
+    #top-products-dropdown.visible { display: block; }
+    #top-products-dropdown .tp-header {
+      padding: 8px 10px; font-size: 10px; font-weight: 600; text-transform: uppercase;
+      letter-spacing: 0.8px; color: var(--md-text-secondary); border-bottom: 1px solid var(--md-border);
+    }
+    #top-products-dropdown .tp-row {
+      display: flex; align-items: center; gap: 8px; padding: 6px 10px; font-size: 12px;
+      border-bottom: 1px solid rgba(255,255,255,0.03);
+    }
+    #top-products-dropdown .tp-row:last-child { border-bottom: none; }
+    #top-products-dropdown .tp-idx { color: var(--md-text-muted); font-size: 10px; width: 20px; text-align: center; font-weight: 600; }
+    #top-products-dropdown .tp-name { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 500; }
+    #top-products-dropdown .tp-count { font-weight: 700; color: var(--md-primary-light); font-family: 'JetBrains Mono', monospace; font-size: 11px; }
     /* Loading */
     #loading-overlay {
       position: absolute; top: 0; left: 0; right: 0; bottom: 0;
@@ -269,11 +327,15 @@
     /* Controls Legend */
     #controls-legend {
       position: absolute; bottom: 12px; left: 12px; z-index: 50;
-      background: rgba(15,15,15,0.85); backdrop-filter: blur(8px);
-      border: 1px solid var(--md-border); border-radius: var(--md-radius);
-      padding: 8px 12px; font-size: 10px; color: var(--md-text-muted);
-      pointer-events: auto;
+      background: rgba(15,15,15,0.88); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+      border: 1px solid var(--md-border-subtle); border-radius: var(--md-radius);
+      padding: 8px 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+      pointer-events: auto; min-width: 150px;
     }
+    #controls-legend .ctl-title { font-size: 9px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.8px; color: var(--md-text-secondary); margin-bottom: 6px; }
+    #controls-legend .ctl-row { display: flex; align-items: center; gap: 6px; margin: 3px 0; }
+    #controls-legend .ctl-key { display: inline-flex; align-items: center; justify-content: center; width: 20px; height: 20px; border-radius: 4px; background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.08); font-size: 10px; font-weight: 700; color: var(--md-text-secondary); flex-shrink: 0; }
+    #controls-legend .ctl-label { font-size: 10px; color: var(--md-text-muted); line-height: 1.3; }
     /* Coords Overlay */
     #coords-overlay {
       position: absolute; bottom: 12px; left: 12px; z-index: 45;
@@ -286,10 +348,29 @@
     .coord-row { display: flex; gap: 6px; padding: 1px 0; }
     .coord-label { color: var(--md-text-muted); }
     .coord-value { font-family: 'JetBrains Mono', monospace; color: var(--md-text-secondary); }
+    /* Stats Panel */
+    #stats-panel .floating-panel-body { min-height: 220px; }
+    .stats-product-name { font-size: 14px; font-weight: 700; color: var(--md-text); margin-bottom: 2px; line-height: 1.3; }
+    .stats-product-sku { font-size: 10px; color: var(--md-text-muted); margin-bottom: 12px; font-family: 'JetBrains Mono', monospace; }
+    .stats-section-title { font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.8px; color: var(--md-text-muted); margin-bottom: 6px; margin-top: 8px; padding-bottom: 4px; border-bottom: 1px solid var(--md-border); }
+    .stats-more { font-size: 10px; color: var(--md-text-muted); text-align: center; padding: 6px; font-style: italic; }
+    .stats-empty { font-size: 11px; color: var(--md-text-muted); padding: 12px 0; text-align: center; }
+    /* Info Panel */
+    .info-group { background: rgba(255,255,255,0.03); border: 1px solid var(--md-border); border-radius: var(--md-radius); padding: 10px; margin-bottom: 8px; }
+    .info-group-title { font-size: 13px; font-weight: 600; color: var(--md-text); margin-bottom: 2px; line-height: 1.3; }
+    .info-group-code { font-size: 10px; color: var(--md-text-muted); font-family: 'JetBrains Mono', monospace; margin-bottom: 6px; }
+    .info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 2px 12px; }
+    .info-field { display: flex; justify-content: space-between; align-items: center; padding: 3px 0; font-size: 11px; border-bottom: 1px solid rgba(255,255,255,0.04); }
+    .info-field:last-child { border-bottom: none; }
+    .info-field-label { color: var(--md-text-muted); font-size: 10px; text-transform: uppercase; letter-spacing: 0.3px; }
+    .info-field-value { color: var(--md-text-secondary); font-weight: 500; font-family: 'JetBrains Mono', monospace; font-size: 11px; }
+    .info-lotes { display: flex; flex-wrap: wrap; gap: 3px; margin-top: 6px; padding-top: 6px; border-top: 1px solid var(--md-border); }
+    .info-lote-tag { font-size: 9px; padding: 1px 6px; background: rgba(255,255,255,0.04); border: 1px solid var(--md-border); border-radius: 8px; color: var(--md-text-muted); white-space: nowrap; max-width: 110px; overflow: hidden; text-overflow: ellipsis; display: inline-block; vertical-align: middle; }
+    .info-footer { margin-top: 8px; display: flex; justify-content: flex-end; }
     /* Reset View Button */
     #reset-view-btn {
-      position: absolute; bottom: 80px; left: 50%; transform: translateX(-50%);
-      z-index: 50; pointer-events: auto;
+      position: absolute; bottom: 12px; left: 50%; transform: translateX(-50%);
+      z-index: 55; pointer-events: auto; white-space: nowrap;
       background: rgba(15,15,15,0.85); backdrop-filter: blur(8px);
       border: 1px solid var(--md-border); border-radius: 20px;
       padding: 6px 16px; font-size: 12px; color: var(--md-text-secondary);
@@ -316,7 +397,7 @@
       <div class="sidebar-search" id="search-container">
         <div style="display:flex;gap:4px">
           <input type="text" id="search-input" placeholder="Buscar producto o lote..." autocomplete="off" />
-          <button id="search-clear" style="display:none;background:rgba(255,255,255,0.06);border:1px solid var(--md-border);color:#94a3b8;padding:0 10px;border-radius:4px;cursor:pointer;font-size:13px;font-family:inherit">✕</button>
+          <button id="search-clear" style="background:rgba(255,255,255,0.06);border:1px solid var(--md-border);color:#94a3b8;padding:0 10px;border-radius:4px;cursor:pointer;font-size:13px;font-family:inherit">✕</button>
         </div>
         <div id="search-suggestions"></div>
       </div>
@@ -326,6 +407,7 @@
       </div>
       <div class="sidebar-footer">
         <button class="nav-btn" id="reset-view-btn-sidebar">Reset Vista</button>
+        <button class="nav-btn" id="view-mode-toggle">Ver por Grupo</button>
       </div>
     </aside>
 
@@ -335,8 +417,9 @@
         <div class="kpi-value" id="kpi-total">--</div>
       </div>
       <div class="kpi-card kpi-green">
-        <div class="kpi-label">Ocupación</div>
+        <div class="kpi-label">Ocupaci&oacute;n</div>
         <div class="kpi-value" id="kpi-ocupacion">--</div>
+        <div class="kpi-progress"><div class="kpi-progress-fill" id="kpi-ocupacion-bar" style="width:0%"></div></div>
       </div>
       <div class="kpi-card kpi-amber">
         <div class="kpi-label">Retenidos</div>
@@ -346,7 +429,19 @@
         <div class="kpi-label">Rechazados</div>
         <div class="kpi-value" id="kpi-rechazados">--</div>
       </div>
+      <div class="kpi-card kpi-cyan" style="min-width:160px">
+        <div class="kpi-label">Stock</div>
+        <div class="kpi-split" id="kpi-stock-body">
+          <div class="kpi-split-item"><span class="kpi-split-unit">KG</span><span class="kpi-split-val" id="kpi-stock-kg">--</span></div>
+          <div class="kpi-split-item"><span class="kpi-split-unit">UN</span><span class="kpi-split-val" id="kpi-stock-un">--</span></div>
+          <div class="kpi-split-item"><span class="kpi-split-unit">BP</span><span class="kpi-split-val" id="kpi-stock-bp">--</span></div>
+        </div>
+      </div>
       <div class="kpi-actions">
+        <div style="position:relative">
+          <button class="nav-btn" id="top-products-btn" style="font-size:11px;padding:6px 12px">Top Productos ▼</button>
+          <div id="top-products-dropdown"></div>
+        </div>
         <button class="nav-btn" id="reload-btn" style="font-size:11px;padding:6px 12px">↻ Recargar</button>
       </div>
     </div>
@@ -386,9 +481,10 @@
         </div>
 
         <div id="controls-legend">
-          <div>🖱 Click: seleccionar rack</div>
-          <div>🖱 Mantener: estadísticas</div>
-          <div>🔄 Scroll/Drag: orbitar</div>
+          <div class="ctl-title">Controles</div>
+          <div class="ctl-row"><span class="ctl-key">L</span><span class="ctl-label">Click: seleccionar rack</span></div>
+          <div class="ctl-row"><span class="ctl-key">H</span><span class="ctl-label">Mantener: estadísticas</span></div>
+          <div class="ctl-row"><span class="ctl-key">S</span><span class="ctl-label">Scroll/Drag: orbitar</span></div>
         </div>
       </div>
 
@@ -396,24 +492,34 @@
         <div class="md-card" id="donut-status">
           <div class="card-title">Estado</div>
           <div class="donut-placeholder">
-            <svg width="80" height="80" viewBox="0 0 80 80" style="transform:rotate(-90deg);transform-origin:center" id="donut-svg">
-              <circle cx="40" cy="40" r="33" fill="none" stroke="rgba(255,255,255,0.15)" stroke-width="6" stroke-dasharray="207.345 0" stroke-dashoffset="0" stroke-linecap="butt" />
+            <svg width="100" height="100" viewBox="0 0 100 100" style="transform:rotate(-90deg);transform-origin:center" id="donut-svg">
+              <circle cx="50" cy="50" r="38" fill="none" stroke="rgba(255,255,255,0.15)" stroke-width="8" stroke-dasharray="238.761 0" stroke-dashoffset="0" stroke-linecap="butt" />
             </svg>
+            <div class="donut-center"><div class="val" id="donut-total">0</div><div class="lbl">Total</div></div>
           </div>
           <div class="status-list" id="donut-status-list"></div>
         </div>
         <div class="filter-badge-row" id="usage-status-breakdown">
           <span class="filter-badge" id="usage-status-clear" style="display:none">✕ Limpiar filtro</span>
         </div>
-        <div class="md-card">
-          <div class="card-title">Top Productos</div>
-          <div id="top-products-list"></div>
+        <div class="md-card" id="group-legend">
+          <div class="card-title">Grupos</div>
+          <div class="group-legend-grid" id="group-legend-body"></div>
         </div>
+      <div class="md-card" id="zone-products-card" style="display:none">
+        <div class="card-title">Productos en Zona</div>
+        <div id="zone-products-list"></div>
+      </div>
+      <div class="md-card" id="status-products-card" style="display:none">
+        <div class="card-title" id="status-products-title">Productos Retenidos</div>
+        <div id="status-products-list"></div>
       </div>
     </div>
   </div>
+  </div>
 
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script 
+    src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/GLTFLoader.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
 
@@ -421,8 +527,8 @@
     // ═══════════════════════════════════════════════════════════════════
     // CONSTANTS & CONFIG
     // ═══════════════════════════════════════════════════════════════════
-    const MODEL_URL = 'https://raw.githubusercontent.com/kscerero-png/warehouse-viewer/master/docs/almacen.glb';
-    const PASILLOS = [
+    var MODEL_URL = 'https://raw.githubusercontent.com/kscerero-png/warehouse-viewer/master/docs/almacen.glb';
+    var PASILLOS = [
       { label: 'Todos', value: 'todos', badge: 'General' },
       { label: '01', value: '1', badge: 'Ppal' },
       { label: '02', value: '2', badge: 'Ppal' },
@@ -438,7 +544,7 @@
       { label: 'P', value: 'P', badge: 'Galpón Anexo', zoneClass: 'zone-p' },
       { label: 'J', value: 'S', badge: 'Jaula', zoneClass: 'zone-s' },
     ];
-    const SEGMENT_DONUT = [
+    var SEGMENT_DONUT = [
       { key: 'liberado', label: 'Liberado', color: '#2563eb', status: 'liberado' },
       { key: 'retenido', label: 'Retenido', color: '#d97706', status: 'retenido' },
       { key: 'rechazado', label: 'Rechazado', color: '#dc2626', status: 'rechazado' },
@@ -457,22 +563,33 @@
     function isRackId(id) { return /^[1-9]/.test(id) || isTransitId(id) || isFormulacionId(id) || isGalponAnexoId(id) || isJaulaId(id); }
     function isSubPaletaName(name) { return /^(T\d{2}|A\d{3}|P\d{2}|SQ\d{2})-\d+$/.test(name); }
     function isFiveDigitId(id) { return /^\d{5}$/.test(id); }
+    function normalizeLocationId(id) {
+      if (!id) return null;
+      var candidate = String(id).trim();
+      var match = candidate.match(/^\d(\d{2})\d{2}$/);
+      if (match && candidate.length === 5) {
+        var centerValue = parseInt(match[1], 10);
+        if (centerValue >= 0 && centerValue <= 15) return candidate;
+      }
+      return null;
+    }
     function isFrontFacingLocation(id) {
-      var pasillo = id[0], col = parseInt(id[3], 10);
-      if (pasillo === '5') return col <= 8;
-      if (pasillo >= '6' && pasillo <= '8') return col <= 6;
+      var normalized = normalizeLocationId(id);
+      if (!normalized) return false;
+      var pasillo = normalized.charAt(0);
+      var col = parseInt(normalized.slice(1, 3), 10);
+      if (Number.isNaN(col)) return false;
+      if (pasillo === '5' || pasillo === '6' || pasillo === '7' || pasillo === '8') return col <= 8;
       return col <= 15;
     }
     function getFrontDirectionFromId(id) {
-      if (!id || !/^\d{5}$/.test(id)) return null;
-      var col = parseInt(id[3], 10), pasillo = id[0];
-      if (pasillo === '1' || pasillo === '2') return new THREE.Vector3(0, 0, col <= 1 ? 1 : -1);
-      if (pasillo === '3') return new THREE.Vector3(0, 0, col <= 1 ? -1 : 1);
-      if (pasillo === '5' || pasillo === '6') return new THREE.Vector3(0, 0, col <= 2 ? 1 : -1);
-      if (pasillo === '7' || pasillo === '8') return new THREE.Vector3(0, 0, col <= 2 ? -1 : 1);
-      if (pasillo === '9') return new THREE.Vector3(0, 0, col <= 2 ? 1 : -1);
-      if (pasillo === '4') return new THREE.Vector3(0, 0, col <= 2 ? -1 : 1);
-      return null;
+      var normalized = normalizeLocationId(id);
+      if (!normalized) return null;
+      var pasillo = normalized.charAt(0);
+      var col = parseInt(normalized.slice(1, 3), 10);
+      if (Number.isNaN(col)) return null;
+      if (pasillo === '5' || pasillo === '6' || pasillo === '7' || pasillo === '8') return new THREE.Vector3(0, 0, col <= 8 ? -1 : 1);
+      return new THREE.Vector3(0, 0, col <= 7 ? -1 : 1);
     }
     function getAisleGroupLabel(aisle) {
       if (aisle === 'T') return 'Tránsito';
@@ -759,12 +876,19 @@
     // materials
     var greyMat, okMat, retenidoMat, rechazadoMat;
     function initMaterials() {
-      greyMat = new THREE.MeshStandardMaterial({ color: 0x444444, roughness: 0.6, metalness: 0.1 });
-      okMat = new THREE.MeshStandardMaterial({ color: 0x2563eb, roughness: 0.5, metalness: 0.1 });
-      retenidoMat = new THREE.MeshStandardMaterial({ color: 0xd97706, roughness: 0.5, metalness: 0.1 });
-      rechazadoMat = new THREE.MeshStandardMaterial({ color: 0xdc2626, roughness: 0.5, metalness: 0.1 });
+      greyMat = new THREE.MeshStandardMaterial({ color: 0x5a5a5a, roughness: 0.5, metalness: 0.2 });
+      okMat = new THREE.MeshStandardMaterial({ color: 0x3b82f6, roughness: 0.4, metalness: 0.3 });
+      retenidoMat = new THREE.MeshStandardMaterial({ color: 0xf59e0b, roughness: 0.4, metalness: 0.3 });
+      rechazadoMat = new THREE.MeshStandardMaterial({ color: 0xef4444, roughness: 0.4, metalness: 0.3 });
     }
-    function getRackMaterial(userData, baseColor) {
+    // Group color mapping
+    var GROUP_COLORS = { QS: 0x1565c0, ALG: 0x2e7d32, CRR: 0xe65100, MZ04: 0x6a1b9a, MZ80: 0xad1457, BCH: 0x00838f, PT: 0x558b2f, 'A&G': 0xbf360c, MP: 0x283593, VAR: 0x6d4c41, ME: 0x546e7a, BS: 0xb71c1c, LAM: 0xf9a825, 'T&S': 0x00695c, CEM: 0x37474f, ENV: 0x00897b, CLP: 0x4e342e, PR: 0x880e4f };
+    function getGroupColor(g) { if (!g) return 0x444444; return GROUP_COLORS[g] || hashColor(g); }
+    function hashColor(s) { var h = 0; for (var i = 0; i < s.length; i++) h = s.charCodeAt(i) + ((h << 5) - h); var hue = ((h % 360) + 360) % 360; return hslToHex(hue, 75, 45); }
+    function hslToHex(h, s, l) { s /= 100; l /= 100; var k = function(n) { return (n + h / 30) % 12; }; var a = s * Math.min(l, 1 - l); var f = function(n) { return Math.round(255 * (l - a * Math.max(-1, Math.min(k(n) - 3, Math.min(9 - k(n), 1))))) }; return (f(0) << 16) | (f(8) << 8) | f(4); }
+
+    function getRackMaterial(userData, baseColor, viewMode, grupo) {
+      if (viewMode === 'grupo' && grupo) { var c = getGroupColor(grupo); return new THREE.MeshStandardMaterial({ color: c, roughness: 0.5, metalness: 0.1 }); }
       if (!userData || !userData.estado) return greyMat;
       var estado = userData.estado.toLowerCase();
       if (userData.entries && userData.entries.length > 1) {
@@ -800,16 +924,22 @@
       if (estado === 'R' || estado === 'RETENIDO') estado = 'retenido';
       else if (estado === 'X' || estado === 'RECHAZADO') estado = 'rechazado';
       else estado = 'liberado';
+      var pal = parseFloat(raw.paletas || raw.Paletas || raw.PALETAS || 0) || 0;
+      var um = String(raw.um || raw.UM || raw.Um || raw.Unidad || '').trim().toLowerCase();
+      var cant = parseFloat(raw.cantidad || raw.Cantidad || raw.CANTIDAD || 0) || 0;
+      if (um === 'bp' && cant > 0) pal = cant / 2;
       return {
         id: String(raw.id || raw.ID || raw.Ubicacion || '').trim(),
         producto: String(raw.producto || raw.Producto || raw.PRODUCTO || '').trim(),
         codigo: String(raw.codigo || raw.Codigo || raw.CODIGO || '').trim(),
         lote: String(raw.lote || raw.Lote || raw.LOTE || '').trim(),
-        cantidad: parseFloat(raw.cantidad || raw.Cantidad || raw.CANTIDAD || 0) || 0,
-        um: String(raw.um || raw.UM || raw.Um || raw.Unidad || '').trim(),
+        cantidad: cant,
+        um: um,
         estado: estado,
-        paletas: parseFloat(raw.paletas || raw.Paletas || raw.PALETAS || 0) || 0,
+        paletas: pal,
         nivel: parseFloat(raw.nivel || raw.Nivel || raw.NIVEL || 0) || 0,
+        nomenclatura: String(raw.Nomenclatura || raw.nomenclatura || '').trim() || undefined,
+        grupo: String(raw.Grupo || raw.grupo || '').trim() || undefined,
       };
     }
 
@@ -827,7 +957,7 @@
       this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
       this.renderer.shadowMap.enabled = true;
       this.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
-      if (THREE.ACESFilmicToneMapping !== undefined) { this.renderer.toneMapping = THREE.ACESFilmicToneMapping; this.renderer.toneMappingExposure = 1.2; }
+      if (THREE.ACESFilmicToneMapping !== undefined) { this.renderer.toneMapping = THREE.ACESFilmicToneMapping; this.renderer.toneMappingExposure = 1.0; }
       container.appendChild(this.renderer.domElement);
       this.renderer.domElement.style.touchAction = 'none';
       this.controls = new THREE.OrbitControls(this.camera, this.renderer.domElement);
@@ -847,6 +977,8 @@
       this.currentSearchTerm = '';
       this.pasilloSeleccionado = 'todos';
       this.currentStatusFilter = null;
+      this.currentGroupFilter = null;
+      this.viewMode = 'ocupacion';
       this.lastSelectedMesh = null;
       this.animId = 0;
       this.pressStartX = 0; this.pressStartY = 0;
@@ -864,6 +996,7 @@
     }
 
     SceneManager.NON_RACK_NAMES = new Set(['Jaula', 'PAREDCAVA', 'Formulacion', 'condorV']);
+    function isNonRackName(name) { return SceneManager.NON_RACK_NAMES.has(name) || name.indexOf('rayado') === 0 || name.indexOf('linea') === 0; }
 
     SceneManager.prototype.setupLighting = function() {
       this.scene.add(new THREE.AmbientLight(0xffffff, 0.7));
@@ -900,7 +1033,7 @@
       this.pressStartY = event.clientY;
       this.longPressed = false;
       var hit = this.intersect(event);
-      this.pressedObject = hit ? hit.object : null;
+      this.pressedObject = hit && hit.object.material !== this._dimMat ? hit.object : null;
       if (!this.pressedObject) return;
       var self = this;
       this.pressStartTime = performance.now();
@@ -934,7 +1067,7 @@
       this.onLoaderUpdate && this.onLoaderUpdate(0, false);
       if (!this.longPressed) {
         var hit = this.intersect(event);
-        if (hit && hit.object.userData) {
+        if (hit && hit.object.userData && hit.object.material !== this._dimMat) {
           var ud = hit.object.userData;
           var entries = ud.entries || this.datosInventario.filter(function(e) { return e.id === ud.id; });
           if (entries.length > 0) { this.onMeshClick && this.onMeshClick(entries); this.lastSelectedMesh = hit.object; }
@@ -956,8 +1089,9 @@
         return;
       }
       var hit = this.intersect(event);
-      this.onMeshHover && this.onMeshHover(hit ? (hit.object.userData ? hit.object.userData.id || null : null) : null);
-      this.renderer.domElement.style.cursor = hit ? 'pointer' : 'default';
+      var isDimmed = hit && hit.object.material === this._dimMat;
+      this.onMeshHover && this.onMeshHover(hit && !isDimmed ? (hit.object.userData ? hit.object.userData.id || null : null) : null);
+      this.renderer.domElement.style.cursor = (hit && !isDimmed) ? 'pointer' : 'default';
     };
 
     SceneManager.prototype.onPointerCancel = function() {
@@ -972,13 +1106,9 @@
       this.mouse.y = -((event.clientY - rect.top) / rect.height) * 2 + 1;
       this.raycaster.setFromCamera(this.mouse, this.camera);
       var meshes = [];
-      var self = this;
       this.meshes.forEach(function(m) {
         if (m.visible && m.userData) {
-          var isFaded = m.material && (Array.isArray(m.material) ? m.material.some(function(mat) { return mat.transparent && mat.opacity < 0.3; }) : (m.material.transparent && m.material.opacity < 0.3));
           if (m.userData.jaula) return;
-          if (isFaded) return;
-          if (isEmptyRack(m.userData) && isFaded) return;
           meshes.push(m);
         }
       });
@@ -1017,8 +1147,19 @@
     SceneManager.prototype.processMesh = function(mesh) {
       var name = mesh.name || mesh.userData.id || '';
       if (!name) return;
-      if (SceneManager.NON_RACK_NAMES.has(name)) {
-        mesh.material = new THREE.MeshStandardMaterial({ color: 0x3b5998, transparent: true, opacity: 0.25, roughness: 0.6, side: THREE.DoubleSide });
+      if (isNonRackName(name)) {
+        if (name === 'PAREDCAVA') {
+          mesh.material = new THREE.MeshStandardMaterial({ color: 0xd4d4d4, transparent: true, opacity: 0.35, roughness: 0.9, metalness: 0.0, side: THREE.DoubleSide });
+          mesh.renderOrder = -1;
+        } else if (name.indexOf('rayado') === 0) {
+          mesh.material = new THREE.MeshStandardMaterial({ color: 0xf5c518, roughness: 0.7, metalness: 0.0, side: THREE.DoubleSide });
+          mesh.renderOrder = -1;
+        } else if (name.indexOf('linea') === 0) {
+          mesh.material = new THREE.MeshStandardMaterial({ color: 0xffffff, transparent: true, opacity: 0.50, roughness: 0.8, metalness: 0.0, side: THREE.DoubleSide });
+          mesh.renderOrder = -1;
+        } else {
+          mesh.material = new THREE.MeshStandardMaterial({ color: 0x3b5998, transparent: true, opacity: 0.25, roughness: 0.6, side: THREE.DoubleSide });
+        }
         mesh.userData.jaula = true;
         this.meshes.set(name, mesh);
         return;
@@ -1044,7 +1185,7 @@
       this.datosInventario = data;
       var self = this;
       this.meshes.forEach(function(child, name) {
-        if (SceneManager.NON_RACK_NAMES.has(name) || child.userData.subPaleta) return;
+        if (isNonRackName(name) || child.userData.subPaleta) return;
         var isRack = /^[1-9]/.test(name) || isTransitId(name) || isFormulacionId(name) || isGalponAnexoId(name) || isJaulaId(name);
         if (!isRack) return;
         var infoRacks = getEntriesForId(name, data);
@@ -1054,7 +1195,7 @@
         } else {
           child.userData = { id: name, entries: [], producto: '', codigo: '', lote: '', cantidad: 0, um: '', estado: '' };
         }
-        child.material = getRackMaterial(child.userData);
+        child.material = getRackMaterial(child.userData, undefined, self.viewMode, child.userData.grupo);
       });
       this.gestionarSubPaletas(data);
       this.applyPaletaSpread();
@@ -1067,6 +1208,7 @@
         var name = child.name;
         var parentId = name.replace(/-\d+$/, '');
         var parentRacks = getEntriesForId(parentId, data);
+        if (parentRacks.length === 0) parentRacks = getEntriesForId(name, data);
         child.userData.id = parentId;
         var idx = parseInt(name.split('-').pop(), 10);
         var cumulative = 0;
@@ -1079,10 +1221,10 @@
         child.visible = show || isFormulacionId(parentId) || isJaulaId(parentId);
         child.userData.hiddenByPaletas = !show;
         if (show) {
-          child.material = getRackMaterial(entry);
+          child.material = getRackMaterial(entry, undefined, self.viewMode, entry.grupo);
           child.userData = Object.assign({}, entry, { subPaleta: true, id: parentId, hiddenByPaletas: false });
         } else if (isFormulacionId(parentId) || isJaulaId(parentId)) {
-          child.material = getRackMaterial({ id: parentId, cantidad: 0, estado: '', entries: [] });
+          child.material = getRackMaterial({ id: parentId, cantidad: 0, estado: '', entries: [] }, undefined, self.viewMode, undefined);
           child.userData = { id: parentId, producto: '', codigo: '', lote: '', cantidad: 0, um: '', estado: '', subPaleta: true, hiddenByPaletas: false };
         }
       });
@@ -1120,7 +1262,7 @@
             if (!found) break;
             var adj = self.meshByName.get(found);
             adj.userData = Object.assign({}, firstEntry, { id: found, name: found, entries: [firstEntry], _paletaSpreadDone: true });
-            adj.material = getRackMaterial(adj.userData);
+            adj.material = getRackMaterial(adj.userData, undefined, self.viewMode, adj.userData.grupo);
             occupied.add(found);
             col = found[3]; level = found[4];
           }
@@ -1132,42 +1274,48 @@
       var term = this.currentSearchTerm.toLowerCase().trim();
       var pasillo = this.pasilloSeleccionado;
       var statusFilter = this.currentStatusFilter;
+      var groupFilter = this.currentGroupFilter;
       var self = this;
+      var active = term || statusFilter || groupFilter || pasillo !== 'todos';
+      if (active && !this._dimMat) {
+        this._dimMat = new THREE.MeshPhongMaterial({ color: 0x444444, transparent: true, opacity: 0.40, depthWrite: false });
+      }
       this.meshes.forEach(function(mesh, name) {
-        if (SceneManager.NON_RACK_NAMES.has(name)) { mesh.visible = true; return; }
+        if (isNonRackName(name)) { mesh.visible = true; return; }
         if (mesh.userData.hiddenByPaletas) return;
-        var visible = true;
+        var zoneMatch = true;
         if (pasillo !== 'todos') {
           var primerDigito = name[0];
-          if (pasillo === 'T') visible = /^T\d{2}(-\d+)?$/.test(name);
-          else if (pasillo === 'A') visible = /^A\d{3}(-\d+)?$/.test(name);
-          else if (pasillo === 'P') visible = /^P\d{2}(-\d+)?$/.test(name);
-          else if (pasillo === 'S') visible = /^SQ\d{2}(-\d+)?$/.test(name);
-          else visible = primerDigito === pasillo;
+          if (pasillo === 'T') zoneMatch = /^T\d{2}(-\d+)?$/.test(name);
+          else if (pasillo === 'A') zoneMatch = /^A\d{3}(-\d+)?$/.test(name);
+          else if (pasillo === 'P') zoneMatch = /^P\d{2}(-\d+)?$/.test(name);
+          else if (pasillo === 'S') zoneMatch = /^SQ\d{2}(-\d+)?$/.test(name);
+          else zoneMatch = primerDigito === pasillo;
         }
-        if (visible && term) {
+        var match = zoneMatch;
+        if (match && term) {
           var entries = mesh.userData.entries || self.datosInventario.filter(function(e) { return e.id === (mesh.userData.id || name); });
-          var match = entries.some(function(e) {
+          match = entries.some(function(e) {
             var prod = (e.producto || '').toLowerCase();
             var cod = (e.codigo || '').toLowerCase();
             var id = (e.id || name).toLowerCase();
             var lote = (e.lote || '').toLowerCase();
             return prod.includes(term) || cod.includes(term) || id.includes(term) || lote.includes(term);
           });
-          if (!match) visible = false;
         }
-        if (visible && statusFilter) {
+        if (match && statusFilter) {
           var entries = mesh.userData.entries || self.datosInventario.filter(function(e) { return e.id === (mesh.userData.id || name); });
-          var match = entries.some(function(e) { return (e.estado || '').toLowerCase() === statusFilter; });
-          if (!match) visible = false;
+          match = entries.some(function(e) { return (e.estado || '').toLowerCase() === statusFilter; });
         }
-        mesh.visible = true;
-        if (mesh.material) {
-          var mat = mesh.material;
-          if (mat === greyMat || mat === okMat || mat === retenidoMat || mat === rechazadoMat) { mat = mat.clone(); mesh.material = mat; }
-          if (visible) { mat.transparent = false; mat.opacity = 1.0; }
-          else { mat.transparent = true; mat.opacity = 0.03; }
-          mat.needsUpdate = true;
+        if (match && groupFilter) {
+          var entries = mesh.userData.entries || self.datosInventario.filter(function(e) { return e.id === (mesh.userData.id || name); });
+          match = entries.some(function(e) { return (e.grupo || '') === groupFilter; });
+        }
+        if (!active || match) {
+          if (mesh.userData._origMat) { mesh.material = mesh.userData._origMat; delete mesh.userData._origMat; }
+        } else {
+          if (!mesh.userData._origMat) mesh.userData._origMat = mesh.material;
+          mesh.material = self._dimMat;
         }
       });
     };
@@ -1177,7 +1325,7 @@
       var seen = new Set();
       var subParents = new Set();
       this.meshes.forEach(function(mesh, name) {
-        if (SceneManager.NON_RACK_NAMES.has(name)) return;
+        if (isNonRackName(name)) return;
         if (mesh.userData.subPaleta) {
           var parentId = name.replace(/-\d+$/, '');
           if (/^(A\d{3}|SQ\d{2})$/.test(parentId)) subParents.add(parentId);
@@ -1351,7 +1499,7 @@
       var matches = [];
       var self = this;
       this.meshes.forEach(function(mesh, name) {
-        if (SceneManager.NON_RACK_NAMES.has(name)) return;
+        if (isNonRackName(name)) return;
         if (pasillo !== 'todos') {
           var id = mesh.userData ? mesh.userData.id || name : name;
           if (pasillo === 'T' && !/^T\d{2}/.test(id)) return;
@@ -1411,10 +1559,13 @@
       selectedRackId: null,
       productStats: null,
       rackCounts: {},
+      currentGroupFilter: null,
+      groupFilterData: null,
       zoneMetrics: {},
       statusBreakdown: { retenido: 0, rechazado: 0, liberado: 0, vacio: 0, pctRetenido: 0, pctRechazado: 0, pctLiberado: 0, pctVacio: 0 },
       topProducts: [],
       hoveredMeshId: null,
+      viewMode: 'ocupacion',
 
       listeners: {},
 
@@ -1448,6 +1599,15 @@
         this.emit('statusFilter');
       },
 
+      setGroupFilter: function(g) {
+        this.currentGroupFilter = g;
+        if (sceneManager) {
+          sceneManager.currentGroupFilter = g;
+          if (sceneManager.modelReady) sceneManager.applySearchFilter();
+        }
+        this.emit('groupFilter');
+      },
+
       setSearchQuery: function(q) {
         this.searchQuery = q;
         this.emit('search');
@@ -1479,12 +1639,29 @@
         this.pasilloSeleccionado = 'todos';
         this.searchQuery = '';
         this.currentStatusFilter = null;
+        this.currentGroupFilter = null;
+        this.viewMode = 'ocupacion';
         this.emit('selection');
         this.emit('stats');
         this.emit('pasillo');
         this.emit('search');
         this.emit('statusFilter');
+        this.emit('viewMode');
         if (sceneManager) sceneManager.resetView();
+      },
+
+      setViewMode: function(m) {
+        this.viewMode = m;
+        this.emit('viewMode');
+      },
+
+      toggleViewMode: function() {
+        this.viewMode = this.viewMode === 'ocupacion' ? 'grupo' : 'ocupacion';
+        if (this.viewMode === 'ocupacion') {
+          this.currentGroupFilter = null;
+          if (sceneManager) { sceneManager.currentGroupFilter = null; sceneManager.applySearchFilter(); }
+        }
+        this.emit('viewMode');
       },
 
       setRackCounts: function(counts) {
@@ -1539,17 +1716,29 @@
     function renderKpis() {
       var data = AppState.datosInventario;
       var rc = AppState.rackCounts;
-      var sb = AppState.statusBreakdown;
       var totalRacks = Object.values(rc).reduce(function(a, b) { return a + b; }, 0);
       var usedIds = {};
+      var stKg = 0, stUn = 0, stBp = 0, retG = 0, rejG = 0;
       data.forEach(function(e) {
         if ((parseFloat(String(e.paletas)) || 0) > 0 || (parseFloat(String(e.cantidad)) || 0) > 0) usedIds[e.id] = true;
+        var um = (e.um || '').toLowerCase(), cant = parseFloat(String(e.cantidad)) || 0;
+        if (um === 'kg') stKg += cant;
+        else if (um === 'bp') stBp += cant;
+        else stUn += cant;
+        var es = (e.estado || '').toLowerCase();
+        if (es === 'retenido') retG++;
+        else if (es === 'rechazado') rejG++;
       });
       var pct = totalRacks > 0 ? Math.round((Object.keys(usedIds).length / totalRacks) * 100) : 0;
       document.getElementById('kpi-total').textContent = totalRacks || '--';
       document.getElementById('kpi-ocupacion').textContent = pct + '%';
-      document.getElementById('kpi-retenidos').textContent = sb.retenido;
-      document.getElementById('kpi-rechazados').textContent = sb.rechazado;
+      document.getElementById('kpi-ocupacion-bar').style.width = pct + '%';
+      document.getElementById('kpi-retenidos').textContent = retG;
+      document.getElementById('kpi-rechazados').textContent = rejG;
+      function fmt(n) { var r = Math.round(n); return r >= 1000000 ? Math.floor(r / 1000000) + 'M' : r >= 1000 ? Math.floor(r / 1000) + 'K' : r || 0; }
+      document.getElementById('kpi-stock-kg').textContent = fmt(stKg);
+      document.getElementById('kpi-stock-un').textContent = fmt(stUn);
+      document.getElementById('kpi-stock-bp').textContent = fmt(stBp);
     }
 
     // Pasillo Buttons
@@ -1578,7 +1767,7 @@
     function renderDonut() {
       var sb = AppState.statusBreakdown;
       var pcts = [sb.pctLiberado, sb.pctRetenido, sb.pctRechazado, sb.pctVacio];
-      var CIRC = 2 * Math.PI * 33;
+      var CIRC = 2 * Math.PI * 38;
       var cumulative = 0;
       var svg = document.getElementById('donut-svg');
       svg.innerHTML = '';
@@ -1588,14 +1777,16 @@
         var offset = cumulative === 0 ? 0 : -(CIRC * cumulative) / 100;
         cumulative += pct;
         var circle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
-        circle.setAttribute('cx', '40'); circle.setAttribute('cy', '40'); circle.setAttribute('r', '33');
+        circle.setAttribute('cx', '50'); circle.setAttribute('cy', '50'); circle.setAttribute('r', '38');
         circle.setAttribute('fill', 'none'); circle.setAttribute('stroke', seg.color);
-        circle.setAttribute('stroke-width', '6');
+        circle.setAttribute('stroke-width', '8');
         circle.setAttribute('stroke-dasharray', len > 0 ? len + ' ' + (CIRC - len) : '0 ' + CIRC);
         circle.setAttribute('stroke-dashoffset', String(offset));
         circle.setAttribute('stroke-linecap', 'butt');
         svg.appendChild(circle);
       });
+      var tot = sb.liberado + sb.retenido + sb.rechazado + sb.vacio;
+      document.getElementById('donut-total').textContent = tot;
 
       var list = document.getElementById('donut-status-list');
       list.innerHTML = '';
@@ -1611,7 +1802,7 @@
         var active = AppState.currentStatusFilter === s.status;
         div.className = 'status-row' + (active ? ' active' : '');
         if (s.status) div.style.cursor = 'pointer';
-        div.innerHTML = '<span class="status-label">' + s.label + '</span><div class="status-bar"><div class="bar-fill" style="width:' + size + '%;background:' + s.color + '"></div></div><span class="status-qty">' + s.count + '</span>';
+        div.innerHTML = '<span class="status-label"><span class="status-dot" style="background:' + s.color + '"></span>' + s.label + '</span><div class="status-bar"><div class="bar-fill" style="width:' + size + '%;background:' + s.color + '"></div></div><span class="status-qty"><span>' + s.count + '</span><span class="status-pct">' + s.pct + '%</span></span>';
         if (s.status) {
           div.addEventListener('click', function() {
             if (AppState.currentStatusFilter === s.status) AppState.setStatusFilter(null);
@@ -1622,25 +1813,10 @@
         }
         list.appendChild(div);
       });
+      document.getElementById('usage-status-clear').style.display = (AppState.currentStatusFilter || AppState.currentGroupFilter) ? 'block' : 'none';
     }
 
     // Top Products
-    function renderTopProducts() {
-      var list = document.getElementById('top-products-list');
-      list.innerHTML = '';
-      var items = AppState.topProducts.slice(0, 5);
-      if (items.length === 0) {
-        list.innerHTML = '<div style="font-size:12px;color:#64748b;padding:8px 0">Sin datos</div>';
-        return;
-      }
-      items.forEach(function(p, i) {
-        var div = document.createElement('div');
-        div.className = 'top-product-row';
-        div.innerHTML = '<span class="top-product-idx">#' + (i + 1) + '</span><span class="top-product-name">' + escapeHtml(p.name) + '</span><span class="top-product-count">' + p.count + '</span>';
-        list.appendChild(div);
-      });
-    }
-
     // Info Panel
     function renderInfoPanel() {
       var panel = document.getElementById('info-panel');
@@ -1652,16 +1828,20 @@
       var body = document.getElementById('info-body');
       var groups = groupEntries(rack);
       var estado = rack[0] ? rack[0].estado || 'liberado' : 'liberado';
-      body.innerHTML = groups.map(function(g, i) {
-        return '<div' + (i < groups.length - 1 ? ' style="margin-bottom:10px"' : '') + '>' +
-          '<div style="font-size:13px;font-weight:600;color:#f1f5f9;margin-bottom:2px">' + escapeHtml(g.producto || '-') + '</div>' +
-          '<div style="font-size:11px;color:#94a3b8;margin-bottom:1px">' + escapeHtml(g.codigo || '-') + '</div>' +
-          '<div style="font-size:11px;color:#94a3b8;margin-bottom:1px">Lote: ' + escapeHtml(g.lotes.map(function(l) { return l.lote; }).join(', ') || '-') + '</div>' +
-          '<div style="font-size:11px;color:#94a3b8;margin-bottom:1px">Cant: ' + g.cantidad + ' ' + escapeHtml(g.um || '') + '</div>' +
-          '<div style="font-size:11px;color:#94a3b8;margin-bottom:1px">Palets: ' + g.paletas + '</div>' +
-          '<div style="font-size:11px;color:#94a3b8;margin-bottom:1px">Nivel: ' + (rack[0] && rack[0].nivel ? rack[0].nivel + ' niveles' : '1 nivel') + '</div>' +
+      body.innerHTML = groups.map(function(g) {
+        var lt = g.lotes.map(function(l) { return '<span class="info-lote-tag" title="' + escapeHtml(l.lote) + '">' + escapeHtml(l.lote) + '</span>'; }).join('');
+        return '<div class="info-group">' +
+          '<div class="info-group-title">' + escapeHtml(g.producto || '-') + '</div>' +
+          '<div class="info-group-code">' + escapeHtml(g.codigo || '-') + '</div>' +
+          '<div class="info-grid">' +
+          '<div class="info-field"><span class="info-field-label">Cant</span><span class="info-field-value">' + g.cantidad + ' ' + escapeHtml(g.um || '') + '</span></div>' +
+          '<div class="info-field"><span class="info-field-label">Palets</span><span class="info-field-value">' + Math.round(g.paletas) + '</span></div>' +
+          '<div class="info-field"><span class="info-field-label">Nivel</span><span class="info-field-value">' + (rack[0] && rack[0].nivel ? rack[0].nivel + ' niv' : '1 niv') + '</span></div>' +
+          '<div class="info-field"><span class="info-field-label">Lotes</span><span class="info-field-value">' + g.lotes.length + '</span></div>' +
+          '</div>' +
+          (lt ? '<div class="info-lotes">' + lt + '</div>' : '') +
           '</div>';
-      }).join('') + '<div style="margin-top:8px"><span class="estado-badge estado-' + estado + '">' + estado.toUpperCase() + '</span></div>';
+      }).join('') + '<div class="info-footer"><span class="estado-badge estado-' + estado + '">' + estado.toUpperCase() + '</span></div>';
     }
 
     // Stats Panel
@@ -1672,17 +1852,17 @@
       panel.classList.add('visible');
       var body = document.getElementById('stats-body');
       var qtyStr = ps.totalQty % 1 === 0 ? ps.totalQty : ps.totalQty.toFixed(2);
-      body.innerHTML = '<div style="font-size:15px;font-weight:700;color:#f1f5f9;margin-bottom:2px">' + escapeHtml(ps.canonName) + '</div>' +
-        '<div style="font-size:11px;color:#94a3b8;margin-bottom:12px">SKU: ' + escapeHtml(ps.canonCod) + '</div>' +
+      body.innerHTML = '<div class="stats-product-name">' + escapeHtml(ps.canonName) + '</div>' +
+        '<div class="stats-product-sku">SKU: ' + escapeHtml(ps.canonCod) + '</div>' +
         '<div class="stats-metric-row"><div class="stats-metric"><div class="stats-metric-value">' + ps.totalUbics + '</div><div class="stats-metric-label">Ubicaciones</div></div>' +
         '<div class="stats-metric"><div class="stats-metric-value">' + qtyStr + '</div><div class="stats-metric-label">' + escapeHtml(ps.canonUm || 'Unidades') + '</div></div></div>' +
-        '<div style="font-size:11px;color:#94a3b8;margin-bottom:6px;margin-top:8px">Lotes</div>' +
-        (ps.lotes.length === 0 ? '<div class="stats-no-data">Sin lotes registrados</div>' :
+        '<div class="stats-section-title">Lotes</div>' +
+        (ps.lotes.length === 0 ? '<div class="stats-empty">Sin lotes registrados</div>' :
           ps.lotes.slice(0, 10).map(function(l) {
             return '<div class="stats-lote-row"><span class="stats-lote-name" title="' + escapeHtml(l.name) + '">' + escapeHtml(l.name) + '</span><span class="stats-lote-meta"><span class="stats-lote-ubics">' + l.ubics.length + ' ubic.</span><span class="stats-lote-qty">' + (l.qty >= 1000 ? l.qty.toLocaleString('es') : l.qty) + '</span></span></div>';
-          }).join('') + (ps.lotes.length > 10 ? '<div class="stats-no-data" style="text-align:center;padding:4px">+ ' + (ps.lotes.length - 10) + ' lotes más</div>' : '')) +
-        '<div style="font-size:11px;color:#94a3b8;margin-bottom:6px;margin-top:8px">Ubicaciones</div>' +
-        (ps.ubicaciones.length === 0 ? '<div class="stats-no-data">Sin ubicaciones</div>' :
+          }).join('') + (ps.lotes.length > 10 ? '<div class="stats-more">+ ' + (ps.lotes.length - 10) + ' lotes más</div>' : '')) +
+        '<div class="stats-section-title">Ubicaciones</div>' +
+        (ps.ubicaciones.length === 0 ? '<div class="stats-empty">Sin ubicaciones</div>' :
           '<div class="stats-ubics-grid">' + ps.ubicaciones.map(function(id) { return '<span class="stats-ubic-tag">' + escapeHtml(id) + '</span>'; }).join('') + '</div>');
     }
 
@@ -1714,10 +1894,43 @@
       items.forEach(function(item) {
         var div = document.createElement('div');
         div.className = 'zone-item ' + item.cls;
-        div.innerHTML = '<div class="zone-label-row"><span class="zone-label">' + item.label + '</span><span class="zone-stats">' + item.data.used + '/' + item.data.total + ' (' + item.data.percent + '%)</span></div>' +
+        div.innerHTML = '<div class="zone-label-row"><span class="zone-label"><span class="zone-dot"></span>' + item.label + '</span><span class="zone-stats">' + Math.round(item.data.used) + '/' + Math.round(item.data.total) + ' (' + item.data.percent + '%)</span></div>' +
           '<div class="zone-bar"><div class="zone-bar-fill" id="' + item.id + '" style="width:' + item.data.percent + '%"></div></div>';
         body.appendChild(div);
       });
+    }
+
+    function renderZoneProducts() {
+      var card = document.getElementById('zone-products-card');
+      var pasillo = AppState.pasilloSeleccionado;
+      var data = AppState.datosInventario;
+      if (pasillo === 'todos' || !data || data.length === 0) { card.style.display = 'none'; return; }
+      card.style.display = 'block';
+      var zoneFilter;
+      if (pasillo === 'T') zoneFilter = function(id) { return /^T\d{2}$/.test(id); };
+      else if (pasillo === 'A') zoneFilter = function(id) { return /^A\d{3}$/.test(id); };
+      else if (pasillo === 'P') zoneFilter = function(id) { return /^P\d{2}$/.test(id); };
+      else if (pasillo === 'S') zoneFilter = function(id) { return /^SQ\d{2}$/.test(id); };
+      else zoneFilter = function(id) { return id[0] === pasillo; };
+      var filtered = data.filter(function(e) { return zoneFilter(e.id) && e.producto; });
+      var groups = {};
+      filtered.forEach(function(e) {
+        var key = (e.codigo || '') + '|' + (e.producto || '');
+        if (!groups[key]) {
+          var es = (e.estado || 'liberado').toLowerCase();
+          groups[key] = { producto: e.producto, codigo: e.codigo, paletas: 0, estado: es };
+        }
+        groups[key].paletas += parseFloat(String(e.paletas)) || 0;
+        var es2 = (e.estado || 'liberado').toLowerCase();
+        if (es2 === 'rechazado') groups[key].estado = 'rechazado';
+        else if (es2 === 'retenido' && groups[key].estado !== 'rechazado') groups[key].estado = 'retenido';
+      });
+      var items = Object.values(groups).sort(function(a, b) { return b.paletas - a.paletas; }).slice(0, 10);
+      var list = document.getElementById('zone-products-list');
+      if (items.length === 0) { list.innerHTML = '<div class="stats-empty">Sin productos en esta zona</div>'; return; }
+      list.innerHTML = items.map(function(it) {
+        return '<div class="product-summary-row"><span class="prod-name" title="' + escapeHtml(it.producto) + '">' + escapeHtml(it.producto) + '</span><span class="prod-qty">' + Math.round(it.paletas) + '</span><span class="badge-estado badge-' + it.estado + '">' + it.estado.substring(0, 3).toUpperCase() + '</span></div>';
+      }).join('');
     }
 
     // Search Input & Suggestions
@@ -1762,7 +1975,7 @@
 
       input.addEventListener('input', function() {
         AppState.setSearchQuery(input.value);
-        if (sceneManager) { sceneManager.currentSearchTerm = input.value; sceneManager.applySearchFilter(); }
+        if (sceneManager) { sceneManager.currentSearchTerm = input.value; sceneManager.applySearchFilter(); if (input.value.trim()) sceneManager.focusSearchMatches(); }
         updateSuggestions();
         renderAll();
       });
@@ -1778,9 +1991,8 @@
         AppState.setSearchQuery('');
         if (sceneManager) { sceneManager.currentSearchTerm = ''; sceneManager.applySearchFilter(); }
         suggestions.classList.remove('visible');
-        clear.style.display = 'none';
+        suggestions.innerHTML = '';
         renderAll();
-        input.focus();
       });
 
       suggestions.addEventListener('click', function(e) {
@@ -1790,7 +2002,7 @@
         var codigo = btn.getAttribute('data-codigo') || '';
         input.value = producto;
         AppState.setSearchQuery(producto);
-        if (sceneManager) { sceneManager.currentSearchTerm = producto; sceneManager.applySearchFilter(); }
+        if (sceneManager) { sceneManager.currentSearchTerm = producto; sceneManager.applySearchFilter(); sceneManager.focusSearchMatches(); }
         suggestions.classList.remove('visible');
         var stats = computeProductStats(producto, codigo, AppState.datosInventario);
         if (stats) AppState.setProductStats(stats);
@@ -1800,20 +2012,25 @@
       document.addEventListener('mousedown', function(e) {
         if (!document.getElementById('search-container').contains(e.target)) suggestions.classList.remove('visible');
       });
-
-      // Show clear button when typing
-      input.addEventListener('input', function() {
-        clear.style.display = input.value ? 'block' : 'none';
-      });
     }
 
     // Reset View Button
     function initResetView() {
       var btn = document.getElementById('reset-view-btn');
       var sidebarBtn = document.getElementById('reset-view-btn-sidebar');
-      function reset() { AppState.resetAll(); if (sceneManager) { sceneManager.pasilloSeleccionado = 'todos'; sceneManager.currentSearchTerm = ''; sceneManager.currentStatusFilter = null; sceneManager.applySearchFilter(); } renderAll(); document.getElementById('search-input').value = ''; document.getElementById('search-clear').style.display = 'none'; }
+      var viewModeBtn = document.getElementById('view-mode-toggle');
+      function reset() { AppState.resetAll(); if (sceneManager) { sceneManager.pasilloSeleccionado = 'todos'; sceneManager.currentSearchTerm = ''; sceneManager.currentStatusFilter = null; sceneManager.currentGroupFilter = null; sceneManager.applySearchFilter(); } renderAll(); document.getElementById('search-input').value = ''; if (viewModeBtn) viewModeBtn.textContent = 'Ver por Grupo'; }
       btn.addEventListener('click', reset);
       sidebarBtn.addEventListener('click', reset);
+      if (viewModeBtn) {
+        viewModeBtn.addEventListener('click', function() {
+          AppState.toggleViewMode();
+          if (sceneManager) sceneManager.viewMode = AppState.viewMode;
+          if (AppState.viewMode === 'grupo') { this.textContent = 'Ver por Estado'; } else { this.textContent = 'Ver por Grupo'; }
+          if (sceneManager && sceneManager.modelReady) { sceneManager.updateSceneFromInventario(sceneManager.datosInventario); }
+          renderAll();
+        });
+      }
     }
 
     // Reload button
@@ -1821,6 +2038,20 @@
       document.getElementById('reload-btn').addEventListener('click', function() {
         loadData();
       });
+    }
+
+    // Top products dropdown toggle
+    function initTopProductsDropdown() {
+      var btn = document.getElementById('top-products-btn');
+      var dropdown = document.getElementById('top-products-dropdown');
+      if (!btn || !dropdown) return;
+      btn.addEventListener('click', function(e) {
+        e.stopPropagation();
+        dropdown.classList.toggle('visible');
+        renderTopProductsDropdown();
+      });
+      document.addEventListener('click', function() { dropdown.classList.remove('visible'); });
+      dropdown.addEventListener('click', function(e) { e.stopPropagation(); });
     }
 
     // ─── Close buttons ───
@@ -1840,10 +2071,108 @@
       renderKpis();
       renderPasilloButtons();
       renderDonut();
-      renderTopProducts();
       renderInfoPanel();
       renderStatsPanel();
       renderZoneOccupancy();
+      renderGroupLegend();
+      renderZoneProducts();
+      renderStatusProducts();
+      renderTopProductsDropdown();
+      highlightSearchZones();
+      adjustPanelPositions();
+    }
+
+    function adjustPanelPositions() {
+      var info = document.getElementById('info-panel');
+      var stats = document.getElementById('stats-panel');
+      info.style.top = stats.classList.contains('visible') ? (stats.offsetTop + stats.offsetHeight + 8 + 'px') : '20px';
+    }
+
+    function renderStatusProducts() {
+      var card = document.getElementById('status-products-card'), sf = AppState.currentStatusFilter, data = AppState.datosInventario;
+      if (!sf || !data || data.length === 0) { card.style.display = 'none'; return; }
+      card.style.display = 'block';
+      document.getElementById('status-products-title').textContent = 'Productos ' + sf.charAt(0).toUpperCase() + sf.slice(1);
+      var filtered = data.filter(function(e) { return (e.estado || '').toLowerCase() === sf && e.producto; }), groups = {};
+      filtered.forEach(function(e) {
+        var k = (e.codigo || '') + '|' + (e.producto || '');
+        if (!groups[k]) groups[k] = { producto: e.producto, codigo: e.codigo, paletas: 0, ubicaciones: 0 };
+        groups[k].paletas += parseFloat(String(e.paletas)) || 0;
+        groups[k].ubicaciones++;
+      });
+      var items = Object.values(groups).sort(function(a, b) { return b.paletas - a.paletas; }).slice(0, 15);
+      var list = document.getElementById('status-products-list');
+      if (items.length === 0) { list.innerHTML = '<div class="stats-empty">Sin resultados</div>'; return; }
+      list.innerHTML = items.map(function(it) {
+        return '<div class="product-summary-row"><span class="prod-name" title="' + escapeHtml(it.producto) + '">' + escapeHtml(it.producto) + '</span><span class="prod-qty">' + Math.round(it.paletas) + ' pal</span><span class="prod-ubics" style="font-size:10px;color:var(--md-text-muted)">' + it.ubicaciones + ' ub</span></div>';
+      }).join('');
+    }
+
+    function renderGroupLegend() {
+      var card = document.getElementById('group-legend');
+      var body = document.getElementById('group-legend-body');
+      if (AppState.viewMode !== 'grupo') {
+        card.classList.remove('visible');
+        return;
+      }
+      card.classList.add('visible');
+      var groups = {};
+      AppState.datosInventario.forEach(function(e) {
+        if (!e.grupo) return;
+        var id = e.id || '';
+        if (!/^[1-9]/.test(id)) return;
+        if (!groups[e.grupo]) groups[e.grupo] = 0;
+        groups[e.grupo] += parseFloat(String(e.paletas)) || 0;
+      });
+      var items = Object.entries(groups)
+        .map(function(g) { return { name: g[0], count: g[1], color: getGroupColor(g[0]) }; })
+        .sort(function(a, b) { return b.count - a.count; });
+      body.innerHTML = '';
+      items.forEach(function(g) {
+        var div = document.createElement('div');
+        var active = AppState.currentGroupFilter === g.name;
+        div.className = 'group-legend-row' + (active ? ' active' : '');
+        var colorHex = '#' + g.color.toString(16).padStart(6, '0');
+        div.innerHTML = '<span class="group-legend-dot" style="background:' + colorHex + '"></span><span class="group-legend-name">' + escapeHtml(g.name) + '</span><span class="group-legend-count">' + Math.round(g.count) + '</span>';
+        div.addEventListener('click', function() {
+          if (AppState.currentGroupFilter === g.name) AppState.setGroupFilter(null);
+          else AppState.setGroupFilter(g.name);
+          renderAll();
+        });
+        body.appendChild(div);
+      });
+    }
+
+    function renderTopProductsDropdown() {
+      var dropdown = document.getElementById('top-products-dropdown');
+      var items = AppState.topProducts.slice(0, 10);
+      if (items.length === 0) {
+        dropdown.innerHTML = '<div class="tp-header">Top Productos</div><div style="padding:10px;font-size:11px;color:var(--md-text-muted);text-align:center">Sin datos</div>';
+        return;
+      }
+      var html = '<div class="tp-header">Top Productos</div>';
+      items.forEach(function(p, i) {
+        html += '<div class="tp-row"><span class="tp-idx">#' + (i + 1) + '</span><span class="tp-name">' + escapeHtml(p.name) + '</span><span class="tp-count">' + Math.round(p.count) + '</span></div>';
+      });
+      dropdown.innerHTML = html;
+    }
+
+    function highlightSearchZones() {
+      var t = AppState.searchQuery;
+      document.querySelectorAll('.nav-btn[data-pasillo]').forEach(function(b) { b.classList.remove('has-matches'); });
+      if (!t || !AppState.datosInventario) return;
+      var q = t.toLowerCase().trim(), seen = {};
+      AppState.datosInventario.forEach(function(e) {
+        var a = (e.producto || '').toLowerCase(), c = (e.codigo || '').toLowerCase(), id = e.id || '', l = (e.lote || '').toLowerCase();
+        if (!a.includes(q) && !c.includes(q) && !id.includes(q) && !l.includes(q)) return;
+        var z;
+        if (/^T\d{2}$/.test(id)) z = 'T';
+        else if (/^A\d{3}$/.test(id)) z = 'A';
+        else if (/^P\d{2}$/.test(id)) z = 'P';
+        else if (/^SQ\d{2}$/.test(id)) z = 'S';
+        else if (/^\d/.test(id)) z = id[0];
+        if (z && !seen[z]) { seen[z] = 1; var btn = document.querySelector('[data-pasillo="' + z + '"]'); if (btn) btn.classList.add('has-matches'); }
+      });
     }
 
     // ═══════════════════════════════════════════════════════════════════
@@ -1858,28 +2187,29 @@
       loadingText.textContent = 'Cargando datos del inventario...';
       loadingProgress.textContent = '';
 
-      var url = 'https://script.google.com/macros/s/AKfycbxJthmAczBij7ilAhDQF8ylNpUEs1WreP-oTBe03xRuV6VCAF3WbM79YD6u_ZjhUuqC/exec';
-      var cb = 'jsonp_cb_' + Date.now();
-      window[cb] = function(data) {
-        delete window[cb];
-        if (Array.isArray(data)) {
-          var mapped = data.map(normalizeEntry).filter(function(e) { return e.id && isRackId(e.id); });
-          AppState.setInventario(mapped);
-          if (sceneManager && sceneManager.modelReady) {
-            sceneManager.updateSceneFromInventario(mapped);
-            var counts = sceneManager.getRackCountsByZone();
-            AppState.setRackCounts(counts);
+      google.script.run
+        .withSuccessHandler(function(data) {
+          if (Array.isArray(data)) {
+            var mapped = data.map(normalizeEntry).filter(function(e) {
+              if (!e.id) return false;
+              if (isSubPaletaName(e.id)) { e.id = e.id.replace(/-\d+$/, ''); return isRackId(e.id); }
+              return isRackId(e.id);
+            });
+            AppState.setInventario(mapped);
+            if (sceneManager && sceneManager.modelReady) {
+              sceneManager.updateSceneFromInventario(mapped);
+              var counts = sceneManager.getRackCountsByZone();
+              AppState.setRackCounts(counts);
+            }
+            renderAll();
+            loadingText.textContent = 'Modelo y datos cargados';
+            setTimeout(function() { document.getElementById('loading-overlay').classList.add('hidden'); }, 500);
           }
-          renderAll();
-          loadingText.textContent = 'Modelo y datos cargados';
-          setTimeout(function() { document.getElementById('loading-overlay').classList.add('hidden'); }, 500);
-        }
-      };
-      var script = document.createElement('script');
-      script.src = url + '?callback=' + cb + '&_=' + Date.now();
-      script.onerror = function() { delete window[cb]; loadingText.textContent = 'Error de conexión'; loadingProgress.textContent = 'Verifica la conexión a internet'; };
-      document.body.appendChild(script);
-      setTimeout(function() { script.remove(); }, 15000);
+        })
+        .withFailureHandler(function(err) {
+          loadingText.textContent = 'Error cargando inventario: ' + err.message;
+        })
+        .getInventoryData();
     }
 
     // ═══════════════════════════════════════════════════════════════════
@@ -1890,6 +2220,13 @@
       initSearch();
       initResetView();
       initReload();
+      initTopProductsDropdown();
+      document.getElementById('usage-status-clear').addEventListener('click', function() {
+        AppState.setStatusFilter(null);
+        AppState.setGroupFilter(null);
+        if (sceneManager) { sceneManager.currentStatusFilter = null; sceneManager.currentGroupFilter = null; sceneManager.applySearchFilter(); }
+        renderAll();
+      });
 
       var container = document.getElementById('scene-container');
       sceneManager = new SceneManager(container);

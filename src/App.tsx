@@ -48,16 +48,22 @@ export default function App() {
 
 function normalizeEntry(raw: any) {
   if (!raw) return raw;
+  var pal = parseFloat(raw.paletas || raw.Paletas || raw.PALETAS || 0) || 0;
+  var um = String(raw.um || raw.UM || raw.Um || raw.Unidad || '').trim().toLowerCase();
+  var cant = parseFloat(raw.cantidad || raw.Cantidad || raw.CANTIDAD || 0) || 0;
+  if (pal === 0 && um === 'bp' && cant > 0) pal = cant / 4;
   return {
     id: String(raw.id || raw.ID || '').trim(),
     producto: String(raw.producto || raw.Producto || raw.PRODUCTO || '').trim(),
     codigo: String(raw.codigo || raw.Codigo || raw.CODIGO || '').trim(),
     lote: String(raw.lote || raw.Lote || raw.LOTE || '').trim(),
-    cantidad: parseFloat(raw.cantidad || raw.Cantidad || raw.CANTIDAD || 0) || 0,
-    um: String(raw.um || raw.UM || raw.Um || raw.Unidad || '').trim(),
+    cantidad: cant,
+    um: um,
     estado: normalizeEstado(raw.estado || raw.Estado || raw.ESTADO || raw.lote_estado || ''),
-    paletas: parseFloat(raw.paletas || raw.Paletas || raw.PALETAS || 0) || 0,
+    paletas: pal,
     nivel: parseFloat(raw.nivel || raw.Nivel || raw.NIVEL || 0) || 0,
+    nomenclatura: String(raw.Nomenclatura || raw.nomenclatura || '').trim() || undefined,
+    grupo: String(raw.Grupo || raw.grupo || '').trim() || undefined,
   };
 }
 

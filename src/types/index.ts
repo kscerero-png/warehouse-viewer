@@ -9,6 +9,8 @@ export interface InventoryEntry {
   paletas?: number;
   nivel?: number;
   ocupacion?: number;
+  nomenclatura?: string;
+  grupo?: string;
 }
 
 export interface RackUserData {

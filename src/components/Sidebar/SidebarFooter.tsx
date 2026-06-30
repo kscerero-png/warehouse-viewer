@@ -75,6 +75,9 @@ export default function SidebarFooter() {
     useStore.getState().triggerResetView();
   }, []);
 
+  const viewMode = useStore((s) => s.viewMode);
+  const toggleViewMode = useStore((s) => s.toggleViewMode);
+
   return (
     <div className="sidebar-footer">
       <div className="sidebar-actions">
@@ -91,6 +94,9 @@ export default function SidebarFooter() {
         </button>
         <button className="nav-btn" onClick={handleResetView}>
           Reset Vista
+        </button>
+        <button className="nav-btn" onClick={toggleViewMode} style={{ background: viewMode === 'grupo' ? 'var(--md-primary)' : '' }}>
+          {viewMode === 'ocupacion' ? 'Ver por Grupo' : 'Ver por Ocupación'}
         </button>
       </div>
     </div>

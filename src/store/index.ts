@@ -3,6 +3,8 @@ import type { InventoryEntry, Pasillo, StatusFilter, StatusBreakdown, ProductCou
 import { calculateStatusBreakdown, computeTopProducts, computeProductStats } from '../utils/metrics';
 import { calculateAllZonesMetrics } from '../utils/zoneMetrics';
 
+export type ViewMode = 'ocupacion' | 'grupo';
+
 export interface AppStore {
   datosInventario: InventoryEntry[];
   setInventario: (data: InventoryEntry[]) => void;
@@ -44,6 +46,10 @@ export interface AppStore {
 
   hoveredMeshId: string | null;
   setHoveredMeshId: (id: string | null) => void;
+
+  viewMode: ViewMode;
+  setViewMode: (mode: ViewMode) => void;
+  toggleViewMode: () => void;
 }
 
 export const useStore = create<AppStore>((set, get) => ({
@@ -139,4 +145,8 @@ export const useStore = create<AppStore>((set, get) => ({
 
   hoveredMeshId: null,
   setHoveredMeshId: (id) => set({ hoveredMeshId: id }),
+
+  viewMode: 'ocupacion',
+  setViewMode: (mode: ViewMode) => set({ viewMode: mode }),
+  toggleViewMode: () => set((s) => ({ viewMode: s.viewMode === 'ocupacion' ? 'grupo' : 'ocupacion' })),
 }));

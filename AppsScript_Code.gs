@@ -45,7 +45,9 @@ function fetchInventoryData_() {
     const cantidadStr = String(row[5] || '0').trim().replace(/,/g, '');
     const cantidad = parseFloat(cantidadStr) || 0;
     const um = String(row[6] || '').trim();
-    const paletas = parseInt(row[7]) || 0;
+    const paletas = parseFloat(row[7]) || 0;
+    const nomenclatura = String(row[8] || '').trim();
+    const grupo = String(row[9] || '').trim();
 
     let estado = 'liberado';
     if (edoLote === 'R') estado = 'retenido';
@@ -59,6 +61,8 @@ function fetchInventoryData_() {
       'Edo Lote': edoLote,
       Cantidad: cantidadStr,
       UM: um,
+      Nomenclatura: nomenclatura,
+      Grupo: grupo,
       id: ubicacion,
       producto: producto,
       codigo: codigo,
@@ -66,7 +70,9 @@ function fetchInventoryData_() {
       cantidad: cantidad,
       um: um,
       estado: estado,
-      paletas: paletas
+      paletas: paletas,
+      nomenclatura: nomenclatura,
+      grupo: grupo
     };
 
     if (productosMap[codigo]) {

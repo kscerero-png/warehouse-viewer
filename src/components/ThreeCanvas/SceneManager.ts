@@ -82,6 +82,7 @@ export class SceneManager {
   public currentSearchTerm: string = '';
   public pasilloSeleccionado: string = 'todos';
   public currentStatusFilter: string | null = null;
+  public viewMode: string = 'ocupacion';
   public lastSelectedMesh: THREE.Mesh | null = null;
   private touchAction: string = '';
 
@@ -373,7 +374,7 @@ export class SceneManager {
       } else {
         child.userData = { id: name, entries: [], producto: '', codigo: '', lote: '', cantidad: 0, um: '', estado: '' };
       }
-      child.material = getRackMaterial(child.userData as RackUserData);
+      child.material = getRackMaterial(child.userData as RackUserData, undefined, this.viewMode, child.userData.grupo);
     });
 
     this.gestionarSubPaletas(data);
@@ -398,10 +399,10 @@ export class SceneManager {
       child.visible = show || isFormulacionId(parentId) || isJaulaId(parentId);
       child.userData.hiddenByPaletas = !show;
       if (show) {
-        child.material = getRackMaterial(entry);
+        child.material = getRackMaterial(entry, undefined, this.viewMode, entry.grupo);
         child.userData = Object.assign({}, entry, { subPaleta: true, id: parentId, hiddenByPaletas: false });
       } else if (isFormulacionId(parentId) || isJaulaId(parentId)) {
-        child.material = getRackMaterial({ id: parentId, cantidad: 0, estado: '', entries: [] } as any);
+        child.material = getRackMaterial({ id: parentId, cantidad: 0, estado: '', entries: [] } as any, undefined, this.viewMode, undefined);
         child.userData = { id: parentId, producto: '', codigo: '', lote: '', cantidad: 0, um: '', estado: '', subPaleta: true, hiddenByPaletas: false };
       }
     });
@@ -449,7 +450,7 @@ export class SceneManager {
 
           const adj = meshByName.get(found)!;
           adj.userData = Object.assign({}, firstEntry, { id: found, name: found, entries: [firstEntry], _paletaSpreadDone: true });
-          adj.material = getRackMaterial(adj.userData as RackUserData);
+          adj.material = getRackMaterial(adj.userData as RackUserData, undefined, this.viewMode, adj.userData.grupo);
           occupied.add(found);
           col = found[3];
           level = found[4];
