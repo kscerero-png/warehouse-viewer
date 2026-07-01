@@ -1136,48 +1136,30 @@
     SceneManager.prototype.loadModel = function(url) {
       var self = this;
       return new Promise(function(resolve, reject) {
-        function loadFromBuffer(buffer) {
-          var loader = new THREE.GLTFLoader();
-          loader.parse(buffer, '', function(gltf) {
-            var model = gltf.scene;
-            model.traverse(function(child) {
-              if (child.isMesh) self.processMesh(child);
-            });
-            self.scene.add(model);
-            self.buildMeshByName();
-            self.modelReady = true;
-            self.onModelLoaded && self.onModelLoaded();
-            resolve();
-          }, function(err) { reject(err); });
-        }
-        function fetchAndCache() {
-          var xhr = new XMLHttpRequest();
-          xhr.open('GET', url, true);
-          xhr.responseType = 'arraybuffer';
-          xhr.onprogress = function(e) {
-            if (e.lengthComputable && self.onLoadProgress) self.onLoadProgress(e.loaded / e.total);
-          };
-          xhr.onload = function() {
-            if (xhr.status === 200) {
-              var buffer = xhr.response;
-              if (self._modelCache) {
-                try { self._modelCache.put(url, new Response(buffer)); } catch(e) {}
-              }
-              loadFromBuffer(buffer);
-            } else { reject(new Error('HTTP ' + xhr.status)); }
-          };
-          xhr.onerror = function() { reject(new Error('Error de red')); };
-          xhr.send();
-        }
-        if ('caches' in window) {
-          caches.open('warehouse-model-v1').then(function(cache) {
-            self._modelCache = cache;
-            cache.match(url).then(function(resp) {
-              if (resp) { resp.arrayBuffer().then(loadFromBuffer).catch(fetchAndCache); }
-              else { fetchAndCache(); }
-            }).catch(fetchAndCache);
-          }).catch(fetchAndCache);
-        } else { fetchAndCache(); }
+        var xhr = new XMLHttpRequest();
+        xhr.open('GET', url, true);
+        xhr.responseType = 'arraybuffer';
+        xhr.onprogress = function(e) {
+          if (e.lengthComputable && self.onLoadProgress) self.onLoadProgress(e.loaded / e.total);
+        };
+        xhr.onload = function() {
+          if (xhr.status === 200) {
+            var loader = new THREE.GLTFLoader();
+            loader.parse(xhr.response, '', function(gltf) {
+              var model = gltf.scene;
+              model.traverse(function(child) {
+                if (child.isMesh) self.processMesh(child);
+              });
+              self.scene.add(model);
+              self.buildMeshByName();
+              self.modelReady = true;
+              self.onModelLoaded && self.onModelLoaded();
+              resolve();
+            }, function(err) { reject(err); });
+          } else { reject(new Error('HTTP ' + xhr.status)); }
+        };
+        xhr.onerror = function() { reject(new Error('Error de red')); };
+        xhr.send();
       });
     };
 
