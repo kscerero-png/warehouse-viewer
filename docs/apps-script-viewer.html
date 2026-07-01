@@ -309,6 +309,8 @@
     @keyframes spin { to { transform: rotate(360deg); } }
     #loading-text { font-size: 14px; font-weight: 500; }
     #loading-progress { font-size: 11px; color: var(--md-text-muted); margin-top: 4px; }
+    #loading-bar-bg { width: 200px; height: 4px; background: rgba(255,255,255,0.1); border-radius: 2px; margin: 8px auto 0; overflow: hidden; }
+    #loading-bar-fill { height: 100%; width: 0%; background: var(--md-primary); border-radius: 2px; transition: width 0.2s; }
     /* Search suggestions */
     #search-suggestions {
       position: absolute; top: 100%; left: 0; right: 0; z-index: 200;
@@ -452,6 +454,7 @@
           <div id="loading-content">
             <div class="spinner"></div>
             <div id="loading-text">Cargando modelo 3D...</div>
+            <div id="loading-bar-bg"><div id="loading-bar-fill"></div></div>
             <div id="loading-progress"></div>
           </div>
         </div>
@@ -1133,18 +1136,48 @@
     SceneManager.prototype.loadModel = function(url) {
       var self = this;
       return new Promise(function(resolve, reject) {
-        var loader = new THREE.GLTFLoader();
-        loader.load(url, function(gltf) {
-          var model = gltf.scene;
-          model.traverse(function(child) {
-            if (child.isMesh) self.processMesh(child);
-          });
-          self.scene.add(model);
-          self.buildMeshByName();
-          self.modelReady = true;
-          self.onModelLoaded && self.onModelLoaded();
-          resolve();
-        }, undefined, function(err) { reject(err); });
+        function loadFromBuffer(buffer) {
+          var loader = new THREE.GLTFLoader();
+          loader.parse(buffer, '', function(gltf) {
+            var model = gltf.scene;
+            model.traverse(function(child) {
+              if (child.isMesh) self.processMesh(child);
+            });
+            self.scene.add(model);
+            self.buildMeshByName();
+            self.modelReady = true;
+            self.onModelLoaded && self.onModelLoaded();
+            resolve();
+          }, function(err) { reject(err); });
+        }
+        function fetchAndCache() {
+          var xhr = new XMLHttpRequest();
+          xhr.open('GET', url, true);
+          xhr.responseType = 'arraybuffer';
+          xhr.onprogress = function(e) {
+            if (e.lengthComputable && self.onLoadProgress) self.onLoadProgress(e.loaded / e.total);
+          };
+          xhr.onload = function() {
+            if (xhr.status === 200) {
+              var buffer = xhr.response;
+              if (self._modelCache) {
+                try { self._modelCache.put(url, new Response(buffer)); } catch(e) {}
+              }
+              loadFromBuffer(buffer);
+            } else { reject(new Error('HTTP ' + xhr.status)); }
+          };
+          xhr.onerror = function() { reject(new Error('Error de red')); };
+          xhr.send();
+        }
+        if ('caches' in window) {
+          caches.open('warehouse-model-v1').then(function(cache) {
+            self._modelCache = cache;
+            cache.match(url).then(function(resp) {
+              if (resp) { resp.arrayBuffer().then(loadFromBuffer).catch(fetchAndCache); }
+              else { fetchAndCache(); }
+            }).catch(fetchAndCache);
+          }).catch(fetchAndCache);
+        } else { fetchAndCache(); }
       });
     };
 
@@ -2261,8 +2294,13 @@
         document.getElementById('reset-view-btn').style.display = 'block';
       };
 
+      sceneManager.onLoadProgress = function(pct) {
+        var fill = document.getElementById('loading-bar-fill');
+        var progress = document.getElementById('loading-progress');
+        if (fill) fill.style.width = Math.round(pct * 100) + '%';
+        if (progress) progress.textContent = Math.round(pct * 100) + '%';
+      };
       sceneManager.onLoaderUpdate = function(pct, show) {
-        // Could show a progress bar on the model loading
         var progress = document.getElementById('loading-progress');
         if (show) progress.textContent = Math.round(pct * 100) + '%';
         else progress.textContent = '';
