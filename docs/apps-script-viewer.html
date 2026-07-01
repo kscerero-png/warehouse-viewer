@@ -928,9 +928,9 @@
       if (estado === 'R' || estado === 'RETENIDO') estado = 'retenido';
       else if (estado === 'X' || estado === 'RECHAZADO') estado = 'rechazado';
       else estado = 'liberado';
-      var pal = parseFloat(raw.paletas || raw.Paletas || raw.PALETAS || 0) || 0;
+      var pal = Math.round(parseFloat(raw.paletas || raw.Paletas || raw.PALETAS || 0) || 0);
       var um = String(raw.um || raw.UM || raw.Um || raw.Unidad || '').trim().toLowerCase();
-      var cant = parseFloat(raw.cantidad || raw.Cantidad || raw.CANTIDAD || 0) || 0;
+      var cant = Math.round(parseFloat(raw.cantidad || raw.Cantidad || raw.CANTIDAD || 0) || 0);
 
       return {
         id: String(raw.id || raw.ID || raw.Ubicacion || '').trim(),
