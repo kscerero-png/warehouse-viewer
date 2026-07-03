@@ -656,18 +656,20 @@
       var zone = zoneFilter ? entries.filter(function(e) { return zoneFilter(e.id); }) : entries;
       var isCapacityZone = pasillo === 'T' || pasillo === 'P';
       if (isCapacityZone) {
-        var occupiedIds = {};
+        var ret = 0, rej = 0, lib = 0;
         for (var i = 0; i < zone.length; i++) {
           var e = zone[i];
-          if ((parseFloat(String(e.paletas)) || 0) > 0 || (parseFloat(String(e.cantidad)) || 0) > 0) occupiedIds[e.id] = true;
-        }
-        var ret = 0, rej = 0, lib = 0;
-        for (var id in occupiedIds) {
-          var entries = zone.filter(function(e) { return e.id === id; });
-          var estado = mergeEntryState(entries);
-          if (estado === 'retenido') ret++;
-          else if (estado === 'rechazado') rej++;
-          else lib++;
+          var p = parseFloat(String(e.paletas)) || 0;
+          var estado = (e.estado || 'liberado').toLowerCase();
+          if (p > 0) {
+            if (estado === 'retenido') ret += p;
+            else if (estado === 'rechazado') rej += p;
+            else lib += p;
+          } else if (parseFloat(String(e.cantidad)) > 0) {
+            if (estado === 'retenido') ret++;
+            else if (estado === 'rechazado') rej++;
+            else lib++;
+          }
         }
         var vacio = totalRacks - ret - rej - lib;
         var total = totalRacks || 1;
@@ -836,18 +838,14 @@
       for (var zi = 0; zi < ['T','P'].length; zi++) {
         var zone = ['T','P'][zi];
         var test = zone === 'T' ? /^T\d{2}$/ : /^P\d{2}$/;
-        var total = rackCounts[zone] || 0;
-        var usedIds = {};
+        var total = 0, used = 0;
         entries.forEach(function(e) {
           if (!test.test(e.id)) return;
-          if ((parseFloat(String(e.paletas)) || 0) > 0 || (parseFloat(String(e.cantidad)) || 0) > 0) usedIds[e.id] = true;
+          var p = parseFloat(String(e.paletas)) || 0;
+          if (p > 0) { total += getEffectivePositions(e); used += p; }
+          else if (parseFloat(String(e.cantidad)) > 0) { total += 1; used += 1; }
         });
-        if (total === 0) {
-          var ids = {};
-          entries.forEach(function(e) { if (test.test(e.id)) ids[e.id] = true; });
-          total = Object.keys(ids).length || 1;
-        }
-        result[zone] = { total: total, used: Object.keys(usedIds).length, empty: total - Object.keys(usedIds).length, percent: total > 0 ? Math.round((Object.keys(usedIds).length / total) * 100) : 0 };
+        result[zone] = { total: total, used: used, empty: total - used, percent: total > 0 ? Math.round((used / total) * 100) : 0 };
       }
       for (var si = 0; si < [{zone:'A',test:/^A\d{3}$/},{zone:'S',test:/^SQ\d{2}$/}].length; si++) {
         var spec = [{zone:'A',test:/^A\d{3}$/},{zone:'S',test:/^SQ\d{2}$/}][si];
@@ -1366,7 +1364,7 @@
         if (isNonRackName(name)) return;
         if (mesh.userData.subPaleta) {
           var parentId = name.replace(/-\d+$/, '');
-          if (/^(A\d{3}|SQ\d{2}|T\d{2}|P\d{2})$/.test(parentId)) subParents.add(parentId);
+          if (/^(A\d{3}|SQ\d{2})$/.test(parentId)) subParents.add(parentId);
           return;
         }
         var id = mesh.userData.id || name;
@@ -1383,12 +1381,7 @@
       });
       subParents.forEach(function(parentId) {
         if (seen.has(parentId)) return;
-        var zone;
-        if (/^A\d{3}$/.test(parentId)) zone = 'A';
-        else if (/^SQ\d{2}$/.test(parentId)) zone = 'S';
-        else if (/^T\d{2}$/.test(parentId)) zone = 'T';
-        else if (/^P\d{2}$/.test(parentId)) zone = 'P';
-        else return;
+        var zone = /^A\d{3}$/.test(parentId) ? 'A' : 'S';
         counts[zone] = (counts[zone] || 0) + 1;
       });
       return counts;
