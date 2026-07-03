@@ -940,6 +940,7 @@
       var pal = Math.round(parseFloat(raw.paletas || raw.Paletas || raw.PALETAS || 0) || 0);
       var um = String(raw.um || raw.UM || raw.Um || raw.Unidad || '').trim().toLowerCase();
       var cant = Math.round(parseFloat(raw.cantidad || raw.Cantidad || raw.CANTIDAD || 0) || 0);
+      if (pal === 0 && um === 'bp' && cant > 0) pal = Math.round(cant / 2);
 
       return {
         id: String(raw.id || raw.ID || raw.Ubicacion || '').trim(),
