@@ -1268,12 +1268,14 @@
       this.meshes.forEach(function(mesh, name) {
         if (isFiveDigitId(name) && mesh.userData.entries && mesh.userData.entries.length > 0) {
           var firstEntry = mesh.userData.entries[0];
+          var um = (firstEntry.um || '').toLowerCase();
           var p = parseFloat(String(firstEntry.paletas)) || 0;
           if (p <= 1) return;
           var base = name.substring(0, 3);
           var col = name[3];
           var level = name[4];
-          var alwaysVertical = name === '110411040';
+          var prodCode = (firstEntry.producto || firstEntry.codigo || '');
+          var alwaysVertical = prodCode.indexOf('110411040') !== -1;
           occupied.add(name);
           for (var n = 1; n < p; n++) {
             var found = null;
