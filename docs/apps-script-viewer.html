@@ -842,6 +842,11 @@
           if (!test.test(e.id)) return;
           if ((parseFloat(String(e.paletas)) || 0) > 0 || (parseFloat(String(e.cantidad)) || 0) > 0) usedIds[e.id] = true;
         });
+        if (total === 0) {
+          var ids = {};
+          entries.forEach(function(e) { if (test.test(e.id)) ids[e.id] = true; });
+          total = Object.keys(ids).length || 1;
+        }
         result[zone] = { total: total, used: Object.keys(usedIds).length, empty: total - Object.keys(usedIds).length, percent: total > 0 ? Math.round((Object.keys(usedIds).length / total) * 100) : 0 };
       }
       for (var si = 0; si < [{zone:'A',test:/^A\d{3}$/},{zone:'S',test:/^SQ\d{2}$/}].length; si++) {
@@ -1171,10 +1176,10 @@
           mesh.material = new THREE.MeshStandardMaterial({ color: 0xd4d4d4, transparent: true, opacity: 0.35, roughness: 0.9, metalness: 0.0, side: THREE.DoubleSide });
           mesh.renderOrder = -1;
         } else if (name.indexOf('rayado') === 0) {
-          mesh.material = new THREE.MeshStandardMaterial({ color: 0xf5c518, roughness: 0.7, metalness: 0.0, side: THREE.DoubleSide });
+          mesh.material = new THREE.MeshStandardMaterial({ color: 0xffcc00, emissive: 0xffcc00, emissiveIntensity: 0.15, roughness: 0.5, metalness: 0.0, side: THREE.DoubleSide });
           mesh.renderOrder = -1;
         } else if (name.indexOf('linea') === 0) {
-          mesh.material = new THREE.MeshStandardMaterial({ color: 0xffffff, transparent: true, opacity: 0.50, roughness: 0.8, metalness: 0.0, side: THREE.DoubleSide });
+          mesh.material = new THREE.MeshStandardMaterial({ color: 0xffffff, transparent: true, opacity: 0.85, roughness: 0.8, metalness: 0.0, side: THREE.DoubleSide });
           mesh.renderOrder = -1;
         } else if (name.indexOf('tramo') === 0) {
           mesh.material = new THREE.MeshStandardMaterial({ color: 0xDB6027, roughness: 0.7, metalness: 0.1 });
@@ -1219,9 +1224,10 @@
           child.userData = Object.assign({}, infoRacks[0], { entries: infoRacks });
           child.userData.estado = mergeEntryState(infoRacks);
         } else {
-          child.userData = { id: name, entries: [], producto: '', codigo: '', lote: '', cantidad: 0, um: '', estado: '' };
+          child.visible = false;
+          child.userData = { id: name, entries: [], producto: '', codigo: '', lote: '', cantidad: 0, um: '', estado: '', empty: true };
         }
-        child.material = getRackMaterial(child.userData, undefined, self.viewMode, child.userData.grupo);
+        if (infoRacks.length > 0) child.material = getRackMaterial(child.userData, undefined, self.viewMode, child.userData.grupo);
       });
       this.gestionarSubPaletas(data);
       this.applyPaletaSpread();
@@ -1244,14 +1250,13 @@
           if (idx <= cumulative) { entry = parentRacks[k]; break; }
         }
         var show = idx <= cumulative && isSlotVisible(idx, entry ? entry.nivel : 0);
-        child.visible = show || isFormulacionId(parentId) || isJaulaId(parentId);
+        child.visible = show;
         child.userData.hiddenByPaletas = !show;
         if (show) {
           child.material = getRackMaterial(entry, undefined, self.viewMode, entry.grupo);
           child.userData = Object.assign({}, entry, { subPaleta: true, id: parentId, hiddenByPaletas: false });
-        } else if (isFormulacionId(parentId) || isJaulaId(parentId)) {
-          child.material = getRackMaterial({ id: parentId, cantidad: 0, estado: '', entries: [] }, undefined, self.viewMode, undefined);
-          child.userData = { id: parentId, producto: '', codigo: '', lote: '', cantidad: 0, um: '', estado: '', subPaleta: true, hiddenByPaletas: false };
+        } else {
+          child.userData = { id: parentId, producto: '', codigo: '', lote: '', cantidad: 0, um: '', estado: '', subPaleta: true, hiddenByPaletas: false, empty: true };
         }
       });
     };
@@ -1308,6 +1313,7 @@
       }
       this.meshes.forEach(function(mesh, name) {
         if (isNonRackName(name)) { mesh.visible = true; return; }
+        if (mesh.userData.empty) { mesh.visible = false; return; }
         if (mesh.userData.hiddenByPaletas) return;
         var zoneMatch = true;
         if (pasillo !== 'todos') {
@@ -1354,7 +1360,7 @@
         if (isNonRackName(name)) return;
         if (mesh.userData.subPaleta) {
           var parentId = name.replace(/-\d+$/, '');
-          if (/^(A\d{3}|SQ\d{2})$/.test(parentId)) subParents.add(parentId);
+          if (/^(A\d{3}|SQ\d{2}|T\d{2}|P\d{2})$/.test(parentId)) subParents.add(parentId);
           return;
         }
         var id = mesh.userData.id || name;
@@ -1371,7 +1377,12 @@
       });
       subParents.forEach(function(parentId) {
         if (seen.has(parentId)) return;
-        var zone = /^A\d{3}$/.test(parentId) ? 'A' : 'S';
+        var zone;
+        if (/^A\d{3}$/.test(parentId)) zone = 'A';
+        else if (/^SQ\d{2}$/.test(parentId)) zone = 'S';
+        else if (/^T\d{2}$/.test(parentId)) zone = 'T';
+        else if (/^P\d{2}$/.test(parentId)) zone = 'P';
+        else return;
         counts[zone] = (counts[zone] || 0) + 1;
       });
       return counts;
