@@ -1348,8 +1348,10 @@
           match = entries.some(function(e) { return (e.grupo || '') === groupFilter; });
         }
         if (!active || match) {
+          mesh.visible = true;
           if (mesh.userData._origMat) { mesh.material = mesh.userData._origMat; delete mesh.userData._origMat; }
         } else {
+          mesh.visible = true;
           if (!mesh.userData._origMat) mesh.userData._origMat = mesh.material;
           mesh.material = self._dimMat;
         }
