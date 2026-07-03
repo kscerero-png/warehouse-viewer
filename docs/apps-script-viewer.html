@@ -1295,6 +1295,7 @@
             }
             if (!found) break;
             var adj = self.meshByName.get(found);
+            adj.visible = true;
             adj.userData = Object.assign({}, firstEntry, { id: found, name: found, entries: [firstEntry], _paletaSpreadDone: true });
             adj.material = getRackMaterial(adj.userData, undefined, self.viewMode, adj.userData.grupo);
             occupied.add(found);
