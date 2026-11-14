@@ -963,7 +963,7 @@
   
 /* ── Panel de productos por zona ── */
 .zp {
-  position: absolute; left: 12px; top: 64px; bottom: 118px; width: 292px; z-index: 28;
+  position: absolute; left: 76px; top: 70px; bottom: 118px; width: 292px; z-index: 28;
   display: flex; flex-direction: column; gap: 8px;
   background: var(--color-surface-elevated, var(--color-surface));
   border: 1px solid var(--color-border); border-radius: 12px;
