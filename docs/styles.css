@@ -649,7 +649,7 @@
     #kpi-bar::-webkit-scrollbar { height: 0; }
     .ribbon-card {
       display: flex; flex-direction: column; justify-content: center; gap: 0;
-      padding: 4px 12px; min-width: 88px; flex: 0 0 auto; text-align: left;
+      padding: 8px 12px 6px; min-width: 88px; flex: 0 0 auto; text-align: left;
       background: transparent; border: 1px solid transparent; border-radius: var(--radius-md);
       font-family: inherit; color: inherit; cursor: pointer; transition: background .12s, border-color .12s;
     }
@@ -657,7 +657,7 @@
     .ribbon-card.is-active { background: var(--color-accent-light); border-color: var(--color-accent); }
     .ribbon-card.is-static { cursor: default; }
     .ribbon-card.is-static:hover { background: transparent; }
-    .ribbon-card .kpi-label { font-size: 9.5px; letter-spacing: .7px; }
+    .ribbon-card .kpi-label { font-size: 9.5px; letter-spacing: .7px; margin-bottom: 1px; }
     .ribbon-card .kpi-value { font-size: 20px; line-height: 1.1; margin: 0; }
     .ribbon-unit { font-size: 9px; font-weight: 600; letter-spacing: .4px; text-transform: uppercase; color: var(--color-text-tertiary); }
     .ribbon-split { display: flex; gap: 0; align-items: baseline; }
